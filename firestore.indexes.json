@@ -1,0 +1,103 @@
+{
+    "indexes": [
+        {
+            "collectionGroup": "fields",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "activo",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "nombre",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "plots",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "fieldId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "nombre",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "plots",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "activo",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "nombre",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "crops",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "plotId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "campania",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "crops",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "campania",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "campania",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "alerts",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "resuelta",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "fechaDeteccion",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "satellite_analysis",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "plotId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "fechaAnalisis",
+                    "order": "DESCENDING"
+                }
+            ]
+        }
+    ],
+    "fieldOverrides": []
+}
