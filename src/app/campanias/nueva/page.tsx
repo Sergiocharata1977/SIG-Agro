@@ -54,7 +54,7 @@ export default function NuevaCampaniaPage() {
 
         const cargarCampos = async () => {
             try {
-                const data = await obtenerCampos(user.uid);
+                const data = await obtenerCampos(user.id);
                 setCampos(data);
             } catch (err) {
                 console.error('Error al cargar campos:', err);
@@ -75,7 +75,7 @@ export default function NuevaCampaniaPage() {
 
         const cargarLotes = async () => {
             try {
-                const data = await obtenerLotes(user.uid, formData.campoId);
+                const data = await obtenerLotes(user.id, formData.campoId);
                 setLotes(data);
             } catch (err) {
                 console.error('Error al cargar lotes:', err);
@@ -118,16 +118,12 @@ export default function NuevaCampaniaPage() {
         try {
             const lote = lotes.find(l => l.id === formData.loteId);
 
-            await crearCampania(user.uid, {
+            await crearCampania(user.id, {
                 campoId: formData.campoId,
                 loteId: formData.loteId,
                 nombre: formData.nombre,
                 cultivo: formData.cultivo,
-                variedad: formData.variedad || undefined,
-                tecnologia: formData.tecnologia || undefined,
                 fechaInicio: new Date(formData.fechaInicio),
-                superficieSembrada: formData.superficieSembrada ? parseFloat(formData.superficieSembrada) : lote?.superficie,
-                observaciones: formData.observaciones || undefined,
                 estado: 'planificada',
             });
 

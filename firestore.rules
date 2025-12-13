@@ -210,6 +210,34 @@ service cloud.firestore {
         allow delete: if isAdminOrOwner(orgId);
       }
       
+      // =========================================================
+      // COLECCIONES CONTABLES (Fase 4)
+      // =========================================================
+
+      match /accounts/{accountId} {
+        allow read: if isMember(orgId);
+        allow write: if isMember(orgId) && canWrite(orgId);
+        allow delete: if isAdminOrOwner(orgId);
+      }
+
+      match /journal_entries/{entryId} {
+        allow read: if isMember(orgId);
+        allow write: if isMember(orgId) && canWrite(orgId);
+        allow delete: if isAdminOrOwner(orgId);
+      }
+
+      match /products/{productId} {
+        allow read: if isMember(orgId);
+        allow write: if isMember(orgId) && canWrite(orgId);
+        allow delete: if isAdminOrOwner(orgId);
+      }
+
+      match /stock_movements/{movementId} {
+        allow read: if isMember(orgId);
+        allow write: if isMember(orgId) && canWrite(orgId);
+        allow delete: if isAdminOrOwner(orgId);
+      }
+      
       // ----------------------------------------
       // SUBCOLECCIÓN: invitations
       // Invitaciones pendientes

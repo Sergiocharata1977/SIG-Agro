@@ -9,7 +9,6 @@ import {
     addDoc,
     updateDoc,
     getDocs,
-    getDoc,
     query,
     where,
     orderBy,
@@ -66,6 +65,7 @@ export const obtenerAlertas = async (
 ): Promise<Alert[]> => {
     try {
         const collectionRef = collection(db, `organizations/${orgId}/${COLLECTION}`);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let constraints: any[] = [orderBy('fechaDeteccion', 'desc')];
 
         if (filtros?.plotId) {

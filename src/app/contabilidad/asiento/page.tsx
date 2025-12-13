@@ -42,7 +42,7 @@ export default function NuevoAsientoPage() {
 
         const cargarCuentas = async () => {
             try {
-                const data = await obtenerCuentas(user.uid);
+                const data = await obtenerCuentas(user.id);
                 // Solo cuentas que admiten movimientos
                 setCuentas(data.filter(c => c.admiteMovimientos));
             } catch (err) {
@@ -120,14 +120,14 @@ export default function NuevoAsientoPage() {
                     };
                 });
 
-            await crearAsiento(user.uid, {
+            await crearAsiento(user.id, {
                 fecha: new Date(formData.fecha),
                 concepto: formData.concepto,
                 descripcion: formData.descripcion || undefined,
                 tipo: formData.tipo,
                 lineas: lineasAsiento,
                 estado: 'borrador',
-                createdBy: user.uid,
+                createdBy: user.id,
             });
 
             router.push('/contabilidad');

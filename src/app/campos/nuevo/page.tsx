@@ -80,8 +80,21 @@ export default function NuevoCampoPage() {
         });
     };
 
-    const handlePolygonCreated = (polygon: GeoJSONPolygon, areaHa: number) => {
+    const handlePolygonCreated = (polygon: GeoJSONPolygon) => {
         setPoligono(polygon);
+        // Calcular área aproximada
+        const coords = polygon.coordinates[0];
+        const numPoints = coords.length - 1;
+        let area = 0;
+        for (let i = 0; i < numPoints; i++) {
+            const j = (i + 1) % numPoints;
+            area += coords[i][0] * coords[j][1];
+            area -= coords[j][0] * coords[i][1];
+        }
+        area = Math.abs(area) / 2;
+        const factorConversion = 111 * 111 * Math.cos((27 * Math.PI) / 180) * 100;
+        const areaHa = area * factorConversion;
+
         setAreaCalculada(areaHa);
         setFormData(prev => ({
             ...prev,
@@ -121,19 +134,20 @@ export default function NuevoCampoPage() {
                 sumLng += coords[i][0];
                 sumLat += coords[i][1];
             }
-            const ubicacion: GeoJSONPoint = {
+            const centroide: GeoJSONPoint = {
                 type: 'Point',
                 coordinates: [sumLng / numPoints, sumLat / numPoints],
             };
 
             await crearCampo(firebaseUser.uid, {
+                productorId: firebaseUser.uid,
                 nombre: formData.nombre,
                 provincia: 'Chaco',
                 departamento: formData.departamento,
                 localidad: formData.localidad || undefined,
                 superficieTotal: formData.superficieTotal || areaCalculada,
                 perimetro: poligono,
-                ubicacion,
+                ubicacion: centroide,
                 activo: true,
             });
 
@@ -295,8 +309,7 @@ export default function NuevoCampoPage() {
                             </div>
 
                             <MapaEditor
-                                onPolygonCreated={handlePolygonCreated}
-                                onPolygonEdited={handlePolygonCreated}
+                                onPolygonChange={handlePolygonCreated}
                                 altura="450px"
                             />
                         </div>

@@ -8,12 +8,12 @@ import {
     doc,
     addDoc,
     updateDoc,
-    deleteDoc,
     getDocs,
     getDoc,
     query,
     where,
-    orderBy
+    orderBy,
+    QueryConstraint
 } from 'firebase/firestore';
 import { db } from '@/firebase/config';
 import type { Plot, EstadoLote } from '@/types/sig-agro';
@@ -61,7 +61,7 @@ export const obtenerPlots = async (
 ): Promise<Plot[]> => {
     try {
         const collectionRef = collection(db, `organizations/${orgId}/${COLLECTION}`);
-        let constraints: any[] = [orderBy('nombre', 'asc')];
+        let constraints: QueryConstraint[] = [orderBy('nombre', 'asc')];
 
         if (filtros?.fieldId) {
             constraints = [where('fieldId', '==', filtros.fieldId), ...constraints];
@@ -80,7 +80,7 @@ export const obtenerPlots = async (
             if (typeof poligono === 'string' && poligono) {
                 try {
                     poligono = JSON.parse(poligono);
-                } catch (e) {
+                } catch {
                     // Mantener como string si falla
                 }
             }
@@ -137,7 +137,7 @@ export const obtenerPlot = async (
         if (typeof poligono === 'string' && poligono) {
             try {
                 poligono = JSON.parse(poligono);
-            } catch (e) { }
+            } catch { }
         }
 
         return {
@@ -165,6 +165,7 @@ export const actualizarPlot = async (
         const docRef = doc(db, `organizations/${orgId}/${COLLECTION}/${plotId}`);
 
         // Serializar poligono si es objeto
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const updateData: any = { ...data, updatedAt: new Date() };
         if (updateData.poligono && typeof updateData.poligono === 'object') {
             updateData.poligono = JSON.stringify(updateData.poligono);

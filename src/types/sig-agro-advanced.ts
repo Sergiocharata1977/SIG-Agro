@@ -231,6 +231,7 @@ export interface Report {
     graficos?: {
         tipo: 'linea' | 'barra' | 'pie' | 'area';
         titulo: string;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         datos: any;
     }[];
 

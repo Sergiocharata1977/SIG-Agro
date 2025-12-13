@@ -248,6 +248,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!Array.isArray(modulosHabilitados) || modulosHabilitados.length === 0) return false;
 
         // Verificar si el módulo está en la lista
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return modulosHabilitados.includes(module as any);
     };
 

@@ -62,6 +62,7 @@ export const obtenerCrops = async (
 ): Promise<Crop[]> => {
     try {
         const collectionRef = collection(db, `organizations/${orgId}/${COLLECTION}`);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let constraints: any[] = [orderBy('campania', 'desc')];
 
         if (filtros?.plotId) {
@@ -229,14 +230,13 @@ export const obtenerResumenCampania = async (
     const crops = await obtenerCropsByCampania(orgId, campania);
 
     const porCultivo: Record<string, { cantidad: number; superficie: number }> = {};
-    let superficieTotal = 0;
+    const superficieTotal = 0;
     let sumRendimientos = 0;
     let countRendimientos = 0;
 
     crops.forEach(crop => {
         // Necesitamos obtener la superficie del lote asociado
         // Por ahora usamos un estimado
-        const superficie = 0; // Se debería hacer join con plots
 
         if (!porCultivo[crop.cultivo]) {
             porCultivo[crop.cultivo] = { cantidad: 0, superficie: 0 };

@@ -12,9 +12,7 @@ import {
     getDocs,
     getDoc,
     query,
-    where,
-    orderBy,
-    Timestamp
+    orderBy
 } from 'firebase/firestore';
 import { db } from '@/firebase/config';
 import type { EventoLote, TipoEvento, ProductoAplicado } from '@/types';
@@ -71,7 +69,7 @@ export const obtenerEventosLote = async (
             `organizations/${orgId}/campos/${campoId}/lotes/${loteId}/eventos`
         );
 
-        let q = query(collectionRef, orderBy('fecha', 'desc'));
+        const q = query(collectionRef, orderBy('fecha', 'desc'));
 
         const snapshot = await getDocs(q);
 

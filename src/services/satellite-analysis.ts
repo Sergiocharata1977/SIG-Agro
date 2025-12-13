@@ -5,15 +5,13 @@
 
 import {
     collection,
-    doc,
     addDoc,
-    updateDoc,
     getDocs,
-    getDoc,
     query,
     where,
     orderBy,
-    limit
+    limit,
+    QueryConstraint
 } from 'firebase/firestore';
 import { db } from '@/firebase/config';
 import type { SatelliteAnalysis, TipoAnalisis } from '@/types/sig-agro-advanced';
@@ -61,7 +59,7 @@ export const obtenerAnalisis = async (
 ): Promise<SatelliteAnalysis[]> => {
     try {
         const collectionRef = collection(db, `organizations/${orgId}/${COLLECTION}`);
-        let constraints: any[] = [orderBy('fechaAnalisis', 'desc')];
+        let constraints: QueryConstraint[] = [orderBy('fechaAnalisis', 'desc')];
 
         if (filtros?.plotId) {
             constraints = [where('plotId', '==', filtros.plotId), ...constraints];

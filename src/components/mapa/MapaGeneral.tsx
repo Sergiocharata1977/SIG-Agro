@@ -120,6 +120,7 @@ export default function MapaGeneral({
     // Verificar si estamos en el cliente
     useEffect(() => {
         setIsClient(true);
+        return () => setIsClient(false);
     }, []);
 
     // Convertir coordenadas GeoJSON a formato Leaflet

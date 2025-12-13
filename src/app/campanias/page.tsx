@@ -36,7 +36,7 @@ export default function CampaniasPage() {
 
         try {
             setLoading(true);
-            const data = await obtenerCampanias(user.uid);
+            const data = await obtenerCampanias(user.id);
             setCampanias(data);
         } catch (error) {
             console.error('Error al cargar campañas:', error);
@@ -119,8 +119,8 @@ export default function CampaniasPage() {
                                 key={f}
                                 onClick={() => setFiltro(f)}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition ${filtro === f
-                                        ? 'bg-green-500 text-white'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    ? 'bg-green-500 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                     }`}
                             >
                                 {f === 'todas' ? 'Todas' : f === 'en_curso' ? 'En Curso' : 'Finalizadas'}
@@ -168,12 +168,6 @@ export default function CampaniasPage() {
                                     {campania.variedad && (
                                         <p className="text-gray-600">
                                             <span className="font-medium">Variedad:</span> {campania.variedad}
-                                        </p>
-                                    )}
-
-                                    {campania.superficieSembrada && (
-                                        <p className="text-gray-600">
-                                            <span className="font-medium">Superficie:</span> {campania.superficieSembrada} ha
                                         </p>
                                     )}
 

@@ -1,14 +1,12 @@
 import {
     collection,
     doc,
-    addDoc,
-    updateDoc,
-    deleteDoc,
     getDocs,
     getDoc,
+    addDoc,
+    updateDoc,
     query,
-    where,
-    Timestamp
+    where
 } from 'firebase/firestore';
 import { db } from '@/firebase/config';
 import { Campo, Lote } from '@/types/agro';
@@ -55,7 +53,7 @@ export const obtenerCampos = async (orgId: string): Promise<Campo[]> => {
             if (typeof perimetro === 'string') {
                 try {
                     perimetro = JSON.parse(perimetro);
-                } catch (e) {
+                } catch {
                     perimetro = null;
                 }
             }
@@ -86,7 +84,7 @@ export const obtenerCampo = async (orgId: string, campoId: string): Promise<Camp
         if (typeof perimetro === 'string') {
             try {
                 perimetro = JSON.parse(perimetro);
-            } catch (e) {
+            } catch {
                 perimetro = null;
             }
         }
@@ -204,8 +202,8 @@ export const actualizarLote = async (orgId: string, campoId: string, loteId: str
             ...data,
             updatedAt: new Date()
         });
-    } catch (error) {
-        console.error('Error al actualizar lote:', error);
+    } catch {
+        console.error('Error al actualizar lote');
         throw error;
     }
 };

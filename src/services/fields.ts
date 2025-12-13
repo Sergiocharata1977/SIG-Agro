@@ -8,13 +8,11 @@ import {
     doc,
     addDoc,
     updateDoc,
-    deleteDoc,
     getDocs,
     getDoc,
     query,
     where,
-    orderBy,
-    Timestamp
+    orderBy
 } from 'firebase/firestore';
 import { db } from '@/firebase/config';
 import type { Field } from '@/types/sig-agro';
@@ -72,7 +70,7 @@ export const obtenerFields = async (
             if (typeof perimetro === 'string' && perimetro) {
                 try {
                     perimetro = JSON.parse(perimetro);
-                } catch (e) {
+                } catch {
                     // Mantener como string si falla
                 }
             }

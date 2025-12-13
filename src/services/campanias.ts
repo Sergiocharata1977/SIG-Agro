@@ -63,9 +63,12 @@ export async function crearCampania(
  * Obtener todas las campañas de un productor
  */
 export async function obtenerCampanias(productorId: string): Promise<Campania[]> {
+    const collectionRef = getCampaniasCollection(productorId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const constraints: any[] = [orderBy('fechaInicio', 'desc')];
     const q = query(
-        getCampaniasCollection(productorId),
-        orderBy('fechaInicio', 'desc')
+        collectionRef,
+        ...constraints
     );
 
     const snapshot = await getDocs(q);
