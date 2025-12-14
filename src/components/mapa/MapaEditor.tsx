@@ -155,7 +155,8 @@ export default function MapaEditor({
             map.addControl(drawControl);
 
             // Evento: Polígono creado
-            map.on(L.Draw.Event.CREATED, (event: L.DrawEvents.Created) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            map.on(L.Draw.Event.CREATED, (event: any) => {
                 const layer = event.layer;
 
                 // Limpiar polígonos anteriores (solo 1 polígono por vez)
@@ -170,9 +171,10 @@ export default function MapaEditor({
             });
 
             // Evento: Polígono editado
-            map.on(L.Draw.Event.EDITED, (event: L.DrawEvents.Edited) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            map.on(L.Draw.Event.EDITED, (event: any) => {
                 const layers = event.layers;
-                layers.eachLayer((layer) => {
+                layers.eachLayer((layer: L.Layer) => {
                     const geoJSON = layerToGeoJSON(layer);
                     if (geoJSON && onPolygonChange) {
                         onPolygonChange(geoJSON);

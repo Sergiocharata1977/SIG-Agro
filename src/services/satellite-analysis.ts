@@ -23,7 +23,7 @@ const COLLECTION = 'satellite_analysis';
  */
 export const crearAnalisisSatelital = async (
     orgId: string,
-    analysis: Omit<SatelliteAnalysis, 'id' | 'organizationId' | 'createdAt'>,
+    analysis: Omit<SatelliteAnalysis, 'id' | 'organizationId' | 'createdAt' | 'createdBy'>,
     userId: string
 ): Promise<SatelliteAnalysis> => {
     try {

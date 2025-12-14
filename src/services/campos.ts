@@ -176,7 +176,7 @@ export const obtenerLotes = async (orgId: string, campoId: string): Promise<Lote
             if (typeof poligono === 'string') {
                 try {
                     poligono = JSON.parse(poligono);
-                } catch (e) {
+                } catch {
                     poligono = null;
                 }
             }
@@ -202,8 +202,8 @@ export const actualizarLote = async (orgId: string, campoId: string, loteId: str
             ...data,
             updatedAt: new Date()
         });
-    } catch {
-        console.error('Error al actualizar lote');
+    } catch (error) {
+        console.error('Error al actualizar lote:', error);
         throw error;
     }
 };

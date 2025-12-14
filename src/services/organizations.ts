@@ -327,6 +327,7 @@ export function puedeRealizarAccion(
     accion: 'read' | 'write' | 'delete' | 'admin'
 ): boolean {
     const permisos: Record<UserRole, string[]> = {
+        super_admin: ['read', 'write', 'delete', 'admin'],
         owner: ['read', 'write', 'delete', 'admin'],
         admin: ['read', 'write', 'delete', 'admin'],
         operator: ['read', 'write'],

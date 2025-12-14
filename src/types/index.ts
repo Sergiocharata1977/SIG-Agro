@@ -1,5 +1,15 @@
 // Exportar todos los tipos
 export * from './agro';
-// campania.ts tiene tipos duplicados con agro.ts, se usa agro.ts como fuente principal
+// Exportar tipos de campania.ts que no conflictúan con agro.ts
+// (Campania en agro.ts usa fechaFin, en campania.ts usa fechaFinPrevista/fechaFinReal)
+export type {
+    Evento,
+    EstadoEvento,
+    ProductoAplicado as ProductoAplicadoCampania,
+    CategoriaCosto,
+    CostoBasico,
+    Ingreso,
+    MargenBruto
+} from './campania';
 export * from './contabilidad';
 export * from './organization';

@@ -11,7 +11,7 @@
  * - Capas satelitales (OpenStreetMap, Satellite)
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import dynamic from 'next/dynamic';
 import 'leaflet/dist/leaflet.css';
 
@@ -51,7 +51,7 @@ interface MapaGeneralProps {
     // Callbacks
     onCampoClick?: (campo: Campo) => void;
     onLoteClick?: (lote: Lote) => void;
-    onPolygonCreated?: (polygon: GeoJSONPolygon) => void;
+    _onPolygonCreated?: (polygon: GeoJSONPolygon) => void;
 
     // Configuración
     modoEdicion?: boolean;
@@ -109,19 +109,19 @@ export default function MapaGeneral({
     lotes = [],
     onCampoClick,
     onLoteClick,
-    onPolygonCreated,
+    _onPolygonCreated,
     modoEdicion = false,
     altura = '100%',
 }: MapaGeneralProps) {
     const [capaActiva, setCapaActiva] = useState<keyof typeof CAPAS>('satellite');
     const [loteSeleccionado, setLoteSeleccionado] = useState<string | null>(null);
-    const [isClient, setIsClient] = useState(false);
 
-    // Verificar si estamos en el cliente
-    useEffect(() => {
-        setIsClient(true);
-        return () => setIsClient(false);
-    }, []);
+    // Detectar cliente usando useSyncExternalStore (evita error de setState en useEffect)
+    const isClient = useSyncExternalStore(
+        () => () => { },
+        () => true,
+        () => false
+    );
 
     // Convertir coordenadas GeoJSON a formato Leaflet
     const geoJsonToLeaflet = (polygon: GeoJSONPolygon): [number, number][] => {

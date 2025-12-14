@@ -4,7 +4,7 @@
  * Componente para mostrar la lista de labores de un lote
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { TIPOS_LABOR, obtenerEventosLote } from '@/services/labores';
 import type { EventoLote, TipoEvento } from '@/types';
 
@@ -26,25 +26,25 @@ export default function ListaLabores({
     const [error, setError] = useState('');
     const [filtroTipo, setFiltroTipo] = useState<TipoEvento | ''>('');
 
-    const cargarEventos = async () => {
+    const cargarEventos = useCallback(async () => {
         try {
             setLoading(true);
             const data = await obtenerEventosLote(orgId, campoId, loteId, {
                 tipo: filtroTipo || undefined
             });
             setEventos(data);
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'Error desconocido');
         } finally {
             setLoading(false);
         }
-    };
+    }, [orgId, campoId, loteId, filtroTipo]);
 
     useEffect(() => {
         if (orgId && campoId && loteId) {
             cargarEventos();
         }
-    }, [orgId, campoId, loteId, filtroTipo]);
+    }, [orgId, campoId, loteId, filtroTipo, cargarEventos]);
 
     const formatearFecha = (fecha: Date | string) => {
         const d = new Date(fecha);
@@ -173,7 +173,7 @@ export default function ListaLabores({
                                         {/* Observaciones */}
                                         {evento.observaciones && (
                                             <p className="text-xs text-gray-500 mt-2 italic">
-                                                "{evento.observaciones}"
+                                                &ldquo;{evento.observaciones}&rdquo;
                                             </p>
                                         )}
                                     </div>

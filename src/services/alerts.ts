@@ -208,7 +208,8 @@ export const crearAlertaDesdeAnalisis = async (
             descripcion: `El índice de vegetación del lote es ${(analisis.ndviPromedio * 100).toFixed(0)}%, muy por debajo del valor esperado.`,
             accionSugerida: 'Revisar el estado del cultivo y verificar riego/fertilización.',
             fechaDeteccion: new Date(),
-            origenTipo: 'satellite_analysis'
+            origenTipo: 'satellite_analysis',
+            createdBy: userId
         }, userId);
         alertasCreadas.push(alerta);
     }
@@ -223,7 +224,8 @@ export const crearAlertaDesdeAnalisis = async (
             descripcion: 'El análisis satelital detectó signos de estrés hídrico en el cultivo.',
             accionSugerida: 'Evaluar la posibilidad de riego suplementario.',
             fechaDeteccion: new Date(),
-            origenTipo: 'satellite_analysis'
+            origenTipo: 'satellite_analysis',
+            createdBy: userId
         }, userId);
         alertasCreadas.push(alerta);
     }

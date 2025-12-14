@@ -16,7 +16,10 @@ import {
     Timestamp,
 } from 'firebase/firestore';
 import { db } from '@/firebase/config';
-import { Campania, EstadoCampania } from '@/types';
+import { Campania } from '@/types';
+
+// Definir tipo localmente para evitar conflictos de exportación
+type EstadoCampania = 'planificada' | 'en_curso' | 'finalizada' | 'cancelada';
 
 const PRODUCTORES = 'agro_productores';
 
@@ -41,8 +44,7 @@ export async function crearCampania(
         fechaInicio: Timestamp.fromDate(data.fechaInicio),
         fechaSiembra: data.fechaSiembra ? Timestamp.fromDate(data.fechaSiembra) : null,
         fechaCosecha: data.fechaCosecha ? Timestamp.fromDate(data.fechaCosecha) : null,
-        fechaFinPrevista: data.fechaFinPrevista ? Timestamp.fromDate(data.fechaFinPrevista) : null,
-        fechaFinReal: data.fechaFinReal ? Timestamp.fromDate(data.fechaFinReal) : null,
+        fechaFin: data.fechaFin ? Timestamp.fromDate(data.fechaFin) : null,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
     };
@@ -81,8 +83,7 @@ export async function obtenerCampanias(productorId: string): Promise<Campania[]>
             fechaInicio: data.fechaInicio?.toDate() || new Date(),
             fechaSiembra: data.fechaSiembra?.toDate() || undefined,
             fechaCosecha: data.fechaCosecha?.toDate() || undefined,
-            fechaFinPrevista: data.fechaFinPrevista?.toDate() || undefined,
-            fechaFinReal: data.fechaFinReal?.toDate() || undefined,
+            fechaFin: data.fechaFin?.toDate() || undefined,
             createdAt: data.createdAt?.toDate() || new Date(),
             updatedAt: data.updatedAt?.toDate() || new Date(),
         } as Campania;
@@ -177,7 +178,7 @@ export async function cambiarEstadoCampania(
 
     await updateDoc(docRef, {
         estado,
-        ...(estado === 'finalizada' ? { fechaFinReal: Timestamp.now() } : {}),
+        ...(estado === 'finalizada' ? { fechaFin: Timestamp.now() } : {}),
         updatedAt: Timestamp.now(),
     });
 }
@@ -203,7 +204,7 @@ export async function registrarCosecha(
         produccionTotal: data.produccionTotal,
         humedadCosecha: data.humedadCosecha || null,
         estado: 'finalizada',
-        fechaFinReal: Timestamp.now(),
+        fechaFin: Timestamp.now(),
         updatedAt: Timestamp.now(),
     });
 }
