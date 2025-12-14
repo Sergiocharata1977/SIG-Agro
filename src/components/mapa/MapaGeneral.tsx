@@ -164,6 +164,7 @@ export default function MapaGeneral({
 
             {/* Mapa */}
             <MapContainer
+                key={`map-${centro[0]}-${centro[1]}-${zoom}`}
                 center={centro}
                 zoom={zoom}
                 style={{ height: altura, width: '100%' }}

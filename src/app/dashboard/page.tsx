@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { useAuth } from '@/contexts/AuthContext';
-import Sidebar from '@/components/layout/Sidebar';
+import Sidebar, { toggleMobileSidebar } from '@/components/layout/Sidebar';
 import type { Field, Plot, Crop } from '@/types/sig-agro';
 import type { Alert } from '@/types/sig-agro-advanced';
 import { obtenerFields } from '@/services/fields';
@@ -156,16 +156,26 @@ function DashboardHeader({
     const { user } = useAuth();
 
     return (
-        <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4">
-            <div className="flex items-center gap-4">
+        <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-2 md:px-4">
+            <div className="flex items-center gap-2 md:gap-4">
+                {/* Botón hamburguesa móvil */}
+                <button
+                    onClick={toggleMobileSidebar}
+                    className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 md:hidden"
+                    aria-label="Abrir menú"
+                >
+                    <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
                 <div className="flex items-center gap-2">
-                    <span className="text-green-600">📍</span>
+                    <span className="text-green-600 hidden sm:block">📍</span>
                     <div>
-                        <span className="font-semibold text-gray-900">
+                        <span className="font-semibold text-gray-900 text-sm md:text-base">
                             {field?.nombre || 'Sin campo seleccionado'}
                         </span>
                         {field && (
-                            <span className="text-sm text-gray-500 ml-2">
+                            <span className="text-xs md:text-sm text-gray-500 ml-2 hidden sm:inline">
                                 {field.departamento}, {field.provincia} • {field.superficieTotal} ha
                             </span>
                         )}
@@ -173,7 +183,7 @@ function DashboardHeader({
                 </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 md:gap-3">
                 {/* Badge de alertas */}
                 {alertasNoLeidas > 0 && (
                     <div className="flex items-center gap-1 bg-red-100 text-red-700 px-2 py-1 rounded">
@@ -184,7 +194,7 @@ function DashboardHeader({
 
                 {/* Selector de campo */}
                 <select
-                    className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white"
+                    className="text-xs md:text-sm border border-gray-300 rounded-lg px-2 md:px-3 py-1.5 bg-white max-w-[120px] md:max-w-none truncate"
                     value={field?.id || ''}
                     onChange={(e) => onFieldChange(e.target.value)}
                 >
@@ -196,7 +206,7 @@ function DashboardHeader({
 
                 {/* Usuario */}
                 <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600 hidden sm:block">{user?.email}</span>
+                    <span className="text-sm text-gray-600 hidden lg:block">{user?.email}</span>
                     <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
                         {user?.email?.charAt(0).toUpperCase() || 'U'}
                     </div>
@@ -322,9 +332,9 @@ export default function DashboardPage() {
                 />
 
                 {/* Contenido: Mapa + Panel lateral */}
-                <div className="flex-1 flex overflow-hidden p-4 gap-4">
-                    {/* Mapa (70%) */}
-                    <div className="flex-[7] rounded-xl overflow-hidden shadow-lg border border-gray-200">
+                <div className="flex-1 flex flex-col md:flex-row overflow-auto md:overflow-hidden p-2 md:p-4 gap-2 md:gap-4">
+                    {/* Mapa (70% en desktop, altura fija en móvil) */}
+                    <div className="h-64 md:h-auto md:flex-[7] rounded-xl overflow-hidden shadow-lg border border-gray-200 flex-shrink-0">
                         {loadingData ? (
                             <div className="h-full bg-gray-200 animate-pulse flex items-center justify-center">
                                 <span className="text-gray-500">Cargando mapa...</span>
@@ -339,10 +349,10 @@ export default function DashboardPage() {
                         )}
                     </div>
 
-                    {/* Panel lateral (30%) */}
-                    <div className="flex-[3] flex flex-col gap-4 overflow-y-auto">
-                        {/* KPIs */}
-                        <div className="grid grid-cols-2 gap-3">
+                    {/* Panel lateral (30% en desktop, debajo del mapa en móvil) */}
+                    <div className="md:flex-[3] flex flex-col gap-2 md:gap-4 overflow-visible md:overflow-y-auto">
+                        {/* KPIs - Grid 2x2 */}
+                        <div className="grid grid-cols-2 gap-2 md:gap-3">
                             <KPICard
                                 icon="🏞️"
                                 label="Campos"
