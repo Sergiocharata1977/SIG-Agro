@@ -263,3 +263,170 @@ export const obtenerResumenAlertas = async (
         porTipo: porTipo as Record<TipoAlerta, number>
     };
 };
+
+// ============================================
+// NOTIFICACIONES PROACTIVAS
+// ============================================
+
+export type CanalNotificacion = 'push' | 'email' | 'sms' | 'whatsapp';
+
+export interface NotificacionConfig {
+    canales: CanalNotificacion[];
+    emailDestino?: string;
+    telefonoDestino?: string;
+}
+
+export interface ResultadoNotificacion {
+    canal: CanalNotificacion;
+    exito: boolean;
+    mensaje?: string;
+    timestamp: Date;
+}
+
+/**
+ * Enviar notificación proactiva de una alerta
+ * Llama al endpoint API para enviar push/email
+ */
+export const enviarNotificacion = async (
+    alerta: Alert,
+    config: NotificacionConfig
+): Promise<ResultadoNotificacion[]> => {
+    const resultados: ResultadoNotificacion[] = [];
+
+    for (const canal of config.canales) {
+        try {
+            const response = await fetch('/api/alerts/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    alertId: alerta.id,
+                    canal,
+                    alerta: {
+                        titulo: alerta.titulo,
+                        descripcion: alerta.descripcion,
+                        tipo: alerta.tipo,
+                        severidad: alerta.severidad,
+                        accionSugerida: alerta.accionSugerida
+                    },
+                    destino: {
+                        email: config.emailDestino,
+                        telefono: config.telefonoDestino
+                    }
+                }),
+            });
+
+            const data = await response.json();
+
+            resultados.push({
+                canal,
+                exito: response.ok,
+                mensaje: data.message || (response.ok ? 'Enviado' : 'Error'),
+                timestamp: new Date()
+            });
+        } catch (error) {
+            console.error(`Error enviando notificación por ${canal}:`, error);
+            resultados.push({
+                canal,
+                exito: false,
+                mensaje: 'Error de conexión',
+                timestamp: new Date()
+            });
+        }
+    }
+
+    return resultados;
+};
+
+/**
+ * Configurar preferencias de notificación para un usuario
+ */
+export interface PreferenciasNotificacion {
+    userId: string;
+    organizationId: string;
+
+    // Canales habilitados
+    pushEnabled: boolean;
+    emailEnabled: boolean;
+
+    // Qué tipos de alerta notificar
+    notificarCriticas: boolean;
+    notificarWarning: boolean;
+    notificarInfo: boolean;
+
+    // Tipos específicos
+    tiposHabilitados: TipoAlerta[];
+
+    // Horarios (opcional)
+    horaInicio?: string;  // "08:00"
+    horaFin?: string;     // "20:00"
+
+    // Email alternativo
+    emailAlternativo?: string;
+}
+
+/**
+ * Obtener alertas que requieren notificación
+ */
+export const obtenerAlertasPendientesNotificacion = async (
+    orgId: string,
+    preferencias: PreferenciasNotificacion
+): Promise<Alert[]> => {
+    const alertas = await obtenerAlertas(orgId, {
+        soloNoLeidas: true,
+        soloNoResueltas: true,
+        limite: 20
+    });
+
+    return alertas.filter(alerta => {
+        // Filtrar por severidad
+        if (alerta.severidad === 'critical' && !preferencias.notificarCriticas) return false;
+        if (alerta.severidad === 'warning' && !preferencias.notificarWarning) return false;
+        if (alerta.severidad === 'info' && !preferencias.notificarInfo) return false;
+
+        // Filtrar por tipo
+        if (preferencias.tiposHabilitados.length > 0 &&
+            !preferencias.tiposHabilitados.includes(alerta.tipo)) {
+            return false;
+        }
+
+        return true;
+    });
+};
+
+/**
+ * Enviar notificaciones masivas de alertas pendientes
+ */
+export const enviarNotificacionesMasivas = async (
+    orgId: string,
+    preferencias: PreferenciasNotificacion
+): Promise<{
+    alertasNotificadas: number;
+    resultados: { alertId: string; resultados: ResultadoNotificacion[] }[];
+}> => {
+    const alertasPendientes = await obtenerAlertasPendientesNotificacion(orgId, preferencias);
+    const resultadosTotales: { alertId: string; resultados: ResultadoNotificacion[] }[] = [];
+
+    const canales: CanalNotificacion[] = [];
+    if (preferencias.pushEnabled) canales.push('push');
+    if (preferencias.emailEnabled) canales.push('email');
+
+    for (const alerta of alertasPendientes) {
+        const resultados = await enviarNotificacion(alerta, {
+            canales,
+            emailDestino: preferencias.emailAlternativo
+        });
+
+        resultadosTotales.push({
+            alertId: alerta.id,
+            resultados
+        });
+    }
+
+    return {
+        alertasNotificadas: alertasPendientes.length,
+        resultados: resultadosTotales
+    };
+};
+

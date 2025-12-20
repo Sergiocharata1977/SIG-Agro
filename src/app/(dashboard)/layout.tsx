@@ -1,0 +1,58 @@
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import Sidebar from '@/components/layout/Sidebar';
+import { DashboardHeader } from '@/components/layout/DashboardHeader';
+
+export default function DashboardLayout({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
+    const { firebaseUser, loading } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!loading && !firebaseUser) {
+            router.push('/auth/login');
+        }
+    }, [firebaseUser, loading, router]);
+
+    // Show loading state while checking authentication
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-100">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Verificando autenticación...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Don't render dashboard content if not authenticated
+    if (!firebaseUser) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-100">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Redirigiendo al login...</p>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex h-screen bg-gray-100">
+            <Sidebar />
+            <div className="flex-1 flex flex-col overflow-hidden">
+                <DashboardHeader />
+                <main className="flex-1 overflow-y-auto p-6">
+                    {children}
+                </main>
+            </div>
+        </div>
+    );
+}

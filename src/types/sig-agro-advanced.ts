@@ -69,7 +69,11 @@ export interface SatelliteImage {
 // ============================================
 
 export type TipoAnalisis =
-    | 'ndvi'
+    | 'ndvi'           // Normalized Difference Vegetation Index (existente)
+    | 'ndre'           // Normalized Difference Red Edge - Estrés temprano
+    | 'msavi'          // Modified Soil Adjusted Vegetation Index - Cultivos bajos
+    | 'ndmi'           // Normalized Difference Moisture Index - Humedad
+    | 'reci'           // Red Edge Chlorophyll Index - Clorofila
     | 'estres_hidrico'
     | 'plagas'
     | 'rendimiento'
@@ -101,11 +105,31 @@ export interface SatelliteAnalysis {
     ndviMaximo?: number;
     ndviDesviacion?: number;
 
-    // Zonas del lote
+    // Métricas NDRE (Red Edge) - Detecta estrés temprano
+    ndrePromedio?: number;          // -1.0 a 1.0
+    ndreMinimo?: number;
+    ndreMaximo?: number;
+
+    // Métricas MSAVI (Suelo ajustado) - Mejor en cultivos bajos
+    msaviPromedio?: number;         // 0.0 a 1.0
+    msaviMinimo?: number;
+    msaviMaximo?: number;
+
+    // Métricas NDMI (Humedad) - Contenido de agua en vegetación
+    ndmiPromedio?: number;          // -1.0 a 1.0
+    ndmiMinimo?: number;
+    ndmiMaximo?: number;
+
+    // Métricas ReCI (Clorofila) - Contenido de clorofila
+    reciPromedio?: number;          // 0.0 a ~3.0
+    reciMinimo?: number;
+    reciMaximo?: number;
+
+    // Zonas del lote (genérico para cualquier índice)
     zonasNdvi?: {
-        baja: number;               // % lote con NDVI < 0.3
-        media: number;              // % lote con NDVI 0.3-0.6
-        alta: number;               // % lote con NDVI > 0.6
+        baja: number;               // % lote con valor < umbral bajo
+        media: number;              // % lote con valor en rango medio
+        alta: number;               // % lote con valor > umbral alto
     };
 
     // Detección de problemas

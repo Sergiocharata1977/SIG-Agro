@@ -1,78 +1,79 @@
 /**
- * Script para crear Super Admin en SIG Agro
- * Ejecutar: node scripts/create-super-admin.js
- * Requiere: service-account.json en la raíz del proyecto
+ * Script para crear usuario Super Admin
+ * Ejecutar con: node scripts/create-super-admin.js
  */
 
-const admin = require('firebase-admin');
-const serviceAccount = require('../service-account.json');
+const { cert, getApps, initializeApp } = require('firebase-admin/app');
+const { getAuth } = require('firebase-admin/auth');
+const fs = require('fs');
+const path = require('path');
 
-// Inicializar Firebase Admin
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-});
-
-const auth = admin.auth();
-const db = admin.firestore();
+// Configuración del Super Admin
+const SUPER_ADMIN_EMAIL = 'sergio@empresa.com';
+const SUPER_ADMIN_PASSWORD = 'Sergio123';
 
 async function createSuperAdmin() {
-    console.log('🚀 Creando Super Admin para SIG Agro...\n');
+    console.log('🚀 Iniciando creación de Super Admin...\n');
+
+    // Inicializar Firebase Admin si no está inicializado
+    if (getApps().length === 0) {
+        const serviceAccountPath = path.resolve(process.cwd(), 'service-account.json');
+
+        if (!fs.existsSync(serviceAccountPath)) {
+            console.error('❌ No se encontró service-account.json en la raíz del proyecto');
+            process.exit(1);
+        }
+
+        const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
+
+        initializeApp({
+            credential: cert(serviceAccount),
+        });
+
+        console.log(`📦 Firebase Admin inicializado para proyecto: ${serviceAccount.project_id}`);
+    }
+
+    const auth = getAuth();
 
     try {
-        const email = 'superadmin@doncandido.agro';
-        const password = 'SuperAdmin2024!';
-        const displayName = 'Super Admin';
-
-        // 1. Crear usuario en Authentication
-        let uid;
+        // Intentar obtener usuario existente
+        let user;
         try {
-            const userRecord = await auth.createUser({
-                email,
-                password,
-                emailVerified: true,
-                displayName,
-            });
-            uid = userRecord.uid;
-            console.log('✅ Usuario creado en Authentication');
-        } catch (e) {
-            if (e.code === 'auth/email-already-exists') {
-                console.log('ℹ️  El usuario ya existe en Auth, actualizando rol en Firestore...');
-                const user = await auth.getUserByEmail(email);
-                uid = user.uid;
+            user = await auth.getUserByEmail(SUPER_ADMIN_EMAIL);
+            console.log(`✅ Usuario existente encontrado: ${user.uid}`);
+        } catch (error) {
+            if (error.code === 'auth/user-not-found') {
+                // Crear usuario si no existe
+                user = await auth.createUser({
+                    email: SUPER_ADMIN_EMAIL,
+                    password: SUPER_ADMIN_PASSWORD,
+                    displayName: 'Super Admin',
+                    emailVerified: true,
+                });
+                console.log(`✅ Usuario creado: ${user.uid}`);
             } else {
-                throw e;
+                throw error;
             }
         }
 
-        console.log('   UID:', uid);
+        // Asignar custom claims de Super Admin
+        await auth.setCustomUserClaims(user.uid, {
+            superAdmin: true,
+            role: 'super_admin'
+        });
 
-        // 2. Crear documento en Firestore (users collection)
-        await db.collection('users').doc(uid).set({
-            email,
-            displayName,
-            role: 'super_admin', // ← Rol Clave
-            status: 'active',
-            organizationId: null, // No pertenece a una org
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        }, { merge: true });
+        console.log(`✅ Claims de Super Admin asignados a ${SUPER_ADMIN_EMAIL}`);
+        console.log('\n🎉 ¡Super Admin configurado exitosamente!');
+        console.log(`   Email: ${SUPER_ADMIN_EMAIL}`);
+        console.log(`   UID: ${user.uid}`);
+        console.log(`   Claims: { superAdmin: true, role: 'super_admin' }`);
 
-        console.log('✅ Documento creado/actualizado en Firestore\n');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log(`📧 Email:    ${email}`);
-        console.log(`🔑 Password: ${password}`);
-        console.log('👤 Rol:      super_admin');
-        console.log('🛡️  Acceso:   Panel Super Admin');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-        console.log('✅ ¡Super Admin listo!');
-        console.log('   Ingresa en: http://localhost:3000/auth/login');
-        console.log('   Panel: http://localhost:3000/super-admin/organizaciones\n');
-
-        process.exit(0);
     } catch (error) {
-        console.error('❌ Error:', error.message);
+        console.error('❌ Error:', error);
         process.exit(1);
     }
+
+    process.exit(0);
 }
 
 createSuperAdmin();

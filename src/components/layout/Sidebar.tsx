@@ -18,11 +18,29 @@ export function closeMobileSidebar() {
     if (mobileCloseFn) mobileCloseFn();
 }
 
+interface MenuItem {
+    icon: string;
+    label: string;
+    href: string;
+    active: boolean;
+    feature: string;
+    module: string;
+    subItems?: { icon: string; label: string; href: string }[];
+}
+
 export default function Sidebar() {
     const pathname = usePathname();
     const { firebaseUser, user, organization, signOut, hasModuleAccess } = useAuth();
     const [collapsed, setCollapsed] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [contabilidadOpen, setContabilidadOpen] = useState(false);
+
+    // Abrir automáticamente el submenú si estamos en contabilidad
+    useEffect(() => {
+        if (pathname?.startsWith('/contabilidad') || pathname?.startsWith('/terceros') || pathname?.startsWith('/operaciones')) {
+            setContabilidadOpen(true);
+        }
+    }, [pathname]);
 
     // Registrar toggle y close functions
     useEffect(() => {
@@ -35,7 +53,7 @@ export default function Sidebar() {
     }, []);
 
     // Definición de ítems con requerimientos de acceso
-    const menuItems = [
+    const menuItems: MenuItem[] = [
         {
             icon: '📊',
             label: 'Dashboard',
@@ -56,7 +74,7 @@ export default function Sidebar() {
             icon: '📍',
             label: 'Mis Campos',
             href: '/campos',
-            active: pathname?.startsWith('/campos'),
+            active: pathname?.startsWith('/campos') || false,
             feature: 'mapa_gis',
             module: 'campos'
         },
@@ -64,17 +82,22 @@ export default function Sidebar() {
             icon: '🌾',
             label: 'Campañas',
             href: '/campanias',
-            active: pathname?.startsWith('/campanias'),
+            active: pathname?.startsWith('/campanias') || false,
             feature: 'campanias',
             module: 'campanias'
         },
         {
-            icon: '📋',
+            icon: '💰',
             label: 'Contabilidad',
             href: '/contabilidad',
-            active: pathname?.startsWith('/contabilidad'),
+            active: pathname?.startsWith('/contabilidad') || pathname?.startsWith('/terceros') || pathname?.startsWith('/operaciones') || false,
             feature: 'contabilidad',
-            module: 'contabilidad'
+            module: 'contabilidad',
+            subItems: [
+                { icon: '👥', label: 'Terceros', href: '/terceros' },
+                { icon: '💹', label: 'Operaciones', href: '/operaciones' },
+                { icon: '📊', label: 'Saldos', href: '/contabilidad' },
+            ]
         },
         {
             icon: '🤖',
@@ -113,6 +136,8 @@ export default function Sidebar() {
     const userEmail = user?.email || firebaseUser?.email || '';
     const userName = user?.displayName || firebaseUser?.displayName || userEmail.split('@')[0] || 'Usuario';
     const userInitial = userName.charAt(0).toUpperCase();
+
+    const isSubItemActive = (href: string) => pathname === href;
 
     return (
         <>
@@ -182,18 +207,61 @@ export default function Sidebar() {
                 {/* Menú */}
                 <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
                     {filteredItems.map((item) => (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            onClick={() => setMobileOpen(false)}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition ${item.active
-                                ? 'bg-green-600 text-white'
-                                : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-                                }`}
-                        >
-                            <span className="text-lg">{item.icon}</span>
-                            {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
-                        </Link>
+                        <div key={item.href}>
+                            {/* Si tiene subItems, es un menú desplegable */}
+                            {item.subItems ? (
+                                <>
+                                    <button
+                                        onClick={() => setContabilidadOpen(!contabilidadOpen)}
+                                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition ${item.active
+                                            ? 'bg-green-600/20 text-green-400'
+                                            : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                                            }`}
+                                    >
+                                        <span className="text-lg">{item.icon}</span>
+                                        {!collapsed && (
+                                            <>
+                                                <span className="text-sm font-medium flex-1 text-left">{item.label}</span>
+                                                <span className={`text-xs transition-transform ${contabilidadOpen ? 'rotate-180' : ''}`}>
+                                                    ▼
+                                                </span>
+                                            </>
+                                        )}
+                                    </button>
+                                    {/* Submenú */}
+                                    {contabilidadOpen && !collapsed && (
+                                        <div className="ml-4 mt-1 space-y-1 border-l border-gray-700 pl-3">
+                                            {item.subItems.map((sub) => (
+                                                <Link
+                                                    key={sub.href}
+                                                    href={sub.href}
+                                                    onClick={() => setMobileOpen(false)}
+                                                    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition text-sm ${isSubItemActive(sub.href)
+                                                            ? 'bg-green-600 text-white'
+                                                            : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                                                        }`}
+                                                >
+                                                    <span>{sub.icon}</span>
+                                                    <span>{sub.label}</span>
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <Link
+                                    href={item.href}
+                                    onClick={() => setMobileOpen(false)}
+                                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition ${item.active
+                                        ? 'bg-green-600 text-white'
+                                        : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                                        }`}
+                                >
+                                    <span className="text-lg">{item.icon}</span>
+                                    {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
+                                </Link>
+                            )}
+                        </div>
                     ))}
                 </nav>
 
@@ -224,3 +292,4 @@ export default function Sidebar() {
         </>
     );
 }
+

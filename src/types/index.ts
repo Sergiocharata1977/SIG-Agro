@@ -12,4 +12,6 @@ export type {
     MargenBruto
 } from './campania';
 export * from './contabilidad';
+export * from './contabilidad-simple';
 export * from './organization';
+
