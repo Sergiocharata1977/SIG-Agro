@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { toggleMobileSidebar } from './Sidebar';
+import { LanguageSelector } from '@/components/i18n/LanguageSelector';
 
 export function DashboardHeader() {
     const { organization } = useAuth();
@@ -25,8 +26,9 @@ export function DashboardHeader() {
                 </span>
             </div>
 
-            {/* Spacer para centrar el nombre */}
-            <div className="w-10"></div>
+            {/* Selector de idioma */}
+            <LanguageSelector />
         </header>
     );
 }
+

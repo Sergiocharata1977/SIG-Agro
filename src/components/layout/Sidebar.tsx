@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { LanguageSelector } from '@/components/i18n/LanguageSelector';
 
 // Export mobile toggle para usar desde otros componentes
 let mobileToggleFn: (() => void) | null = null;
@@ -237,8 +238,8 @@ export default function Sidebar() {
                                                     href={sub.href}
                                                     onClick={() => setMobileOpen(false)}
                                                     className={`flex items-center gap-2 px-3 py-2 rounded-lg transition text-sm ${isSubItemActive(sub.href)
-                                                            ? 'bg-green-600 text-white'
-                                                            : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                                                        ? 'bg-green-600 text-white'
+                                                        : 'text-gray-400 hover:bg-gray-800 hover:text-white'
                                                         }`}
                                                 >
                                                     <span>{sub.icon}</span>
@@ -278,6 +279,13 @@ export default function Sidebar() {
                             </div>
                         )}
                     </div>
+
+                    {/* Selector de Idioma */}
+                    {!collapsed && (
+                        <div className="mt-2 flex justify-center">
+                            <LanguageSelector />
+                        </div>
+                    )}
 
                     {/* Botón de Cerrar Sesión - SIEMPRE VISIBLE */}
                     <button

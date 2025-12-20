@@ -43,10 +43,7 @@ next-env.d.ts
 
 # Agent & Docs
 .agent/
-# Agent & Docs
-.agent/
-# *.md
-# !README.md
-# !README.md
+*.md
+!README.md
 
 service-account.json

@@ -1,115 +1,111 @@
 # SIG-Agro - Últimas Tareas
 
-**Última actualización:** 2025-12-20
+**Última actualización:** 2025-12-20 16:38 (Argentina)
 
 ---
 
-## 📊 Estado del Repositorio
+## ✅ Estado del Repositorio
 
-Branch: `main` (actualizado con `origin/main`)
-
----
-
-## 🗑️ Archivos Eliminados (docs-site movido a sig-agro-doc)
-
-| Archivo |
-|---------|
-| `docs-site/.gitignore` |
-| `docs-site/README.md` |
-| `docs-site/app/manual-programador/arquitectura/page.tsx` |
-| `docs-site/app/manual-programador/firebase/page.tsx` |
-| `docs-site/app/manual-programador/page.tsx` |
-| `docs-site/app/manual-programador/servicios/page.tsx` |
-| `docs-site/app/manual-usuario/introduccion/page.tsx` |
-| `docs-site/app/manual-usuario/modulos/campanias/page.tsx` |
-| `docs-site/app/manual-usuario/modulos/campos/page.tsx` |
-| `docs-site/app/manual-usuario/modulos/labores/page.tsx` |
-| `docs-site/app/manual-usuario/modulos/metricas/page.tsx` |
-| `docs-site/app/manual-usuario/page.tsx` |
-| `docs-site/app/page.tsx` |
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `main` |
+| **Último Commit** | `7708c55` |
+| **Push** | ✅ Pendiente (nuevos cambios) |
+| **Remoto** | https://github.com/Sergiocharata1977/SIG-Agro.git |
 
 ---
 
-## ✏️ Archivos Modificados
+## 🎯 Trabajo Realizado Hoy (2025-12-20)
 
-| Archivo | Descripción |
-|---------|-------------|
-| `eslint.config.mjs` | Configuración ESLint |
-| `next.config.ts` | Configuración Next.js |
-| `package-lock.json` | Dependencias actualizadas |
-| `scripts/create-super-admin.js` | Script administrador |
-| `src/components/layout/Sidebar.tsx` | UI Sidebar |
-| `src/services/alerts.ts` | Servicio de alertas |
-| `src/services/copernicus.ts` | Integración Copernicus |
-| `src/services/satellite-analysis.ts` | Análisis satelital |
-| `src/types/index.ts` | Tipos principales |
-| `src/types/sig-agro-advanced.ts` | Tipos avanzados |
-| `tsconfig.json` | Configuración TypeScript |
+### ✅ Alta Prioridad - COMPLETADAS
+
+| Tarea | Archivos | Estado |
+|-------|----------|--------|
+| **Multi-idioma (i18n)** | 8 archivos, 3 idiomas (es/en/pt), 150+ keys | ✅ |
+| **Reportes PDF** | 3 archivos, 4 tipos, jsPDF | ✅ |
+| **Alertas Push FCM** | 6 archivos, SW, 2 APIs | ✅ |
+| **Copernicus Satelital** | 4 archivos, NDVI/EVI, VRA | ✅ |
+
+### 🟡 Media Prioridad - EN PROGRESO
+
+| Tarea | Estado |
+|-------|--------|
+| **Dashboard Análisis IA** | ✅ Iniciado (page, service, types) |
+| **Gestión Insumos** | 📋 Tipos creados |
+| **Planificación Siembra** | 📋 Tipos creados |
+| **Mapas Rendimiento** | 📋 Tipos creados |
+| **Integración Maquinaria ISOBUS** | ⏳ Pendiente |
 
 ---
 
-## ✨ Archivos Nuevos (Para subir)
+## 📦 Archivos Creados Hoy
 
-### Configuración
-- `.lintstagedrc.json` - Lint staged config
-- `.prettierrc` - Prettier config
+### Multi-idioma (i18n)
+- `i18n.ts`
+- `src/i18n/config.ts`, `request.ts`
+- `src/i18n/messages/es.json`, `en.json`, `pt.json`
+- `src/components/i18n/LanguageSelector.tsx`
 
-### PWA / Offline
-- `public/manifest.json` - Manifest PWA
-- `public/sw.js` - Service Worker
-- `src/app/offline/` - Página offline
-- `src/components/pwa/` - Componentes PWA
-- `src/lib/indexed-db.ts` - IndexedDB para offline
+### Reportes PDF
+- `src/types/reports.ts`
+- `src/services/pdf-generator.ts`
+- `src/components/reports/ReportButton.tsx`
 
-### Dashboard
-- `src/app/(dashboard)/` - Nuevo layout dashboard
-- `src/components/layout/DashboardHeader.tsx` - Header del dashboard
+### Alertas FCM
+- `src/types/notifications.ts`
+- `src/services/fcm.ts`
+- `public/firebase-messaging-sw.js`
+- `src/components/notifications/NotificationPermission.tsx`
+- `src/app/api/notifications/send/route.ts`
+- `src/app/api/notifications/token/route.ts`
 
-### Scouting
-- `src/app/api/alerts/` - API de alertas
-- `src/components/scouting/` - Componentes scouting
-- `src/services/scouting.ts` - Servicio scouting
-- `src/types/scouting.ts` - Tipos scouting
+### Copernicus/Satélite
+- `src/types/satellite.ts`
+- `src/services/copernicus-extended.ts`
+- `src/app/api/satellite/analyze/route.ts`
+- `src/app/api/satellite/prescription/route.ts`
 
-### Weather / Clima
-- `src/components/weather/` - Componentes clima
-- `src/services/weather.ts` - Servicio clima
-- `src/types/weather.ts` - Tipos clima
-
-### VRA (Variable Rate Application)
-- `src/services/vra.ts` - Servicio VRA
-- `src/types/vra.ts` - Tipos VRA
-
-### Contabilidad
-- `src/services/asientos-auto.ts` - Asientos automáticos
-- `src/services/terceros.ts` - Terceros/Proveedores
-- `src/types/contabilidad-simple.ts` - Tipos contabilidad
+### Dashboard IA
+- `src/types/dashboard-ia.ts`
+- `src/services/dashboard-ia.ts`
+- `src/app/(dashboard)/analisis-ia/page.tsx`
 
 ### Otros
-- `src/services/cost-calculator.ts` - Calculador de costos
-- `src/hooks/` - Custom hooks
-- `src/components/ui/alert-dialog.tsx` - Dialog alertas
-- `src/components/ui/avatar.tsx` - Componente avatar
-- `src/components/ui/badge.tsx` - Componente badge
-- `src/components/ui/dropdown-menu.tsx` - Dropdown menu
-- `src/components/ui/tabs.tsx` - Componente tabs
-- `src/components/ui/toast.tsx` - Componente toast
+- `src/lib/firebase-admin.ts`
+- `next.config.ts` (actualizado con next-intl)
+
+---
+
+## 📌 Dependencias Instaladas
+
+```bash
+npm install next-intl @radix-ui/react-dropdown-menu jspdf html2canvas
+```
 
 ---
 
 ## 🚀 Próximos Pasos
 
-1. [ ] Revisar y confirmar cambios pendientes
-2. [ ] Hacer commit con mensaje descriptivo
-3. [ ] Push a repositorio remoto
-4. [ ] Verificar deployment en Vercel
+1. [ ] Hacer commit y push de cambios pendientes
+2. [ ] Completar Dashboard IA (gráficos interactivos)
+3. [ ] Implementar Gestión de Insumos (CRUD)
+4. [ ] Planificación de Siembra (calendario)
+5. [ ] Mapas de Rendimiento (visualización)
+6. [ ] Integración Maquinaria ISOBUS
 
 ---
 
-## 📌 Comando para subir todos los cambios
+## 📌 Comandos
 
 ```bash
+# Desarrollo
+npm run dev
+
+# Build
+npm run build
+
+# Git
 git add .
-git commit -m "feat: PWA support, Scouting, Weather, VRA, Contabilidad modules"
+git commit -m "feat: i18n, PDF reports, FCM, Copernicus, Dashboard IA"
 git push origin main
 ```
