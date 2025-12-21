@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SIG Agro - Don Cándido IA",
+  title: "Don Juan GIS",
   description: "Sistema de Información Geográfica Agrícola para productores del Chaco",
   icons: {
     icon: "/favicon.ico",

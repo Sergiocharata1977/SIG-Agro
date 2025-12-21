@@ -21,7 +21,7 @@ function HeaderNav() {
   }, []);
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white shadow-sm' : 'bg-transparent'
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white shadow-sm' : 'bg-white/80 backdrop-blur-md'
       }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
@@ -30,26 +30,26 @@ function HeaderNav() {
               <span className="text-white text-sm">🌾</span>
             </div>
             <div>
-              <span className={`font-semibold ${scrolled ? 'text-gray-900' : 'text-white'}`}>Don Cándido IA</span>
-              <span className={`text-xs block -mt-1 ${scrolled ? 'text-gray-500' : 'text-gray-400'}`}>SIG Agro</span>
+              <span className="font-semibold text-gray-900">Don Juan GIS</span>
+              <span className="text-xs block -mt-1 text-gray-500">SIG Agro</span>
             </div>
           </div>
 
           <nav className="hidden md:flex items-center gap-8">
             {['Producto', 'Funcionalidades', 'Beneficios', 'Contacto'].map((item) => (
-              <a key={item} href={`#${item.toLowerCase()}`} className={`text-sm transition ${scrolled ? 'text-gray-600 hover:text-gray-900' : 'text-gray-300 hover:text-white'}`}>
+              <a key={item} href={`#${item.toLowerCase()}`} className="text-sm transition text-gray-600 hover:text-green-600 font-medium">
                 {item}
               </a>
             ))}
           </nav>
 
           <div className="flex items-center gap-3">
-            <Link href="/auth/login" className={`text-sm ${scrolled ? 'text-gray-600 hover:text-gray-900' : 'text-gray-300 hover:text-white'}`}>
+            <Link href="/auth/login" className="text-sm text-gray-600 hover:text-green-600 font-medium">
               Iniciar Sesión
             </Link>
             <Link
               href="/auth/registro"
-              className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition"
+              className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition shadow-sm hover:shadow-md"
             >
               Probar Gratis
             </Link>
@@ -60,46 +60,66 @@ function HeaderNav() {
   );
 }
 
-// Hero Section - Dark Mode
+// Hero Section - Cotton Light Theme with "White Tone" Satellite effect
 function HeroSection() {
   return (
-    <section className="pt-32 pb-20 bg-gray-900">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <section className="relative pt-32 pb-24 overflow-hidden">
+      {/* Background Image with Overlay */}
+      <div className="absolute inset-0 z-0">
+        {/* Placeholder for satellite image - replaced with a subtle pattern for now to ensure reliability */}
+        <div
+          className="w-full h-full bg-cover bg-center"
+          style={{
+            backgroundImage: 'url("https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2832&auto=format&fit=crop")', // Field/Satellite vibe
+            filter: 'grayscale(100%)'
+          }}
+        />
+        {/* Sophisticated Gradient Mask for "Clean Horizon" look */}
+        <div className="absolute inset-0 bg-gradient-to-b from-white/95 via-white/70 to-white/10" />
+      </div>
+
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 pt-12">
         {/* Badge */}
-        <div className="inline-flex items-center gap-2 px-3 py-1 bg-gray-800 border border-gray-700 rounded-full text-green-400 text-sm mb-8">
-          <span className="w-1.5 h-1.5 bg-green-400 rounded-full" />
-          Tecnología GIS + Inteligencia Artificial
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white border border-gray-200 rounded-full text-green-700 text-sm mb-10 shadow-sm transition-transform hover:scale-105 cursor-default">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+          </span>
+          Más rentabilidad por hectárea
         </div>
 
         {/* Título */}
-        <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight mb-6">
-          Gestioná tus campos con IA, mapas satelitales y trazabilidad completa
+        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-8 tracking-tight">
+          Transformá datos en <br className="hidden md:block" />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-green-800">decisiones rentables</span>
         </h1>
 
         {/* Subtítulo */}
-        <p className="text-lg text-gray-400 mb-8 max-w-2xl mx-auto">
-          Software agrícola inteligente basado en Next.js, IA, GIS y Firebase.
-          Todo lo que necesitás para digitalizar tu producción en un solo lugar.
+        <p className="text-lg md:text-xl text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed">
+          Gestioná tu producción, controlá tus costos y llevá la administración al día.
+          Información clara para agregar valor real a cada campaña.
         </p>
 
         {/* Botones */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-10">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
           <Link
             href="/auth/registro"
-            className="px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition flex items-center gap-2"
+            className="px-8 py-4 bg-green-700 text-white font-medium rounded-xl hover:bg-green-800 transition-all shadow-lg hover:shadow-green-200 hover:-translate-y-1 flex items-center gap-2"
           >
-            Probar Gratis <span>→</span>
+            Comenzar Ahora <span>→</span>
           </Link>
-          <button className="px-6 py-3 bg-transparent text-white font-medium rounded-lg border border-gray-600 hover:border-gray-500 hover:bg-gray-800 transition flex items-center gap-2">
-            <span>▷</span> Ver Demo
+          <button className="px-8 py-4 bg-white text-gray-700 font-medium rounded-xl border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all shadow-sm hover:shadow-md flex items-center gap-2">
+            <span>▷</span> Ver Video
           </button>
         </div>
 
-        {/* Trust badges */}
-        <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500">
-          {['Sin tarjeta de crédito', '14 días de prueba', 'Soporte incluido'].map((item) => (
+        {/* Trust badges - More elegant */}
+        <div className="pt-8 border-t border-gray-200/60 flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-sm text-gray-500">
+          {['Sin tarjeta de crédito', 'Prueba gratuita', 'Soporte personalizado'].map((item) => (
             <div key={item} className="flex items-center gap-2">
-              <span className="w-4 h-4 text-green-500">✓</span>
+              <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
               {item}
             </div>
           ))}
@@ -112,28 +132,28 @@ function HeroSection() {
 // Sección: ¿Qué hace Don Cándido IA?
 function ProductSection() {
   const features = [
-    { icon: '🗺️', title: 'Mapas GIS', desc: 'Visualización de polígonos de lotes con tecnología de última generación.' },
-    { icon: '🛰️', title: 'Capas NDVI', desc: 'Análisis de índices vegetativos, humedad del suelo y elevación.' },
-    { icon: '📊', title: 'Gráficos', desc: 'Análisis de rendimiento con visualizaciones claras e intuitivas.' },
-    { icon: '⚙️', title: 'Panel Admin', desc: 'Control total de tu operación desde un solo lugar.' },
+    { icon: '🗺️', title: 'Mapeo Productivo', desc: 'Visualización clara de tus lotes y ambientes productivos.' },
+    { icon: '📈', title: 'Gestión Contable', desc: 'Márgenes brutos, control de stock y cuentas al día.' },
+    { icon: '🌾', title: 'Rendimiento', desc: 'Análisis histórico de rinde para mejorar tu producción.' },
+    { icon: '📋', title: 'Administración', desc: 'Control total de tu negocio agrícola en un solo lugar.' },
   ];
 
   return (
-    <section id="producto" className="py-20 bg-white">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-3">¿Qué hace Don Cándido IA?</h2>
-          <p className="text-gray-600">Una plataforma completa para la gestión inteligente de tus campos agrícolas</p>
+    <section id="producto" className="py-24 bg-gray-50 border-t border-gray-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">¿Qué hace Don Juan GIS?</h2>
+          <p className="text-gray-600 max-w-2xl mx-auto">La evolución de la gestión agrícola. Simple, potente y rentable.</p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {features.map((f, i) => (
-            <div key={i} className="bg-white rounded-xl p-6 text-center border border-gray-100 hover:border-green-200 transition shadow-sm">
-              <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center mx-auto mb-4 text-2xl">
+            <div key={i} className="bg-white rounded-2xl p-8 text-center border border-gray-100 hover:border-green-100 transition-all duration-300 shadow-sm hover:shadow-lg hover:-translate-y-1">
+              <div className="w-14 h-14 bg-green-50 rounded-xl flex items-center justify-center mx-auto mb-6 text-2xl group-hover:scale-110 transition-transform">
                 {f.icon}
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">{f.title}</h3>
-              <p className="text-sm text-gray-500">{f.desc}</p>
+              <h3 className="font-semibold text-gray-900 mb-3 text-lg">{f.title}</h3>
+              <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
             </div>
           ))}
         </div>
@@ -145,30 +165,30 @@ function ProductSection() {
 // Sección: Funcionalidades Principales
 function FeaturesSection() {
   const features = [
-    { icon: '🛰️', title: 'Mapas Satelitales', desc: 'Integración con ESRI, MapBox, ArcGIS. Todo integrado para tomar las mejores decisiones.' },
-    { icon: '📍', title: 'Gestión de Campos y Lotes', desc: 'Dibujá y editá los polígonos de tus lotes con herramientas simples y precisas.' },
-    { icon: '🤖', title: 'Análisis con IA', desc: 'Procesamiento inteligente y predicciones basadas en tus datos.' },
-    { icon: '📄', title: 'Documentación Agrícola', desc: 'Mapas, informes, reportes y auditorías. Todo documentado y exportable.' },
-    { icon: '📊', title: 'Panel de Campañas', desc: 'Seguimiento de siembras y cosechas en tiempo real.' },
-    { icon: '📱', title: 'Compatible con Celular', desc: 'Registro de datos desde el campo. Accedé desde cualquier dispositivo.' },
+    { icon: '💼', title: 'Gestión Económica', desc: 'Calculá márgenes brutos, costos directos y rentabilidad por lote en tiempo real.' },
+    { icon: '📍', title: 'Control de Lotes', desc: 'Delimitá tus lotes y registrá cada labor realizada de forma simple.' },
+    { icon: '📊', title: 'Reportes Inteligentes', desc: 'Información procesada para tomar decisiones de venta y compra de insumos.' },
+    { icon: '🚜', title: 'Registro de Labores', desc: 'Historial completo de siembras, aplicaciones y cosechas. Todo documentado.' },
+    { icon: '📉', title: 'Stock de Insumos', desc: 'Control de depósitos al detalle. Sabé siempre qué tenés y cuánto vale.' },
+    { icon: '📱', title: 'Oficina en el Campo', desc: 'Llevá tu administración en el bolsillo. Acceso desde cualquier lugar.' },
   ];
 
   return (
-    <section id="funcionalidades" className="py-20 bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-3">Funcionalidades Principales</h2>
-          <p className="text-gray-600">Herramientas diseñadas específicamente para el productor agrícola argentino</p>
+    <section id="funcionalidades" className="py-24 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">Funcionalidades Principales</h2>
+          <p className="text-gray-600 max-w-2xl mx-auto">Herramientas diseñadas específicamente para el productor agrícola moderno.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {features.map((f, i) => (
-            <div key={i} className="p-6 rounded-xl bg-white border border-gray-100 hover:border-green-200 hover:shadow-sm transition">
-              <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center mb-4 text-xl">
+            <div key={i} className="group p-8 rounded-2xl bg-white border border-gray-100 hover:border-green-200 hover:shadow-lg transition-all duration-300">
+              <div className="w-12 h-12 bg-green-50 text-green-600 rounded-xl flex items-center justify-center mb-6 text-xl group-hover:bg-green-600 group-hover:text-white transition-colors">
                 {f.icon}
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">{f.title}</h3>
-              <p className="text-sm text-gray-500">{f.desc}</p>
+              <h3 className="font-semibold text-gray-900 mb-3 text-lg">{f.title}</h3>
+              <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
             </div>
           ))}
         </div>
@@ -189,21 +209,21 @@ function WorkflowSection() {
   ];
 
   return (
-    <section className="py-20 bg-white">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-3">¿Cómo funciona?</h2>
+    <section className="py-24 bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">¿Cómo funciona?</h2>
           <p className="text-gray-600">En 6 simples pasos, comenzá a digitalizar tu producción</p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-6">
           {steps.map((s, i) => (
-            <div key={i} className="text-center">
-              <div className="w-12 h-12 bg-green-600 text-white rounded-xl flex items-center justify-center mx-auto mb-3 text-sm font-bold">
+            <div key={i} className="text-center group relative">
+              <div className="w-14 h-14 bg-white border-2 border-green-100 text-green-700 rounded-2xl flex items-center justify-center mx-auto mb-4 text-lg font-bold shadow-sm group-hover:border-green-500 group-hover:text-green-600 transition-colors z-10 relative">
                 {s.num}
               </div>
-              <h4 className="font-medium text-gray-900 text-sm mb-1">{s.title}</h4>
-              <p className="text-xs text-gray-500">{s.desc}</p>
+              <h4 className="font-medium text-gray-900 text-sm mb-2">{s.title}</h4>
+              <p className="text-xs text-gray-500 leading-relaxed px-2">{s.desc}</p>
             </div>
           ))}
         </div>
@@ -224,20 +244,22 @@ function BenefitsSection() {
   ];
 
   return (
-    <section id="beneficios" className="py-20 bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-3">Beneficios para tu campo</h2>
-          <p className="text-gray-600">Resultados reales para productores como vos</p>
+    <section id="beneficios" className="py-24 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">Beneficios para tu campo</h2>
+          <p className="text-gray-600">Resultados reales para productores que buscan eficiencia</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {benefits.map((b, i) => (
-            <div key={i} className="flex items-start gap-3 p-4">
-              <span className="text-green-500 text-lg">✓</span>
+            <div key={i} className="flex items-start gap-4 p-6 rounded-2xl hover:bg-gray-50 transition-colors">
+              <div className="w-8 h-8 flex-shrink-0 rounded-full bg-green-100 flex items-center justify-center">
+                <span className="text-green-600 font-bold text-sm">✓</span>
+              </div>
               <div>
-                <h4 className="font-medium text-gray-900">{b.title}</h4>
-                <p className="text-sm text-gray-500">{b.desc}</p>
+                <h4 className="font-bold text-gray-900 mb-2">{b.title}</h4>
+                <p className="text-sm text-gray-600 leading-relaxed">{b.desc}</p>
               </div>
             </div>
           ))}
@@ -256,7 +278,7 @@ function CTASection() {
           Empezá hoy a digitalizar tus campos
         </h2>
         <p className="text-gray-400 mb-8 max-w-2xl mx-auto">
-          Unite a cientos de productores argentinos que ya están transformando su forma de trabajar con tecnología de punta.
+          Sumate a los productores que ya están mejorando su rentabilidad con información precisa.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
           <Link
@@ -293,8 +315,8 @@ function FooterSection() {
               <span className="text-white text-sm">🌾</span>
             </div>
             <div>
-              <span className="font-semibold text-white">Don Cándido IA</span>
-              <span className="text-xs text-gray-500 block">SIG Agro</span>
+              <span className="font-semibold text-white">Don Juan GIS</span>
+              <span className="text-xs text-gray-500 block">www.donjuangis.com</span>
             </div>
           </div>
           <div className="flex items-center gap-6 text-sm text-gray-500">
@@ -303,7 +325,7 @@ function FooterSection() {
             <a href="#" className="hover:text-gray-300 transition">Contacto</a>
           </div>
           <div className="text-sm text-gray-500">
-            © 2024 Don Cándido IA - SIG Agro. Todos los derechos reservados.
+            © 2024 Don Juan GIS. Todos los derechos reservados.
           </div>
         </div>
       </div>
