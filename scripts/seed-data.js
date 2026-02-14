@@ -18,7 +18,7 @@ const db = admin.firestore();
 
 // Datos de ejemplo - Campos reales del Chaco
 const ORGANIZACION_EJEMPLO = {
-    id: 'demo-agro-chaco',
+    id: process.env.ORG_ID || 'demo-agro-chaco',
     name: 'Agropecuaria Los Algarrobos',
     slug: 'agro-los-algarrobos',
     email: 'admin@losalgarrobos.com.ar',
@@ -263,3 +263,4 @@ async function seedData() {
 }
 
 seedData();
+

@@ -73,15 +73,31 @@ function mapOldEntryToNew(old, orgId, legacyId) {
 }
 
 async function migrateProducer(db, producerId) {
-  const userSnap = await db.collection('users').doc(producerId).get();
-  if (!userSnap.exists) {
-    console.log(`- ${producerId}: skip (no users/${producerId})`);
-    return { accounts: 0, entries: 0, skipped: true };
+  const producerSnap = await db.collection('agro_productores').doc(producerId).get();
+  const producerData = producerSnap.exists ? producerSnap.data() : {};
+
+  const orgIdSet = new Set();
+
+  // Modelo recomendado: productor padre con array de organizaciones hijas
+  if (Array.isArray(producerData.organizationIds)) {
+    producerData.organizationIds
+      .filter(Boolean)
+      .forEach((id) => orgIdSet.add(id));
   }
 
-  const orgId = userSnap.data().organizationId;
-  if (!orgId) {
-    console.log(`- ${producerId}: skip (user without organizationId)`);
+  // Compatibilidad: organizaciones creadas por el productor
+  const orgsByCreator = await db.collection('organizations').where('createdBy', '==', producerId).get();
+  orgsByCreator.docs.forEach((d) => orgIdSet.add(d.id));
+
+  // Compatibilidad legacy: users/{producerId}.organizationId (uno a uno)
+  const userSnap = await db.collection('users').doc(producerId).get();
+  if (userSnap.exists && userSnap.data().organizationId) {
+    orgIdSet.add(userSnap.data().organizationId);
+  }
+
+  const orgIds = Array.from(orgIdSet);
+  if (orgIds.length === 0) {
+    console.log(`- ${producerId}: skip (no linked organizations found)`);
     return { accounts: 0, entries: 0, skipped: true };
   }
 
@@ -91,49 +107,51 @@ async function migrateProducer(db, producerId) {
   let accountsMigrated = 0;
   let entriesMigrated = 0;
 
-  for (const oldAccDoc of oldAccountsSnap.docs) {
-    const old = oldAccDoc.data();
-    const mapped = mapOldAccountToNew(old, orgId);
+  for (const orgId of orgIds) {
+    for (const oldAccDoc of oldAccountsSnap.docs) {
+      const old = oldAccDoc.data();
+      const mapped = mapOldAccountToNew(old, orgId);
 
-    const exists = await db
-      .collection(`organizations/${orgId}/accounts`)
-      .where('codigo', '==', mapped.codigo)
-      .limit(1)
-      .get();
+      const exists = await db
+        .collection(`organizations/${orgId}/accounts`)
+        .where('codigo', '==', mapped.codigo)
+        .limit(1)
+        .get();
 
-    if (!exists.empty) continue;
-    if (!dryRun) {
-      await db.collection(`organizations/${orgId}/accounts`).add(mapped);
+      if (!exists.empty) continue;
+      if (!dryRun) {
+        await db.collection(`organizations/${orgId}/accounts`).add(mapped);
+      }
+      accountsMigrated++;
     }
-    accountsMigrated++;
-  }
 
-  for (const oldEntryDoc of oldEntriesSnap.docs) {
-    const old = oldEntryDoc.data();
-    const mapped = mapOldEntryToNew(old, orgId, oldEntryDoc.id);
+    for (const oldEntryDoc of oldEntriesSnap.docs) {
+      const old = oldEntryDoc.data();
+      const mapped = mapOldEntryToNew(old, orgId, oldEntryDoc.id);
 
-    const exists = await db
-      .collection(`organizations/${orgId}/journal_entries`)
-      .where('legacyAsientoId', '==', oldEntryDoc.id)
-      .limit(1)
-      .get();
+      const exists = await db
+        .collection(`organizations/${orgId}/journal_entries`)
+        .where('legacyAsientoId', '==', oldEntryDoc.id)
+        .limit(1)
+        .get();
 
-    if (!exists.empty) continue;
-    if (!dryRun) {
-      await db.collection(`organizations/${orgId}/journal_entries`).add(mapped);
+      if (!exists.empty) continue;
+      if (!dryRun) {
+        await db.collection(`organizations/${orgId}/journal_entries`).add(mapped);
+      }
+      entriesMigrated++;
     }
-    entriesMigrated++;
+
+    const maxNumero = oldEntriesSnap.docs.reduce((max, d) => Math.max(max, d.data().numero || 0), 0);
+    if (maxNumero > 0 && !dryRun) {
+      await db.doc(`organizations/${orgId}/system/accounting_counter`).set(
+        { journalEntryNumber: maxNumero, updatedAt: new Date(), migratedFromProducerId: producerId },
+        { merge: true }
+      );
+    }
   }
 
-  const maxNumero = oldEntriesSnap.docs.reduce((max, d) => Math.max(max, d.data().numero || 0), 0);
-  if (maxNumero > 0 && !dryRun) {
-    await db.doc(`organizations/${orgId}/system/accounting_counter`).set(
-      { journalEntryNumber: maxNumero, updatedAt: new Date(), migratedFromProducerId: producerId },
-      { merge: true }
-    );
-  }
-
-  console.log(`- ${producerId} -> ${orgId}: accounts=${accountsMigrated}, entries=${entriesMigrated}${dryRun ? ' (dry-run)' : ''}`);
+  console.log(`- ${producerId} -> [${orgIds.join(', ')}]: accounts=${accountsMigrated}, entries=${entriesMigrated}${dryRun ? ' (dry-run)' : ''}`);
   return { accounts: accountsMigrated, entries: entriesMigrated, skipped: false };
 }
 

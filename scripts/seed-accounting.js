@@ -14,7 +14,7 @@ if (!admin.apps.length) {
 }
 
 const db = admin.firestore();
-const ORG_ID = 'demo-agro-chaco'; // Organización destino
+const ORG_ID = process.env.ORG_ID || 'demo-agro-chaco'; // Organización destino
 
 const CUENTAS_BASE = [
     // ACTIVO
@@ -151,3 +151,4 @@ async function seedAccounting() {
 }
 
 seedAccounting();
+

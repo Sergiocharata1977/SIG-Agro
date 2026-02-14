@@ -25,7 +25,7 @@ const DEMO_USER = {
     email: 'demo@losalgarrobos.com.ar',
     password: 'Demo2024!',
     displayName: 'Usuario Demo',
-    organizationId: 'demo-agro-chaco' // ID de la organización creada en seed-data.js
+    organizationId: process.env.ORG_ID || 'demo-agro-chaco' // ID de la organización creada en seed-data.js
 };
 
 async function createDemoUser() {
@@ -100,3 +100,4 @@ async function createDemoUser() {
 }
 
 createDemoUser();
+

@@ -46,7 +46,7 @@ export interface Product {
     codigo: string; // SKU
     nombre: string;
     categoria: 'insumo' | 'grano' | 'combustible' | 'servicio' | 'otro';
-    unidadMedida: 'kg' | 'lt' | 'un' | 'tn' | 'has';
+    unidadMedida: 'kg' | 'lt' | 'un' | 'tn' | 'ha';
     precioCompra: number;
     precioVenta: number;
     stockMinimo: number;

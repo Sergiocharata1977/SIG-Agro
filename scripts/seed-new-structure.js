@@ -22,7 +22,7 @@ const db = admin.firestore();
 // ------------------------------------------
 // ORGANIZACIÓN DE EJEMPLO
 // ------------------------------------------
-const ORG_ID = 'demo-agro-chaco';
+const ORG_ID = process.env.ORG_ID || 'demo-agro-chaco';
 const USER_ID = 'seed-script';
 
 // ------------------------------------------
@@ -350,3 +350,4 @@ async function seedNewStructure() {
 }
 
 seedNewStructure();
+

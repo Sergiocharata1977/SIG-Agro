@@ -9,6 +9,8 @@
     "lint": "eslint",
     "test": "vitest run tests/api",
     "test:e2e": "npm run build && node scripts/e2e-api-smoke.js",
+    "migrate:accounting:dry": "node scripts/migrate-accounting-to-org.js --dry-run",
+    "migrate:accounting": "node scripts/migrate-accounting-to-org.js",
     "check-all": "npm run lint && npm run test && npm run build"
   },
   "dependencies": {
