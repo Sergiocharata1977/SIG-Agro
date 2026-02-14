@@ -366,8 +366,8 @@ function generarRecomendaciones(indice: TipoAnalisis, valor: number, estres: boo
  */
 export const obtenerAnalisisCompleto = async (
     orgId: string,
-    plotId: string.
-        limite: number = 5
+    plotId: string,
+    limite: number = 5
 ): Promise<{
     ndvi: SatelliteAnalysis[];
     ndre: SatelliteAnalysis[];

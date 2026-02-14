@@ -272,6 +272,7 @@ export type CanalNotificacion = 'push' | 'email' | 'sms' | 'whatsapp';
 
 export interface NotificacionConfig {
     canales: CanalNotificacion[];
+    targetUserId?: string;
     emailDestino?: string;
     telefonoDestino?: string;
 }
@@ -303,6 +304,7 @@ export const enviarNotificacion = async (
                 body: JSON.stringify({
                     alertId: alerta.id,
                     canal,
+                    targetUserId: config.targetUserId,
                     alerta: {
                         titulo: alerta.titulo,
                         descripcion: alerta.descripcion,
@@ -415,6 +417,7 @@ export const enviarNotificacionesMasivas = async (
     for (const alerta of alertasPendientes) {
         const resultados = await enviarNotificacion(alerta, {
             canales,
+            targetUserId: preferencias.userId,
             emailDestino: preferencias.emailAlternativo
         });
 

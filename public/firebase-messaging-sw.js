@@ -1,3 +1,5 @@
+/* global importScripts, firebase */
+
 // Firebase Messaging Service Worker
 // Este archivo DEBE estar en /public para que funcione
 
@@ -47,7 +49,7 @@ self.addEventListener('notificationclick', (event) => {
     const urlToOpen = event.notification.data?.url || '/dashboard';
 
     event.waitUntil(
-        clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+        self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
             // Si ya hay una ventana abierta, enfocarla
             for (const client of clientList) {
                 if (client.url.includes(self.location.origin) && 'focus' in client) {
@@ -57,8 +59,8 @@ self.addEventListener('notificationclick', (event) => {
                 }
             }
             // Si no hay ventana, abrir una nueva
-            if (clients.openWindow) {
-                return clients.openWindow(urlToOpen);
+            if (self.clients.openWindow) {
+                return self.clients.openWindow(urlToOpen);
             }
         })
     );
@@ -73,5 +75,5 @@ self.addEventListener('install', (event) => {
 // Manejar activación del SW
 self.addEventListener('activate', (event) => {
     console.log('[firebase-messaging-sw.js] Service Worker activated');
-    event.waitUntil(clients.claim());
+    event.waitUntil(self.clients.claim());
 });

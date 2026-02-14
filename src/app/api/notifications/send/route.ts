@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
+import { adminDb, adminMessaging } from '@/lib/firebase-admin';
 import type { NotificationType, NotificationPayload } from '@/types/notifications';
 
 // POST /api/notifications/send
-// Enviar notificación push a un usuario
+// Enviar notificacion push a un usuario
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
@@ -28,12 +28,16 @@ export async function POST(request: NextRequest) {
 
         if (tokensSnapshot.empty) {
             return NextResponse.json(
-                { error: 'No FCM tokens found for user', sent: 0 },
+                { error: 'No FCM tokens found for user', sent: 0, failed: 0 },
                 { status: 200 }
             );
         }
 
-        const tokens = tokensSnapshot.docs.map(doc => doc.data().token);
+        const tokenDocs = tokensSnapshot.docs.map(doc => ({
+            id: doc.id,
+            token: doc.data().token as string,
+        }));
+        const tokens = tokenDocs.map(t => t.token);
 
         // Verificar preferencias del usuario
         const preferencesDoc = await adminDb
@@ -43,29 +47,32 @@ export async function POST(request: NextRequest) {
 
         const preferences = preferencesDoc.data();
 
-        // Verificar si el tipo está habilitado
+        // Verificar si el tipo esta habilitado
         if (preferences && !preferences.types?.[type]) {
             return NextResponse.json(
-                { message: 'Notification type disabled by user', sent: 0 },
+                { message: 'Notification type disabled by user', sent: 0, failed: 0 },
                 { status: 200 }
             );
         }
 
-        // Verificar quiet hours
+        // Verificar quiet hours (soporta ventana cruzando medianoche)
         if (preferences?.quietHours?.enabled) {
             const now = new Date();
             const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
             const { start, end } = preferences.quietHours;
 
-            if (currentTime >= start && currentTime <= end) {
+            const inQuietHours = start <= end
+                ? (currentTime >= start && currentTime <= end)
+                : (currentTime >= start || currentTime <= end);
+
+            if (inQuietHours) {
                 return NextResponse.json(
-                    { message: 'User is in quiet hours', sent: 0 },
+                    { message: 'User is in quiet hours', sent: 0, failed: 0 },
                     { status: 200 }
                 );
             }
         }
 
-        // Preparar mensaje FCM
         const message = {
             notification: {
                 title: payload.title,
@@ -74,32 +81,55 @@ export async function POST(request: NextRequest) {
             },
             data: {
                 type,
-                ...payload.data,
+                ...(payload.data || {}),
                 clickAction: '/dashboard',
             },
             tokens,
         };
 
-        // Enviar via Firebase Admin SDK
-        // NOTA: Requiere configurar Firebase Admin con service account
-        // const response = await getMessaging().sendEachForMulticast(message);
+        const response = await adminMessaging.sendEachForMulticast(message);
 
-        // Por ahora, simular envío exitoso
-        console.log('Sending notification:', message);
+        // Limpiar tokens invalidos/no registrados
+        const invalidTokenIndexes: number[] = [];
+        response.responses.forEach((sendResponse, index) => {
+            if (!sendResponse.success) {
+                const code = sendResponse.error?.code || '';
+                if (
+                    code === 'messaging/invalid-registration-token' ||
+                    code === 'messaging/registration-token-not-registered'
+                ) {
+                    invalidTokenIndexes.push(index);
+                }
+            }
+        });
 
-        // Guardar registro de notificación
+        if (invalidTokenIndexes.length > 0) {
+            const batch = adminDb.batch();
+            invalidTokenIndexes.forEach(index => {
+                const docId = tokenDocs[index]?.id;
+                if (docId) {
+                    batch.delete(adminDb.collection('fcm_tokens').doc(docId));
+                }
+            });
+            await batch.commit();
+        }
+
+        // Guardar registro de notificacion
         await adminDb.collection('notifications').add({
             userId: targetUserId,
             type,
             payload,
             createdAt: new Date(),
             sentAt: new Date(),
+            sentCount: response.successCount,
+            failedCount: response.failureCount,
             read: false,
         });
 
         return NextResponse.json({
             success: true,
-            sent: tokens.length,
+            sent: response.successCount,
+            failed: response.failureCount,
             message: 'Notification sent successfully',
         });
 

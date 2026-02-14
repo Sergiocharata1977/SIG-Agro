@@ -1,13 +1,12 @@
 /**
  * API Route: Enviar notificaciones de alertas
  * POST /api/alerts/send
- * 
- * Envía notificaciones push y/o email para alertas
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { adminDb, adminMessaging } from '@/lib/firebase-admin';
+import type { NotificationType } from '@/types/notifications';
 
-// Tipos para la request
 interface AlertData {
     titulo: string;
     descripcion: string;
@@ -20,18 +19,201 @@ interface SendAlertRequest {
     alertId: string;
     canal: 'push' | 'email' | 'sms' | 'whatsapp';
     alerta: AlertData;
+    targetUserId?: string;
     destino: {
         email?: string;
         telefono?: string;
     };
 }
 
+function normalizePhoneNumber(phone: string): string {
+    return phone.replace(/\s+/g, '').trim();
+}
+
+function toWhatsAppAddress(phone: string): string {
+    const normalized = normalizePhoneNumber(phone);
+    return normalized.startsWith('whatsapp:') ? normalized : `whatsapp:${normalized}`;
+}
+
+async function sendTwilioMessage(to: string, from: string, body: string) {
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+
+    if (!accountSid || !authToken) {
+        throw new Error('TWILIO_ACCOUNT_SID/TWILIO_AUTH_TOKEN are not configured');
+    }
+
+    const credentials = Buffer.from(`${accountSid}:${authToken}`).toString('base64');
+    const formBody = new URLSearchParams({
+        To: to,
+        From: from,
+        Body: body,
+    });
+
+    const response = await fetch(
+        `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+        {
+            method: 'POST',
+            headers: {
+                Authorization: `Basic ${credentials}`,
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: formBody.toString(),
+        }
+    );
+
+    if (!response.ok) {
+        const errorBody = await response.text();
+        throw new Error(`Twilio error: ${response.status} - ${errorBody}`);
+    }
+
+    return { sent: 1, failed: 0 };
+}
+
+async function sendSmsAlert(alerta: AlertData, telefono: string) {
+    const fromPhone = process.env.TWILIO_SMS_FROM;
+    if (!fromPhone) {
+        throw new Error('TWILIO_SMS_FROM is not configured');
+    }
+
+    const toPhone = normalizePhoneNumber(telefono);
+    const body = `[SIG-Agro] ${alerta.titulo}: ${alerta.descripcion}`;
+    const result = await sendTwilioMessage(toPhone, normalizePhoneNumber(fromPhone), body);
+
+    return {
+        ...result,
+        message: `SMS sent to ${toPhone}`,
+    };
+}
+
+async function sendWhatsAppAlert(alerta: AlertData, telefono: string) {
+    const fromWhatsApp = process.env.TWILIO_WHATSAPP_FROM;
+    if (!fromWhatsApp) {
+        throw new Error('TWILIO_WHATSAPP_FROM is not configured');
+    }
+
+    const toWhatsApp = toWhatsAppAddress(telefono);
+    const fromAddress = toWhatsAppAddress(fromWhatsApp);
+    const body = `[SIG-Agro] ${alerta.titulo}\n${alerta.descripcion}`;
+    const result = await sendTwilioMessage(toWhatsApp, fromAddress, body);
+
+    return {
+        ...result,
+        message: `WhatsApp sent to ${toWhatsApp}`,
+    };
+}
+
+function mapAlertTypeToNotificationType(tipo: string): NotificationType {
+    const normalized = (tipo || '').toLowerCase();
+
+    if (normalized.includes('clima') || normalized.includes('helada') || normalized.includes('granizo')) {
+        return 'alerta_clima';
+    }
+    if (normalized.includes('plaga')) {
+        return 'alerta_plaga';
+    }
+    if (normalized.includes('scouting')) {
+        return 'scouting_urgente';
+    }
+
+    return 'sistema';
+}
+
+async function sendPushAlert(alertId: string, alerta: AlertData, targetUserId: string) {
+    const tokensSnapshot = await adminDb
+        .collection('fcm_tokens')
+        .where('userId', '==', targetUserId)
+        .get();
+
+    if (tokensSnapshot.empty) {
+        return { sent: 0, failed: 0, message: 'No FCM tokens found for user' };
+    }
+
+    const tokenDocs = tokensSnapshot.docs.map(doc => ({
+        id: doc.id,
+        token: doc.data().token as string,
+    }));
+
+    const response = await adminMessaging.sendEachForMulticast({
+        tokens: tokenDocs.map(t => t.token),
+        notification: {
+            title: alerta.titulo,
+            body: alerta.descripcion,
+        },
+        data: {
+            type: mapAlertTypeToNotificationType(alerta.tipo),
+            alertId,
+            severidad: alerta.severidad,
+            clickAction: '/dashboard',
+        },
+    });
+
+    const invalidTokenIndexes: number[] = [];
+    response.responses.forEach((sendResponse, index) => {
+        if (!sendResponse.success) {
+            const code = sendResponse.error?.code || '';
+            if (
+                code === 'messaging/invalid-registration-token' ||
+                code === 'messaging/registration-token-not-registered'
+            ) {
+                invalidTokenIndexes.push(index);
+            }
+        }
+    });
+
+    if (invalidTokenIndexes.length > 0) {
+        const batch = adminDb.batch();
+        invalidTokenIndexes.forEach(index => {
+            const docId = tokenDocs[index]?.id;
+            if (docId) {
+                batch.delete(adminDb.collection('fcm_tokens').doc(docId));
+            }
+        });
+        await batch.commit();
+    }
+
+    return {
+        sent: response.successCount,
+        failed: response.failureCount,
+        message: 'Push notification processed',
+    };
+}
+
+async function sendEmailAlert(alerta: AlertData, email: string) {
+    const apiKey = process.env.RESEND_API_KEY;
+    const from = process.env.ALERTS_EMAIL_FROM || 'SIG Agro <alerts@sig-agro.local>';
+
+    if (!apiKey) {
+        throw new Error('RESEND_API_KEY is not configured');
+    }
+
+    const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            from,
+            to: [email],
+            subject: `[SIG-Agro] ${alerta.titulo}`,
+            html: generarEmailHTML(alerta),
+        }),
+    });
+
+    if (!response.ok) {
+        const errorBody = await response.text();
+        throw new Error(`Email provider error: ${response.status} - ${errorBody}`);
+    }
+
+    return { sent: 1, failed: 0, message: `Email sent to ${email}` };
+}
+
 export async function POST(request: NextRequest) {
     try {
         const body: SendAlertRequest = await request.json();
-        const { alertId, canal, alerta, destino } = body;
+        const { alertId, canal, alerta, destino, targetUserId } = body;
 
-        // Validación básica
         if (!alertId || !canal || !alerta) {
             return NextResponse.json(
                 { error: 'Faltan campos requeridos: alertId, canal, alerta' },
@@ -39,25 +221,25 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Procesar según el canal
         switch (canal) {
-            case 'push':
-                // Firebase Cloud Messaging (FCM)
-                // TODO: Implementar cuando se configure FCM
-                console.log(`[PUSH] Enviando notificación para alerta ${alertId}`);
-                console.log(`  Título: ${alerta.titulo}`);
-                console.log(`  Tipo: ${alerta.tipo} | Severidad: ${alerta.severidad}`);
+            case 'push': {
+                if (!targetUserId) {
+                    return NextResponse.json(
+                        { error: 'targetUserId es requerido para canal push' },
+                        { status: 400 }
+                    );
+                }
 
-                // Por ahora retornamos éxito simulado
+                const result = await sendPushAlert(alertId, alerta, targetUserId);
                 return NextResponse.json({
-                    success: true,
-                    message: 'Notificación push enviada (simulado)',
+                    success: result.failed === 0,
                     alertId,
-                    canal
+                    canal,
+                    ...result,
                 });
+            }
 
-            case 'email':
-                // Email con Resend, SendGrid, o nodemailer
+            case 'email': {
                 if (!destino.email) {
                     return NextResponse.json(
                         { error: 'Email destino requerido para canal email' },
@@ -65,62 +247,72 @@ export async function POST(request: NextRequest) {
                     );
                 }
 
-                console.log(`[EMAIL] Enviando a ${destino.email}`);
-                console.log(`  Asunto: [SIG-Agro] ${alerta.titulo}`);
-                console.log(`  Cuerpo: ${alerta.descripcion}`);
+                try {
+                    const result = await sendEmailAlert(alerta, destino.email);
+                    return NextResponse.json({
+                        success: true,
+                        alertId,
+                        canal,
+                        ...result,
+                    });
+                } catch (emailError) {
+                    console.error('Error sending email alert:', emailError);
+                    return NextResponse.json(
+                        { error: 'No se pudo enviar el email de alerta' },
+                        { status: 503 }
+                    );
+                }
+            }
 
-                // TODO: Implementar con servicio de email real
-                // Ejemplo con Resend:
-                // await resend.emails.send({
-                //     from: 'alertas@sig-agro.com',
-                //     to: destino.email,
-                //     subject: `[SIG-Agro Alerta] ${alerta.titulo}`,
-                //     html: generarEmailHTML(alerta)
-                // });
-
-                return NextResponse.json({
-                    success: true,
-                    message: `Email enviado a ${destino.email} (simulado)`,
-                    alertId,
-                    canal
-                });
-
-            case 'sms':
-                // SMS con Twilio u otro proveedor
+            case 'sms': {
                 if (!destino.telefono) {
                     return NextResponse.json(
-                        { error: 'Teléfono destino requerido para canal SMS' },
+                        { error: 'Telefono destino requerido para canal SMS' },
                         { status: 400 }
                     );
                 }
 
-                console.log(`[SMS] Enviando a ${destino.telefono}`);
-                console.log(`  Mensaje: ${alerta.titulo} - ${alerta.severidad}`);
+                try {
+                    const result = await sendSmsAlert(alerta, destino.telefono);
+                    return NextResponse.json({
+                        success: true,
+                        alertId,
+                        canal,
+                        ...result,
+                    });
+                } catch (smsError) {
+                    console.error('Error sending SMS alert:', smsError);
+                    return NextResponse.json(
+                        { error: 'No se pudo enviar el SMS de alerta' },
+                        { status: 503 }
+                    );
+                }
+            }
 
-                return NextResponse.json({
-                    success: true,
-                    message: `SMS enviado a ${destino.telefono} (simulado)`,
-                    alertId,
-                    canal
-                });
-
-            case 'whatsapp':
-                // WhatsApp Business API
+            case 'whatsapp': {
                 if (!destino.telefono) {
                     return NextResponse.json(
-                        { error: 'Teléfono destino requerido para WhatsApp' },
+                        { error: 'Telefono destino requerido para canal WhatsApp' },
                         { status: 400 }
                     );
                 }
 
-                console.log(`[WHATSAPP] Enviando a ${destino.telefono}`);
-
-                return NextResponse.json({
-                    success: true,
-                    message: `WhatsApp enviado a ${destino.telefono} (simulado)`,
-                    alertId,
-                    canal
-                });
+                try {
+                    const result = await sendWhatsAppAlert(alerta, destino.telefono);
+                    return NextResponse.json({
+                        success: true,
+                        alertId,
+                        canal,
+                        ...result,
+                    });
+                } catch (whatsappError) {
+                    console.error('Error sending WhatsApp alert:', whatsappError);
+                    return NextResponse.json(
+                        { error: 'No se pudo enviar el mensaje de WhatsApp' },
+                        { status: 503 }
+                    );
+                }
+            }
 
             default:
                 return NextResponse.json(
@@ -137,7 +329,6 @@ export async function POST(request: NextRequest) {
     }
 }
 
-// Helper para generar HTML del email
 function generarEmailHTML(alerta: AlertData): string {
     const colorSeveridad = {
         critical: '#DC2626',
@@ -163,20 +354,20 @@ function generarEmailHTML(alerta: AlertData): string {
     <body>
         <div class="container">
             <div class="header">
-                <h1 style="margin: 0;">⚠️ ${alerta.titulo}</h1>
+                <h1 style="margin: 0;">Alerta: ${alerta.titulo}</h1>
             </div>
             <div class="content">
                 <p><span class="tipo">${alerta.tipo.toUpperCase()}</span></p>
                 <p>${alerta.descripcion}</p>
                 ${alerta.accionSugerida ? `
                 <div class="action">
-                    <strong>📋 Acción sugerida:</strong><br>
+                    <strong>Accion sugerida:</strong><br>
                     ${alerta.accionSugerida}
                 </div>
                 ` : ''}
                 <div class="footer">
-                    <p>Este es un mensaje automático de SIG-Agro.</p>
-                    <p>Ingresa a la plataforma para más detalles.</p>
+                    <p>Este es un mensaje automatico de SIG-Agro.</p>
+                    <p>Ingresa a la plataforma para mas detalles.</p>
                 </div>
             </div>
         </div>
