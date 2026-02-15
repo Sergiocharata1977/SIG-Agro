@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "vitest run tests/api",
     "test:e2e": "npm run build && node scripts/e2e-api-smoke.js",
+    "qa:gate": "npm run lint && npm run test && npm run build",
     "bootstrap": "node scripts/bootstrap.js",
     "migrate:a1:dry": "node scripts/migrate-a1-domain-model.js --dry-run",
     "migrate:a1": "node scripts/migrate-a1-domain-model.js",

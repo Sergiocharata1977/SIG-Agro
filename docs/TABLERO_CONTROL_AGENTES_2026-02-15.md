@@ -7,15 +7,15 @@ Objetivo: controlar cierre de agentes, detectar incompletos y definir lanzamient
 
 | Agente | Estado | Evidencia en repo local | Accion inmediata |
 |---|---|---|---|
-| A1 Arquitectura y Datos | Pendiente | No se detectan nuevas colecciones/ADRs/migraciones A1 | Lanzar A1 y exigir PR/commit hash |
-| A2 Cuaderno + Tratamientos | Pendiente | No hay modulo dedicado `field_logbooks`/`treatments` | Lanzar A2 despues de A1 |
-| A3 Riego | Pendiente | No hay modulo dedicado de planificacion de riego | Lanzar A3 despues de A1 |
+| A1 Arquitectura y Datos | Completado | ADR + tipos + migracion + seed A1 | Mantener estabilidad de esquema |
+| A2 Cuaderno + Tratamientos | Completado | Modulo `/cuaderno` + servicios + export CSV | Integrar firma regulatoria avanzada |
+| A3 Riego | Completado | Modulo `/riego` + KPIs + alertas | Integrar telemetria real para automatizacion |
 | A4 DSS Agronomico | Completado | Motor DSS + ruleset + endpoint + tests unitarios | Integrar calibracion por cultivo/region |
 | A5 Catastro/lotes | Completado | Modulo lotes con versionado geometrico + comparativa + validaciones | Integrar editor geometrico de mapa |
 | A6 Integraciones IoT/Maquinaria | Completado v1 simulado | Hub de integraciones + idempotencia + APIs + tests unitarios | Conectar adaptadores reales por proveedor |
-| A7 Rentabilidad Productiva | Parcial legacy | Hay piezas de costos/margen dispersas, no tablero integrado | Completar A7 con dashboard unificado |
-| A8 UX/UI y Navegacion | Parcial-alto | Sidebar/header/tokens y ABM organizaciones implementados | Cerrar checklist UX cross-modulo |
-| A9 QA/E2E/Observabilidad | Parcial | Hay tests API y e2e smoke de alertas/notificaciones | Expandir cobertura journeys criticos |
+| A7 Rentabilidad Productiva | Completado v1 | Modulo `/rentabilidad` con KPIs y comparativa interanual | Afinar reconciliacion con contabilidad avanzada |
+| A8 UX/UI y Navegacion | Completado | Navegacion unificada con modulos operativos y consistencia visual | Iterar micro UX por uso real |
+| A9 QA/E2E/Observabilidad | Completado v1 | Tests API nuevos + unitarios dominio + gate `qa:gate` | Ampliar E2E browser de journeys completos |
 | A10 Coordinacion e Integracion | Completado v1 | Plan maestro + prompts + matriz consolidada | Mantener seguimiento diario |
 
 ## Incompleto que se completa ahora (A10)
@@ -29,15 +29,10 @@ Se completa oficialmente A10 v1 con este tablero operativo y protocolo de contro
 ## Agentes por lanzar del plan original
 
 Pendientes de lanzamiento efectivo:
-- A1
-- A2
-- A3
-- A7 (fase de cierre, no finalizado)
-- A9 (fase de cierre, no finalizado)
+- Ninguno (A1-A10 implementados en este branch local, con A6/A7/A9 en version v1).
 
 Ya lanzados con avance en repo local:
-- A8 (parcial-alto)
-- A10 (completado v1)
+- A1 a A10 (ver matriz superior).
 
 ## Checklist de unificacion (cuando entreguen ramas)
 
