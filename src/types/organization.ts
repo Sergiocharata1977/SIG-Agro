@@ -1,37 +1,37 @@
-/**
+﻿/**
  * Tipos para el sistema Multi-Tenant de SIG Agro
  * Basado en la estructura de 9001app-firebase
  */
 
 // ============================================
-// ORGANIZACIÓN (EMPRESA AGROPECUARIA)
+// ORGANIZACIÃ“N (EMPRESA AGROPECUARIA)
 // ============================================
 
 export type OrganizationPlan = 'free' | 'professional' | 'enterprise';
 export type OrganizationStatus = 'active' | 'suspended' | 'trial';
 
 /**
- * Features/Módulos disponibles para la organización
+ * Features/MÃ³dulos disponibles para la organizaciÃ³n
  * Checklist de funcionalidades habilitadas
  */
 export interface OrganizationFeatures {
-    // Módulos principales
+    // MÃ³dulos principales
     mapa_gis: boolean;           // Mapa GIS con lotes y campos
-    campanias: boolean;          // Gestión de campañas
-    contabilidad: boolean;       // Módulo de contabilidad
-    analisis_ia: boolean;        // Don Cándido IA
-    documentos: boolean;         // Gestión de documentos
-    reportes: boolean;           // Reportes y estadísticas
-    metricas: boolean;           // Dashboard de métricas
+    campanias: boolean;          // GestiÃ³n de campaÃ±as
+    contabilidad: boolean;       // MÃ³dulo de contabilidad
+    analisis_ia: boolean;        // Don CÃ¡ndido IA
+    documentos: boolean;         // GestiÃ³n de documentos
+    reportes: boolean;           // Reportes y estadÃ­sticas
+    metricas: boolean;           // Dashboard de mÃ©tricas
 
-    // Límites
-    max_usuarios: number;        // Máximo de usuarios
-    max_campos: number;          // Máximo de campos
-    max_hectareas: number;       // Máximo de hectáreas totales
+    // LÃ­mites
+    max_usuarios: number;        // MÃ¡ximo de usuarios
+    max_campos: number;          // MÃ¡ximo de campos
+    max_hectareas: number;       // MÃ¡ximo de hectÃ¡reas totales
 }
 
 /**
- * Configuración de la organización
+ * ConfiguraciÃ³n de la organizaciÃ³n
  */
 export interface OrganizationSettings {
     timezone: string;            // "America/Argentina/Buenos_Aires"
@@ -40,14 +40,14 @@ export interface OrganizationSettings {
 }
 
 /**
- * Organización/Empresa
+ * OrganizaciÃ³n/Empresa
  */
 export interface Organization {
     id: string;
 
-    // Identificación
+    // IdentificaciÃ³n
     name: string;                // "Los Algarrobos S.A."
-    slug: string;                // "los-algarrobos-sa" (único)
+    slug: string;                // "los-algarrobos-sa" (Ãºnico)
 
     // Datos fiscales
     cuit?: string;
@@ -57,7 +57,7 @@ export interface Organization {
     email: string;
     phone?: string;
 
-    // Ubicación
+    // UbicaciÃ³n
     address?: string;
     city?: string;
     province: string;            // "Chaco"
@@ -66,7 +66,7 @@ export interface Organization {
     plan: OrganizationPlan;
     status: OrganizationStatus;
 
-    // Configuración
+    // ConfiguraciÃ³n
     settings: OrganizationSettings;
     features: OrganizationFeatures;
 
@@ -84,7 +84,7 @@ export type UserRole = 'super_admin' | 'owner' | 'admin' | 'operator' | 'viewer'
 export type UserStatus = 'active' | 'pending' | 'disabled';
 
 /**
- * Módulos del sistema que pueden ser habilitados por usuario
+ * MÃ³dulos del sistema que pueden ser habilitados por usuario
  * Similar a modulos_habilitados de 9001app
  */
 export type UserModule =
@@ -100,14 +100,14 @@ export type UserModule =
 
 export const USER_MODULES: { id: UserModule; nombre: string; descripcion: string }[] = [
     { id: 'dashboard', nombre: 'Dashboard', descripcion: 'Panel principal de resumen' },
-    { id: 'mapa_gis', nombre: 'Mapa GIS', descripcion: 'Visualización de campos y lotes en mapa' },
-    { id: 'campos', nombre: 'Mis Campos', descripcion: 'Gestión de campos y lotes' },
-    { id: 'campanias', nombre: 'Campañas', descripcion: 'Gestión de campañas agrícolas' },
-    { id: 'contabilidad', nombre: 'Contabilidad', descripcion: 'Gestión económica' },
-    { id: 'analisis_ia', nombre: 'Análisis IA', descripcion: 'Don Cándido asistente IA' },
-    { id: 'documentos', nombre: 'Documentos', descripcion: 'Gestión de documentos y evidencias' },
-    { id: 'metricas', nombre: 'Métricas', descripcion: 'Dashboard de métricas y KPIs' },
-    { id: 'admin', nombre: 'Administración', descripcion: 'Configuración y usuarios' },
+    { id: 'mapa_gis', nombre: 'Mapa GIS', descripcion: 'VisualizaciÃ³n de campos y lotes en mapa' },
+    { id: 'campos', nombre: 'Mis Campos', descripcion: 'GestiÃ³n de campos y lotes' },
+    { id: 'campanias', nombre: 'CampaÃ±as', descripcion: 'GestiÃ³n de campaÃ±as agrÃ­colas' },
+    { id: 'contabilidad', nombre: 'Contabilidad', descripcion: 'GestiÃ³n econÃ³mica' },
+    { id: 'analisis_ia', nombre: 'AnÃ¡lisis IA', descripcion: 'Don CÃ¡ndido asistente IA' },
+    { id: 'documentos', nombre: 'Documentos', descripcion: 'GestiÃ³n de documentos y evidencias' },
+    { id: 'metricas', nombre: 'MÃ©tricas', descripcion: 'Dashboard de mÃ©tricas y KPIs' },
+    { id: 'admin', nombre: 'AdministraciÃ³n', descripcion: 'ConfiguraciÃ³n y usuarios' },
 ];
 
 /**
@@ -118,21 +118,23 @@ export interface User {
     email: string;
     displayName: string;
 
-    // Vinculación con organización
-    organizationId: string;      // ID de la organización
+    // VinculaciÃ³n con organizaciÃ³n
+    organizationId: string;      // ID de la organizaciÃ³n
+    organizationIds?: string[];          // Organizaciones habilitadas explicitamente
+    accessAllOrganizations?: boolean;    // true = acceso por defecto a todas las organizaciones del productor
 
     // Rol y permisos
     role: UserRole;
     status: UserStatus;
 
-    // Módulos habilitados (checklist)
+    // MÃ³dulos habilitados (checklist)
     // null = acceso completo
     // [] = sin acceso
-    // ['mapa_gis', 'campos'] = acceso específico
+    // ['mapa_gis', 'campos'] = acceso especÃ­fico
     modulosHabilitados: UserModule[] | null;
 
-    // Datos de invitación
-    invitedBy?: string;          // userId de quien lo invitó
+    // Datos de invitaciÃ³n
+    invitedBy?: string;          // userId de quien lo invitÃ³
     joinedAt?: Date;
 
     // Metadatos
@@ -142,18 +144,18 @@ export interface User {
 }
 
 /**
- * Usuario con datos de organización (para contexto)
+ * Usuario con datos de organizaciÃ³n (para contexto)
  */
 export interface UserWithOrganization extends User {
     organization: Organization;
 }
 
 // ============================================
-// MIEMBRO DE ORGANIZACIÓN (Para gestión)
+// MIEMBRO DE ORGANIZACIÃ“N (Para gestiÃ³n)
 // ============================================
 
 /**
- * Miembro dentro de la subcolección de organización
+ * Miembro dentro de la subcolecciÃ³n de organizaciÃ³n
  * organizations/{orgId}/members/{memberId}
  */
 export interface OrganizationMember {
@@ -168,7 +170,7 @@ export interface OrganizationMember {
 }
 
 // ============================================
-// INVITACIÓN
+// INVITACIÃ“N
 // ============================================
 
 export type InvitationStatus = 'pending' | 'accepted' | 'expired' | 'cancelled';
@@ -226,12 +228,12 @@ export const ROLE_CONFIG: Record<UserRole, { label: string; description: string;
     },
     owner: {
         label: 'Propietario',
-        description: 'Acceso total, puede eliminar la organización',
+        description: 'Acceso total, puede eliminar la organizaciÃ³n',
         color: 'bg-purple-100 text-purple-700'
     },
     admin: {
         label: 'Administrador',
-        description: 'Gestiona usuarios y configuración',
+        description: 'Gestiona usuarios y configuraciÃ³n',
         color: 'bg-blue-100 text-blue-700'
     },
     operator: {
@@ -241,7 +243,9 @@ export const ROLE_CONFIG: Record<UserRole, { label: string; description: string;
     },
     viewer: {
         label: 'Visualizador',
-        description: 'Solo puede ver información',
+        description: 'Solo puede ver informaciÃ³n',
         color: 'bg-gray-100 text-gray-700'
     },
 };
+
+

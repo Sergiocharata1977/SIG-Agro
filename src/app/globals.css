@@ -1,31 +1,99 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
 :root {
-  --background: #FDFBF7; /* Cotton White */
-  --foreground: #1F2937; /* Dark Gray Text */
-  --cotton-gray: #F3F4F6;
-  --agro-green: #16A34A;
+  --primary: #10b981;
+  --primary-hover: #059669;
+  --primary-light: #34d399;
+  --primary-dark: #047857;
+
+  --slate-50: #f8fafc;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1;
+  --slate-400: #94a3b8;
+  --slate-500: #64748b;
+  --slate-600: #475569;
+  --slate-700: #334155;
+  --slate-800: #1e293b;
+  --slate-900: #0f172a;
+
+  --chat-bg-primary: #ffffff;
+  --chat-bg-secondary: #f8fafc;
+  --chat-bg-gradient: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+
+  --chat-fg-primary: #0f172a;
+  --chat-fg-secondary: #475569;
+  --chat-fg-muted: #94a3b8;
+
+  --chat-primary: #10b981;
+  --chat-primary-hover: #059669;
+  --chat-secondary: #06b6d4;
+  --chat-accent: #0d9488;
+
+  --chat-border: #e2e8f0;
+  --chat-border-light: #f1f5f9;
+
+  --chat-glass-bg: rgba(255, 255, 255, 0.8);
+  --chat-glass-border: rgba(16, 185, 129, 0.2);
+  --chat-glass-blur: 12px;
+
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --radius: 0.625rem;
+}
+
+.dark {
+  --chat-bg-primary: #030712;
+  --chat-bg-secondary: #0a1628;
+  --chat-bg-gradient: linear-gradient(180deg, #030712 0%, #0a1628 100%);
+
+  --chat-fg-primary: #f8fafc;
+  --chat-fg-secondary: #cbd5e1;
+  --chat-fg-muted: #64748b;
+
+  --chat-glass-bg: rgba(15, 23, 42, 0.8);
+  --chat-glass-border: rgba(16, 185, 129, 0.2);
+
+  --background: #030712;
+  --foreground: #f8fafc;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-cotton-gray: var(--cotton-gray);
-  --color-agro-green: var(--agro-green);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Mantenemos soporte dark pero priorizamos el look light en default */
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+.glass-panel {
+  background: var(--chat-glass-bg);
+  backdrop-filter: blur(var(--chat-glass-blur));
+  -webkit-backdrop-filter: blur(var(--chat-glass-blur));
+  border: 1px solid var(--chat-glass-border);
+  border-radius: 16px;
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.05);
+}
+
+.glow-border {
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.glow-border:hover {
+  border-color: var(--chat-primary);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }

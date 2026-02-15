@@ -1,39 +1,63 @@
-/**
- * Servicio para gestión de Organizaciones
+﻿/**
+ * Servicio para gestion de Organizaciones
  * CRUD y operaciones de organizaciones en Firestore
  */
 
 import {
-    collection,
-    doc,
-    getDocs,
-    getDoc,
     addDoc,
-    setDoc,
-    updateDoc,
+    arrayUnion,
+    collection,
+    collectionGroup,
+    doc,
+    getDoc,
+    getDocs,
     query,
-    where,
+    setDoc,
     Timestamp,
+    updateDoc,
+    where,
 } from 'firebase/firestore';
 import { db } from '@/firebase/config';
 import {
+    DEFAULT_FREE_FEATURES,
+    DEFAULT_SETTINGS,
     Organization,
     OrganizationMember,
     User,
     UserRole,
-    DEFAULT_FREE_FEATURES,
-    DEFAULT_SETTINGS,
 } from '@/types/organization';
 
 const ORGANIZATIONS = 'organizations';
 const USERS = 'users';
 
-// ============================================
-// ORGANIZACIONES
-// ============================================
+function mapOrganization(id: string, data: Record<string, unknown>): Organization {
+    return {
+        ...(data as Omit<Organization, 'id' | 'createdAt' | 'updatedAt'>),
+        id,
+        createdAt: (data.createdAt as Timestamp | undefined)?.toDate() || new Date(),
+        updatedAt: (data.updatedAt as Timestamp | undefined)?.toDate() || new Date(),
+    };
+}
+
+function mapUser(id: string, data: Record<string, unknown>): User {
+    return {
+        ...(data as Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'joinedAt' | 'lastLogin'>),
+        id,
+        organizationIds: Array.isArray(data.organizationIds)
+            ? (data.organizationIds as string[])
+            : undefined,
+        accessAllOrganizations: typeof data.accessAllOrganizations === 'boolean'
+            ? (data.accessAllOrganizations as boolean)
+            : true,
+        createdAt: (data.createdAt as Timestamp | undefined)?.toDate() || new Date(),
+        updatedAt: (data.updatedAt as Timestamp | undefined)?.toDate() || new Date(),
+        joinedAt: (data.joinedAt as Timestamp | undefined)?.toDate(),
+        lastLogin: (data.lastLogin as Timestamp | undefined)?.toDate(),
+    };
+}
 
 /**
- * Crear nueva organización con el primer usuario como owner
+ * Crear nueva organizacion con el primer usuario como owner.
  */
 export async function crearOrganizacion(
     data: {
@@ -48,10 +72,8 @@ export async function crearOrganizacion(
     creatorEmail: string,
     creatorDisplayName: string
 ): Promise<{ organizationId: string; userId: string }> {
-    // Generar slug único
     const slug = generarSlug(data.name);
 
-    // Crear organización
     const orgRef = await addDoc(collection(db, ORGANIZATIONS), {
         name: data.name,
         slug,
@@ -71,131 +93,157 @@ export async function crearOrganizacion(
         updatedAt: Timestamp.now(),
     });
 
-    // Crear miembro (owner) en subcolección
     await setDoc(doc(db, ORGANIZATIONS, orgRef.id, 'members', creatorUserId), {
         userId: creatorUserId,
         email: creatorEmail,
         displayName: creatorDisplayName,
         role: 'owner' as UserRole,
         status: 'active',
-        modulosHabilitados: null, // Acceso completo
-        invitedBy: creatorUserId, // Self
+        modulosHabilitados: null,
+        invitedBy: creatorUserId,
         joinedAt: Timestamp.now(),
     });
 
-    // Crear documento de usuario
     await setDoc(doc(db, USERS, creatorUserId), {
         email: creatorEmail,
         displayName: creatorDisplayName,
         organizationId: orgRef.id,
+        organizationIds: [orgRef.id],
+        accessAllOrganizations: true,
         role: 'owner' as UserRole,
         status: 'active',
         modulosHabilitados: null,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
+    }, { merge: true });
+
+    return { organizationId: orgRef.id, userId: creatorUserId };
+}
+
+/**
+ * Crear una organizacion para un productor ya existente.
+ */
+export async function crearOrganizacionParaUsuario(
+    data: {
+        name: string;
+        cuit?: string;
+        province: string;
+        city?: string;
+        email: string;
+        phone?: string;
+    },
+    creatorUserId: string,
+    creatorEmail: string,
+    creatorDisplayName: string
+): Promise<string> {
+    const created = await crearOrganizacion(data, creatorUserId, creatorEmail, creatorDisplayName);
+
+    await updateDoc(doc(db, USERS, creatorUserId), {
+        organizationId: created.organizationId,
+        organizationIds: arrayUnion(created.organizationId),
+        accessAllOrganizations: true,
+        updatedAt: Timestamp.now(),
     });
 
-    return {
-        organizationId: orgRef.id,
-        userId: creatorUserId,
-    };
+    return created.organizationId;
 }
 
-/**
- * Obtener organización por ID
- */
 export async function obtenerOrganizacion(orgId: string): Promise<Organization | null> {
-    const docRef = doc(db, ORGANIZATIONS, orgId);
-    const snapshot = await getDoc(docRef);
-
+    const snapshot = await getDoc(doc(db, ORGANIZATIONS, orgId));
     if (!snapshot.exists()) return null;
-
-    const data = snapshot.data();
-    return {
-        id: snapshot.id,
-        ...data,
-        createdAt: data.createdAt?.toDate() || new Date(),
-        updatedAt: data.updatedAt?.toDate() || new Date(),
-    } as Organization;
+    return mapOrganization(snapshot.id, snapshot.data() as Record<string, unknown>);
 }
 
-/**
- * Obtener organización por slug
- */
 export async function obtenerOrganizacionPorSlug(slug: string): Promise<Organization | null> {
     const q = query(collection(db, ORGANIZATIONS), where('slug', '==', slug));
     const snapshot = await getDocs(q);
-
     if (snapshot.empty) return null;
 
-    const docSnapshot = snapshot.docs[0];
-    const data = docSnapshot.data();
-    return {
-        id: docSnapshot.id,
-        ...data,
-        createdAt: data.createdAt?.toDate() || new Date(),
-        updatedAt: data.updatedAt?.toDate() || new Date(),
-    } as Organization;
+    const first = snapshot.docs[0];
+    return mapOrganization(first.id, first.data() as Record<string, unknown>);
+}
+
+export async function obtenerOrganizaciones(): Promise<Organization[]> {
+    const snapshot = await getDocs(collection(db, ORGANIZATIONS));
+    return snapshot.docs.map((d) => mapOrganization(d.id, d.data() as Record<string, unknown>));
 }
 
 /**
- * Actualizar organización
+ * Organizaciones visibles para un usuario/productor.
+ * Regla: si accessAllOrganizations=true, se incluyen las creadas por ese usuario
+ * y las que lo tengan como miembro.
  */
-export async function actualizarOrganizacion(
-    orgId: string,
-    data: Partial<Organization>
-): Promise<void> {
-    const docRef = doc(db, ORGANIZATIONS, orgId);
-    await updateDoc(docRef, {
+export async function obtenerOrganizacionesUsuario(
+    userId: string,
+    userData?: User | null
+): Promise<Organization[]> {
+    const user = userData ?? await obtenerUsuario(userId);
+    if (!user) return [];
+
+    const ids = new Set<string>();
+
+    if (user.organizationId) ids.add(user.organizationId);
+    if (Array.isArray(user.organizationIds)) {
+        user.organizationIds.forEach((id) => id && ids.add(id));
+    }
+
+    const shouldReadAll = user.accessAllOrganizations !== false;
+
+    if (shouldReadAll) {
+        const createdBySnap = await getDocs(
+            query(collection(db, ORGANIZATIONS), where('createdBy', '==', userId))
+        );
+        createdBySnap.docs.forEach((d) => ids.add(d.id));
+
+        const memberships = await getDocs(
+            query(collectionGroup(db, 'members'), where('userId', '==', userId))
+        );
+        memberships.docs.forEach((memberDoc) => {
+            const orgRef = memberDoc.ref.parent.parent;
+            if (orgRef?.id) ids.add(orgRef.id);
+        });
+    }
+
+    const organizations = await Promise.all(Array.from(ids).map((id) => obtenerOrganizacion(id)));
+    return organizations
+        .filter((o): o is Organization => Boolean(o))
+        .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export async function actualizarOrganizacion(orgId: string, data: Partial<Organization>): Promise<void> {
+    await updateDoc(doc(db, ORGANIZATIONS, orgId), {
         ...data,
         updatedAt: Timestamp.now(),
     });
 }
 
-// ============================================
-// USUARIOS
-// ============================================
-
-/**
- * Obtener usuario por ID
- */
-export async function obtenerUsuario(userId: string): Promise<User | null> {
-    const docRef = doc(db, USERS, userId);
-    const snapshot = await getDoc(docRef);
-
-    if (!snapshot.exists()) return null;
-
-    const data = snapshot.data();
-    return {
-        id: snapshot.id,
-        ...data,
-        createdAt: data.createdAt?.toDate() || new Date(),
-        updatedAt: data.updatedAt?.toDate() || new Date(),
-        joinedAt: data.joinedAt?.toDate(),
-        lastLogin: data.lastLogin?.toDate(),
-    } as User;
-}
-
-/**
- * Obtener miembros de una organización
- */
-export async function obtenerMiembrosOrganizacion(orgId: string): Promise<OrganizationMember[]> {
-    const membersRef = collection(db, ORGANIZATIONS, orgId, 'members');
-    const snapshot = await getDocs(membersRef);
-
-    return snapshot.docs.map((docSnapshot) => {
-        const data = docSnapshot.data();
-        return {
-            userId: docSnapshot.id,
-            ...data,
-            joinedAt: data.joinedAt?.toDate() || new Date(),
-        } as OrganizationMember;
+export async function cambiarOrganizacionActiva(userId: string, organizationId: string): Promise<void> {
+    await updateDoc(doc(db, USERS, userId), {
+        organizationId,
+        organizationIds: arrayUnion(organizationId),
+        updatedAt: Timestamp.now(),
     });
 }
 
-/**
- * Agregar miembro a organización
- */
+export async function obtenerUsuario(userId: string): Promise<User | null> {
+    const snapshot = await getDoc(doc(db, USERS, userId));
+    if (!snapshot.exists()) return null;
+    return mapUser(snapshot.id, snapshot.data() as Record<string, unknown>);
+}
+
+export async function obtenerMiembrosOrganizacion(orgId: string): Promise<OrganizationMember[]> {
+    const snapshot = await getDocs(collection(db, ORGANIZATIONS, orgId, 'members'));
+
+    return snapshot.docs.map((d) => {
+        const data = d.data();
+        return {
+            ...(data as Omit<OrganizationMember, 'userId' | 'joinedAt'>),
+            userId: d.id,
+            joinedAt: (data.joinedAt as Timestamp | undefined)?.toDate() || new Date(),
+        };
+    });
+}
+
 export async function agregarMiembroOrganizacion(
     orgId: string,
     userId: string,
@@ -204,7 +252,6 @@ export async function agregarMiembroOrganizacion(
     role: UserRole,
     invitedBy: string
 ): Promise<void> {
-    // Agregar a subcolección de miembros
     await setDoc(doc(db, ORGANIZATIONS, orgId, 'members', userId), {
         userId,
         email,
@@ -216,11 +263,12 @@ export async function agregarMiembroOrganizacion(
         joinedAt: Timestamp.now(),
     });
 
-    // Crear/actualizar documento de usuario
     await setDoc(doc(db, USERS, userId), {
         email,
         displayName,
         organizationId: orgId,
+        organizationIds: arrayUnion(orgId),
+        accessAllOrganizations: true,
         role,
         status: 'active',
         modulosHabilitados: null,
@@ -231,97 +279,47 @@ export async function agregarMiembroOrganizacion(
     }, { merge: true });
 }
 
-/**
- * Actualizar rol de miembro
- */
-export async function actualizarRolMiembro(
-    orgId: string,
-    userId: string,
-    role: UserRole
-): Promise<void> {
-    // Actualizar en miembros
-    await updateDoc(doc(db, ORGANIZATIONS, orgId, 'members', userId), {
-        role,
-    });
-
-    // Actualizar en usuario
-    await updateDoc(doc(db, USERS, userId), {
-        role,
-        updatedAt: Timestamp.now(),
-    });
+export async function actualizarRolMiembro(orgId: string, userId: string, role: UserRole): Promise<void> {
+    await updateDoc(doc(db, ORGANIZATIONS, orgId, 'members', userId), { role });
+    await updateDoc(doc(db, USERS, userId), { role, updatedAt: Timestamp.now() });
 }
 
-/**
- * Actualizar módulos habilitados de un usuario
- */
 export async function actualizarModulosUsuario(
     orgId: string,
     userId: string,
     modulosHabilitados: string[] | null
 ): Promise<void> {
-    // Actualizar en miembros
-    await updateDoc(doc(db, ORGANIZATIONS, orgId, 'members', userId), {
-        modulosHabilitados,
-    });
-
-    // Actualizar en usuario
-    await updateDoc(doc(db, USERS, userId), {
-        modulosHabilitados,
-        updatedAt: Timestamp.now(),
-    });
+    await updateDoc(doc(db, ORGANIZATIONS, orgId, 'members', userId), { modulosHabilitados });
+    await updateDoc(doc(db, USERS, userId), { modulosHabilitados, updatedAt: Timestamp.now() });
 }
 
-/**
- * Actualizar último login
- */
 export async function actualizarUltimoLogin(userId: string): Promise<void> {
     try {
         await updateDoc(doc(db, USERS, userId), {
             lastLogin: Timestamp.now(),
+            updatedAt: Timestamp.now(),
         });
     } catch (error) {
-        // Silently fail if user doesn't exist yet
         console.warn('Could not update last login:', error);
     }
 }
 
-// ============================================
-// HELPERS
-// ============================================
-
-/**
- * Generar slug único desde nombre
- */
 function generarSlug(name: string): string {
     return name
         .toLowerCase()
         .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '') // Quitar acentos
-        .replace(/[^a-z0-9]+/g, '-')     // Reemplazar no-alfanuméricos
-        .replace(/^-|-$/g, '')           // Quitar guiones al inicio/final
-        .substring(0, 50);               // Limitar longitud
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+        .substring(0, 50);
 }
 
-/**
- * Verificar si usuario tiene acceso a un módulo
- */
-export function tieneAccesoModulo(
-    modulosHabilitados: string[] | null,
-    modulo: string
-): boolean {
-    // null = acceso completo
+export function tieneAccesoModulo(modulosHabilitados: string[] | null, modulo: string): boolean {
     if (modulosHabilitados === null) return true;
-
-    // Array vacío = sin acceso
     if (modulosHabilitados.length === 0) return false;
-
-    // Verificar si el módulo está en la lista
     return modulosHabilitados.includes(modulo);
 }
 
-/**
- * Verificar si usuario puede realizar acción según su rol
- */
 export function puedeRealizarAccion(
     role: UserRole,
     accion: 'read' | 'write' | 'delete' | 'admin'
@@ -336,3 +334,4 @@ export function puedeRealizarAccion(
 
     return permisos[role]?.includes(accion) || false;
 }
+

@@ -70,6 +70,9 @@ cp .env.example .env.local
 # Desarrollo
 npm run dev
 
+# Bootstrap automatico (Firebase Auth + Firestore demo)
+npm run bootstrap
+
 # Build
 npm run build
 ```

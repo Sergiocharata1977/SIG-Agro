@@ -1,52 +1,46 @@
-'use client';
+﻿'use client';
 
 /**
- * Contexto de Autenticación Multi-Tenant
- * Maneja autenticación, organización activa y usuario
+ * Multi-tenant auth context.
+ * Handles auth, active organization and user permissions.
  */
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import {
-    User as FirebaseUser,
+    createUserWithEmailAndPassword,
     onAuthStateChanged,
     signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
     signOut as firebaseSignOut,
     updateProfile,
+    User as FirebaseUser,
 } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/firebase/config';
+import { Organization, User, UserRole } from '@/types/organization';
 import {
-    Organization,
-    User,
-    UserRole,
-} from '@/types/organization';
-import {
+    actualizarUltimoLogin,
+    cambiarOrganizacionActiva,
     crearOrganizacion,
     obtenerOrganizacion,
+    obtenerOrganizacionesUsuario,
     obtenerUsuario,
-    actualizarUltimoLogin,
 } from '@/services/organizations';
 
-// ============================================
-// TIPOS
-// ============================================
-
 interface AuthContextType {
-    // Estado
     firebaseUser: FirebaseUser | null;
     user: User | null;
     organization: Organization | null;
+    organizations: Organization[];
+    organizationId: string | null;
     loading: boolean;
     error: string | null;
 
-    // Acciones de autenticación
     signIn: (email: string, password: string) => Promise<void>;
     signUp: (data: SignUpData) => Promise<void>;
     signOut: () => Promise<void>;
     clearError: () => void;
+    setActiveOrganization: (organizationId: string) => Promise<void>;
 
-    // Helpers
     hasModuleAccess: (module: string) => boolean;
     canPerformAction: (action: 'read' | 'write' | 'delete' | 'admin') => boolean;
 }
@@ -55,7 +49,6 @@ interface SignUpData {
     email: string;
     password: string;
     displayName: string;
-    // Datos de organización (nuevo registro)
     organizationName: string;
     cuit?: string;
     province: string;
@@ -63,24 +56,16 @@ interface SignUpData {
     phone?: string;
 }
 
-// ============================================
-// CONTEXTO
-// ============================================
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// ============================================
-// PROVIDER
-// ============================================
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
     const [user, setUser] = useState<User | null>(null);
     const [organization, setOrganization] = useState<Organization | null>(null);
+    const [organizations, setOrganizations] = useState<Organization[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Escuchar cambios de autenticación
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
             setFirebaseUser(fbUser);
@@ -90,6 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             } else {
                 setUser(null);
                 setOrganization(null);
+                setOrganizations([]);
             }
 
             setLoading(false);
@@ -98,47 +84,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return () => unsubscribe();
     }, []);
 
-    // Cargar datos de usuario y organización
     const loadUserData = async (userId: string) => {
         try {
-            // Intentar cargar desde nueva estructura (users collection)
             const userData = await obtenerUsuario(userId);
 
             if (userData) {
-                setUser(userData);
+                const orgs = await obtenerOrganizacionesUsuario(userId, userData);
+                setOrganizations(orgs);
 
-                // Cargar organización
-                if (userData.organizationId) {
-                    const orgData = await obtenerOrganizacion(userData.organizationId);
-                    setOrganization(orgData);
+                const fallbackOrgId = orgs[0]?.id || null;
+                const activeOrgId = userData.organizationId || fallbackOrgId;
+
+                if (activeOrgId && activeOrgId !== userData.organizationId) {
+                    await cambiarOrganizacionActiva(userId, activeOrgId);
                 }
 
-                // Actualizar último login
+                const activeOrg = activeOrgId
+                    ? orgs.find((org) => org.id === activeOrgId) || await obtenerOrganizacion(activeOrgId)
+                    : null;
+
+                setUser({
+                    ...userData,
+                    organizationId: activeOrgId || '',
+                    organizationIds: Array.from(new Set([...(userData.organizationIds || []), ...orgs.map((o) => o.id)])),
+                    accessAllOrganizations: userData.accessAllOrganizations !== false,
+                });
+                setOrganization(activeOrg || null);
                 await actualizarUltimoLogin(userId);
-            } else {
-                // Fallback: verificar si existe en agro_productores (migración)
-                const productorRef = doc(db, 'agro_productores', userId);
-                const productorDoc = await getDoc(productorRef);
-
-                if (productorDoc.exists()) {
-                    // Usuario antiguo sin migrar - mostrar como viewer
-                    console.log('Usuario antiguo detectado, necesita migrar a organización');
-                    setUser(null);
-                    setOrganization(null);
-                }
+                return;
             }
+
+            // Legacy fallback in case user exists only in old collection.
+            const productorRef = doc(db, 'agro_productores', userId);
+            const productorDoc = await getDoc(productorRef);
+
+            if (productorDoc.exists()) {
+                console.log('Legacy user found in agro_productores; migration pending');
+            }
+
+            setUser(null);
+            setOrganization(null);
+            setOrganizations([]);
         } catch (err) {
-            console.error('Error al cargar datos de usuario:', err);
+            console.error('Error loading user data:', err);
         }
     };
 
-    // ============================================
-    // ACCIONES
-    // ============================================
-
-    /**
-     * Iniciar sesión
-     */
     const signIn = async (email: string, password: string) => {
         try {
             setLoading(true);
@@ -154,29 +145,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    /**
-     * Registrar nuevo usuario + organización
-     */
     const signUp = async (data: SignUpData) => {
         try {
             setLoading(true);
             setError(null);
 
-            // Crear usuario en Firebase Auth
-            const userCredential = await createUserWithEmailAndPassword(
-                auth,
-                data.email,
-                data.password
-            );
+            const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
             const newFirebaseUser = userCredential.user;
 
-            // Actualizar perfil
-            await updateProfile(newFirebaseUser, {
-                displayName: data.displayName,
-            });
+            await updateProfile(newFirebaseUser, { displayName: data.displayName });
 
-            // Crear organización con usuario como owner
-            const result = await crearOrganizacion(
+            await crearOrganizacion(
                 {
                     name: data.organizationName,
                     cuit: data.cuit,
@@ -190,11 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 data.displayName
             );
 
-            console.log('Organización creada:', result);
-
-            // Cargar datos
             await loadUserData(newFirebaseUser.uid);
-
         } catch (err: unknown) {
             const errorMessage = getErrorMessage(err);
             setError(errorMessage);
@@ -204,61 +179,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    /**
-     * Cerrar sesión
-     */
     const signOut = async () => {
         try {
             setLoading(true);
             await firebaseSignOut(auth);
             setUser(null);
             setOrganization(null);
+            setOrganizations([]);
         } catch (err: unknown) {
-            const errorMessage = getErrorMessage(err);
-            setError(errorMessage);
+            setError(getErrorMessage(err));
         } finally {
             setLoading(false);
         }
     };
 
-    /**
-     * Limpiar error
-     */
-    const clearError = () => setError(null);
+    const setActiveOrganization = async (organizationId: string) => {
+        if (!firebaseUser || !user) return;
 
-    // ============================================
-    // HELPERS
-    // ============================================
+        const org = organizations.find((item) => item.id === organizationId);
+        if (!org) {
+            throw new Error('No tenes acceso a esa organizacion');
+        }
 
-    /**
-     * Verificar si usuario tiene acceso a un módulo
-     */
-    const hasModuleAccess = (module: string): boolean => {
-        if (!user) return false;
+        await cambiarOrganizacionActiva(firebaseUser.uid, organizationId);
 
-        // Super Admin tiene acceso a todo
-        if (user.role === 'super_admin') return true;
-
-        const modulosHabilitados = user.modulosHabilitados;
-
-        // null o undefined = acceso completo
-        if (modulosHabilitados === null || modulosHabilitados === undefined) return true;
-
-        // Array vacío = sin acceso
-        if (!Array.isArray(modulosHabilitados) || modulosHabilitados.length === 0) return false;
-
-        // Verificar si el módulo está en la lista
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return modulosHabilitados.includes(module as any);
+        setUser((prev) => {
+            if (!prev) return prev;
+            return {
+                ...prev,
+                organizationId,
+                organizationIds: Array.from(new Set([...(prev.organizationIds || []), organizationId])),
+            };
+        });
+        setOrganization(org);
     };
 
-    /**
-     * Verificar si usuario puede realizar acción según su rol
-     */
+    const clearError = () => setError(null);
+
+    const hasModuleAccess = (module: string): boolean => {
+        if (!user) return false;
+        if (user.role === 'super_admin') return true;
+
+        const enabledModules = user.modulosHabilitados;
+        if (enabledModules === null || enabledModules === undefined) return true;
+        if (!Array.isArray(enabledModules) || enabledModules.length === 0) return false;
+
+        return (enabledModules as string[]).includes(module);
+    };
+
     const canPerformAction = (action: 'read' | 'write' | 'delete' | 'admin'): boolean => {
         if (!user) return false;
 
-        const permisos: Record<UserRole, string[]> = {
+        const permissions: Record<UserRole, string[]> = {
             super_admin: ['read', 'write', 'delete', 'admin'],
             owner: ['read', 'write', 'delete', 'admin'],
             admin: ['read', 'write', 'delete', 'admin'],
@@ -266,49 +238,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             viewer: ['read'],
         };
 
-        return permisos[user.role]?.includes(action) || false;
+        return permissions[user.role]?.includes(action) || false;
     };
 
-    // ============================================
-    // RENDER
-    // ============================================
+    const value = useMemo<AuthContextType>(() => ({
+        firebaseUser,
+        user,
+        organization,
+        organizations,
+        organizationId: user?.organizationId || organization?.id || null,
+        loading,
+        error,
+        signIn,
+        signUp,
+        signOut,
+        clearError,
+        setActiveOrganization,
+        hasModuleAccess,
+        canPerformAction,
+    }), [firebaseUser, user, organization, organizations, loading, error]);
 
-    return (
-        <AuthContext.Provider
-            value={{
-                firebaseUser,
-                user,
-                organization,
-                loading,
-                error,
-                signIn,
-                signUp,
-                signOut,
-                clearError,
-                hasModuleAccess,
-                canPerformAction,
-            }}
-        >
-            {children}
-        </AuthContext.Provider>
-    );
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-
-// ============================================
-// HOOK
-// ============================================
 
 export function useAuth() {
     const context = useContext(AuthContext);
     if (context === undefined) {
-        throw new Error('useAuth debe usarse dentro de un AuthProvider');
+        throw new Error('useAuth must be used inside AuthProvider');
     }
     return context;
 }
-
-// ============================================
-// HELPERS
-// ============================================
 
 function getErrorMessage(error: unknown): string {
     if (error instanceof Error) {
@@ -316,22 +275,25 @@ function getErrorMessage(error: unknown): string {
 
         switch (code) {
             case 'auth/email-already-in-use':
-                return 'Este email ya está registrado';
+                return 'Este email ya esta registrado';
             case 'auth/weak-password':
-                return 'La contraseña debe tener al menos 6 caracteres';
+                return 'La contrasena debe tener al menos 6 caracteres';
             case 'auth/invalid-email':
-                return 'Email inválido';
+                return 'Email invalido';
             case 'auth/user-not-found':
                 return 'Usuario no encontrado';
             case 'auth/wrong-password':
-                return 'Contraseña incorrecta';
+                return 'Contrasena incorrecta';
             case 'auth/too-many-requests':
-                return 'Demasiados intentos. Intenta más tarde';
+                return 'Demasiados intentos. Intenta mas tarde';
             case 'auth/invalid-credential':
-                return 'Credenciales inválidas';
+                return 'Credenciales invalidas';
             default:
-                return error.message || 'Error de autenticación';
+                return error.message || 'Error de autenticacion';
         }
     }
+
     return 'Error desconocido';
 }
+
+
