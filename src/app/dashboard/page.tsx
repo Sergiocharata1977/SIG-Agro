@@ -19,6 +19,7 @@ import { obtenerCrops, getCampaniaActual } from '@/services/crops';
 import { obtenerAlertas, obtenerConteoNoLeidas } from '@/services/alerts';
 import { CULTIVOS_CONFIG, ESTADOS_LOTE_CONFIG } from '@/types/sig-agro';
 import { TIPOS_ALERTA_CONFIG, SEVERIDAD_CONFIG } from '@/types/sig-agro-advanced';
+import { BaseButton } from '@/components/design-system';
 
 // Importar mapa dinámicamente
 const MapaGeneral = dynamic(
@@ -71,12 +72,13 @@ function AlertasPanel({ alertas, onVerTodas }: {
         <div className="bg-white rounded-lg shadow-sm">
             <div className="p-3 border-b flex items-center justify-between">
                 <h3 className="font-medium text-gray-900">Alertas Recientes</h3>
-                <button
+                <BaseButton
                     onClick={onVerTodas}
-                    className="text-sm text-green-600 hover:underline"
+                    variant="outline"
+                    size="sm"
                 >
                     Ver todas
-                </button>
+                </BaseButton>
             </div>
             <div className="divide-y max-h-64 overflow-y-auto">
                 {alertas.slice(0, 5).map(alerta => {

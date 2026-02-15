@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, PlusCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { PageShell } from '@/components/layout/PageShell';
 import type { Field, Plot } from '@/types/sig-agro';
 import type { IrrigationPlan } from '@/types/domain-model';
 import { obtenerFields } from '@/services/fields';
@@ -94,11 +95,10 @@ export default function RiegoPage() {
   if (!organizationId) return <div className="p-6">Selecciona una organizacion para continuar.</div>;
 
   return (
-    <div className="p-4 md:p-6 space-y-5">
-      <header>
-        <h1 className="text-2xl font-semibold text-slate-900">Planificacion de Riego</h1>
-        <p className="text-sm text-slate-600">Plan vs ejecucion con KPIs de eficiencia y alertas de ventana.</p>
-      </header>
+    <PageShell
+      title="Planificacion de Riego"
+      subtitle="Plan vs ejecucion con KPIs de eficiencia y alertas de ventana."
+    >
 
       <section className="rounded-xl border border-slate-200 bg-white p-4 grid grid-cols-2 md:grid-cols-6 gap-3">
         <Kpi title="Planes" value={summary.totalPlans} />
@@ -180,7 +180,7 @@ export default function RiegoPage() {
           </div>
         )}
       </section>
-    </div>
+    </PageShell>
   );
 }
 

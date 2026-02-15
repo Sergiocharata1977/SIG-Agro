@@ -17,6 +17,7 @@
     "seed:a1": "node scripts/seed-a1-domain.js",
     "migrate:accounting:dry": "node scripts/migrate-accounting-to-org.js --dry-run",
     "migrate:accounting": "node scripts/migrate-accounting-to-org.js",
+    "seed:super-admin": "node scripts/seed-super-admins.js",
     "check-all": "npm run ui:check && npm run lint && npm run test && npm run build"
   },
   "dependencies": {

@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { dashboardIAService } from '@/services/dashboard-ia';
 import type { DashboardIAData, AlertaIA, RecomendacionIA } from '@/types/dashboard-ia';
 import { useAuth } from '@/contexts/AuthContext';
+import { PageShell } from '@/components/layout/PageShell';
+import { BaseButton } from '@/components/design-system';
 
 // Iconos usando emojis para simplicidad
 const ICONS = {
@@ -57,20 +59,11 @@ export default function DashboardIAPage() {
     }
 
     return (
-        <div className="p-6 space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Dashboard de Análisis IA</h1>
-                    <p className="text-gray-500">Análisis inteligente de tus cultivos</p>
-                </div>
-                <button
-                    onClick={loadData}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-                >
-                    🔄 Actualizar
-                </button>
-            </div>
+        <PageShell
+            title="Dashboard de Analisis IA"
+            subtitle="Analisis inteligente de tus cultivos"
+            rightSlot={<BaseButton onClick={loadData}>Actualizar</BaseButton>}
+        >
 
             {/* Resumen Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -229,7 +222,7 @@ export default function DashboardIAPage() {
                     </div>
                 )}
             </div>
-        </div>
+        </PageShell>
     );
 }
 

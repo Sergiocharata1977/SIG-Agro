@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Download, PlusCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { PageShell } from '@/components/layout/PageShell';
 import type { Field, Plot } from '@/types/sig-agro';
 import type { FieldLogbookEntry, TreatmentApplication } from '@/types/domain-model';
 import { obtenerFields } from '@/services/fields';
@@ -132,11 +133,10 @@ export default function CuadernoPage() {
   if (!organizationId) return <div className="p-6">Selecciona una organizacion para continuar.</div>;
 
   return (
-    <div className="p-4 md:p-6 space-y-5">
-      <header>
-        <h1 className="text-2xl font-semibold text-slate-900">Cuaderno de Campo</h1>
-        <p className="text-sm text-slate-600">Flujo operativo de actividades y tratamientos por campana.</p>
-      </header>
+    <PageShell
+      title="Cuaderno de Campo"
+      subtitle="Flujo operativo de actividades y tratamientos por campana."
+    >
 
       <section className="rounded-xl border border-slate-200 bg-white p-4 flex flex-wrap items-center gap-3">
         <label className="text-sm">Campana</label>
@@ -258,6 +258,6 @@ export default function CuadernoPage() {
           </article>
         </section>
       )}
-    </div>
+    </PageShell>
   );
 }

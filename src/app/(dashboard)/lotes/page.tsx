@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { PlusCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { PageShell } from '@/components/layout/PageShell';
 import type { Field, Plot } from '@/types/sig-agro';
 import type { LoteDetalle } from '@/types/domain-model';
 import { obtenerFields } from '@/services/fields';
@@ -116,11 +117,10 @@ export default function LotesPage() {
   if (!organizationId) return <div className="p-6">Selecciona una organizacion para continuar.</div>;
 
   return (
-    <div className="p-4 md:p-6 space-y-5">
-      <header>
-        <h1 className="text-2xl font-semibold text-slate-900">Catastro de Lotes</h1>
-        <p className="text-sm text-slate-600">Gestion de delimitaciones con versionado geometrico y comparativa temporal.</p>
-      </header>
+    <PageShell
+      title="Catastro de Lotes"
+      subtitle="Gestion de delimitaciones con versionado geometrico y comparativa temporal."
+    >
 
       {message && <div className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700">{message}</div>}
 
@@ -201,6 +201,6 @@ export default function LotesPage() {
           {!selectedLote && !loading && <p className="text-sm text-slate-500">Sin lotes cargados.</p>}
         </article>
       </section>
-    </div>
+    </PageShell>
   );
 }
