@@ -1,17 +1,17 @@
-'use client';
+﻿'use client';
 
 import { useState, useRef } from 'react';
 import { Camera, MapPin, AlertTriangle, X, Loader2, Check } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { BaseButton as Button } from '@/components/design-system';
+import { BaseInput as Input } from '@/components/design-system';
 import { Label } from '@/components/ui/label';
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue
-} from '@/components/ui/select';
+    BaseSelect as Select,
+    BaseSelectContent as SelectContent,
+    BaseSelectItem as SelectItem,
+    BaseSelectTrigger as SelectTrigger,
+    BaseSelectValue as SelectValue
+} from '@/components/design-system';
 import {
     TipoObservacion,
     SeveridadProblema,
@@ -48,7 +48,7 @@ export default function ScoutingForm({
     const [accionRecomendada, setAccionRecomendada] = useState('');
     const [urgente, setUrgente] = useState(false);
 
-    // Estado de ubicación
+    // Estado de ubicaciÃ³n
     const [ubicacion, setUbicacion] = useState<{ lat: number; lng: number; accuracy?: number } | null>(null);
     const [obteniendoUbicacion, setObteniendoUbicacion] = useState(false);
     const [errorUbicacion, setErrorUbicacion] = useState<string | null>(null);
@@ -56,11 +56,11 @@ export default function ScoutingForm({
     // Estado de fotos
     const [fotos, setFotos] = useState<{ file: File; preview: string }[]>([]);
 
-    // Estado de envío
+    // Estado de envÃ­o
     const [enviando, setEnviando] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Obtener ubicación
+    // Obtener ubicaciÃ³n
     const handleObtenerUbicacion = async () => {
         setObteniendoUbicacion(true);
         setErrorUbicacion(null);
@@ -73,8 +73,8 @@ export default function ScoutingForm({
                 accuracy: position.coords.accuracy
             });
         } catch (err) {
-            setErrorUbicacion('No se pudo obtener la ubicación. Verifica los permisos de GPS.');
-            console.error('Error de geolocalización:', err);
+            setErrorUbicacion('No se pudo obtener la ubicaciÃ³n. Verifica los permisos de GPS.');
+            console.error('Error de geolocalizaciÃ³n:', err);
         } finally {
             setObteniendoUbicacion(false);
         }
@@ -96,7 +96,7 @@ export default function ScoutingForm({
 
         setFotos(prev => [...prev, ...nuevasFotos]);
 
-        // Si no hay ubicación, intentar obtenerla
+        // Si no hay ubicaciÃ³n, intentar obtenerla
         if (!ubicacion) {
             handleObtenerUbicacion();
         }
@@ -116,12 +116,12 @@ export default function ScoutingForm({
         e.preventDefault();
 
         if (!ubicacion) {
-            setError('Debes obtener la ubicación antes de guardar');
+            setError('Debes obtener la ubicaciÃ³n antes de guardar');
             return;
         }
 
         if (!titulo.trim()) {
-            setError('El título es requerido');
+            setError('El tÃ­tulo es requerido');
             return;
         }
 
@@ -134,7 +134,7 @@ export default function ScoutingForm({
         setError(null);
 
         try {
-            // Crear observación
+            // Crear observaciÃ³n
             const observacion = await crearObservacion(orgId, {
                 latitude: ubicacion.lat,
                 longitude: ubicacion.lng,
@@ -169,8 +169,8 @@ export default function ScoutingForm({
 
             onSuccess?.();
         } catch (err) {
-            console.error('Error al guardar observación:', err);
-            setError('Error al guardar la observación. Intenta nuevamente.');
+            console.error('Error al guardar observaciÃ³n:', err);
+            setError('Error al guardar la observaciÃ³n. Intenta nuevamente.');
         } finally {
             setEnviando(false);
         }
@@ -178,22 +178,22 @@ export default function ScoutingForm({
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Ubicación */}
+            {/* UbicaciÃ³n */}
             <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                     <MapPin className="h-4 w-4" />
-                    Ubicación GPS
+                    UbicaciÃ³n GPS
                 </Label>
 
                 {ubicacion ? (
                     <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
                         <div className="flex items-center gap-2 text-green-700">
                             <Check className="h-4 w-4" />
-                            <span className="font-medium">Ubicación obtenida</span>
+                            <span className="font-medium">UbicaciÃ³n obtenida</span>
                         </div>
                         <p className="text-sm text-green-600 mt-1">
                             {ubicacion.lat.toFixed(6)}, {ubicacion.lng.toFixed(6)}
-                            {ubicacion.accuracy && ` (±${ubicacion.accuracy.toFixed(0)}m)`}
+                            {ubicacion.accuracy && ` (Â±${ubicacion.accuracy.toFixed(0)}m)`}
                         </p>
                     </div>
                 ) : (
@@ -207,12 +207,12 @@ export default function ScoutingForm({
                         {obteniendoUbicacion ? (
                             <>
                                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                Obteniendo ubicación...
+                                Obteniendo ubicaciÃ³n...
                             </>
                         ) : (
                             <>
                                 <MapPin className="h-4 w-4 mr-2" />
-                                Obtener Ubicación Actual
+                                Obtener UbicaciÃ³n Actual
                             </>
                         )}
                     </Button>
@@ -268,9 +268,9 @@ export default function ScoutingForm({
                 </div>
             </div>
 
-            {/* Tipo de observación */}
+            {/* Tipo de observaciÃ³n */}
             <div className="space-y-2">
-                <Label>Tipo de Observación</Label>
+                <Label>Tipo de ObservaciÃ³n</Label>
                 <Select value={tipo} onValueChange={(v) => setTipo(v as TipoObservacion)}>
                     <SelectTrigger>
                         <SelectValue />
@@ -305,9 +305,9 @@ export default function ScoutingForm({
                 </Select>
             </div>
 
-            {/* Título */}
+            {/* TÃ­tulo */}
             <div className="space-y-2">
-                <Label htmlFor="titulo">Título *</Label>
+                <Label htmlFor="titulo">TÃ­tulo *</Label>
                 <Input
                     id="titulo"
                     value={titulo}
@@ -317,9 +317,9 @@ export default function ScoutingForm({
                 />
             </div>
 
-            {/* Descripción */}
+            {/* DescripciÃ³n */}
             <div className="space-y-2">
-                <Label htmlFor="descripcion">Descripción</Label>
+                <Label htmlFor="descripcion">DescripciÃ³n</Label>
                 <textarea
                     id="descripcion"
                     value={descripcion}
@@ -340,9 +340,9 @@ export default function ScoutingForm({
                 />
             </div>
 
-            {/* Acción recomendada */}
+            {/* AcciÃ³n recomendada */}
             <div className="space-y-2">
-                <Label htmlFor="accion">Acción recomendada (opcional)</Label>
+                <Label htmlFor="accion">AcciÃ³n recomendada (opcional)</Label>
                 <Input
                     id="accion"
                     value={accionRecomendada}
@@ -387,7 +387,7 @@ export default function ScoutingForm({
                             Guardando...
                         </>
                     ) : (
-                        'Guardar Observación'
+                        'Guardar ObservaciÃ³n'
                     )}
                 </Button>
             </div>

@@ -1,11 +1,11 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { BaseButton as Button } from '@/components/design-system';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+import { BaseInput as Input } from '@/components/design-system';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { BaseSelect as Select, BaseSelectContent as SelectContent, BaseSelectItem as SelectItem, BaseSelectTrigger as SelectTrigger, BaseSelectValue as SelectValue } from '@/components/design-system';
 import { Checkbox } from '@/components/ui/checkbox';
 
 interface CreateOrganizationDialogProps {
@@ -48,7 +48,7 @@ export default function CreateOrganizationDialog({ open, onOpenChange, onCreated
             });
 
             if (!res.ok) {
-                throw new Error('Error creando organización');
+                throw new Error('Error creando organizaciÃ³n');
             }
 
             onOpenChange(false);
@@ -66,7 +66,7 @@ export default function CreateOrganizationDialog({ open, onOpenChange, onCreated
 
         } catch (err) {
             console.error(err);
-            setError('No se pudo crear la organización');
+            setError('No se pudo crear la organizaciÃ³n');
         } finally {
             setLoading(false);
         }
@@ -76,7 +76,7 @@ export default function CreateOrganizationDialog({ open, onOpenChange, onCreated
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Nueva Organización</DialogTitle>
+                    <DialogTitle>Nueva OrganizaciÃ³n</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {error && <div className="text-red-500 text-sm p-2 bg-red-50 rounded">{error}</div>}
@@ -119,7 +119,7 @@ export default function CreateOrganizationDialog({ open, onOpenChange, onCreated
                     </div>
 
                     <div className="space-y-3 pt-2">
-                        <Label>Características</Label>
+                        <Label>CaracterÃ­sticas</Label>
                         <div className="flex items-center gap-2">
                             <Checkbox
                                 id="private-sec"

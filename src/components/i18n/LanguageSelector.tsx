@@ -1,9 +1,9 @@
-'use client';
+﻿'use client';
 
 import { useTransition } from 'react';
 import { useLocale } from 'next-intl';
 import { locales, localeNames, localeFlags, type Locale } from '@/i18n/config';
-import { Button } from '@/components/ui/button';
+import { BaseButton as Button } from '@/components/design-system';
 import {
     DropdownMenu,
     DropdownMenuContent,

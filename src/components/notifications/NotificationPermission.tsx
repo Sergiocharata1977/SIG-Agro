@@ -1,9 +1,9 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { fcmService } from '@/services/fcm';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
+import { BaseButton as Button } from '@/components/design-system';
 import { Bell, BellOff, BellRing, Loader2 } from 'lucide-react';
 
 export function NotificationPermission() {

@@ -1,9 +1,9 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { Plus, List, Map } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { BaseButton as Button } from '@/components/design-system';
+import { BaseCard as Card } from '@/components/design-system';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import ScoutingForm from '@/components/scouting/ScoutingForm';
 import ScoutingList from '@/components/scouting/ScoutingList';
@@ -62,10 +62,10 @@ export default function ScoutingPage() {
                         </button>
                     </div>
 
-                    {/* Botón nueva observación */}
+                    {/* BotÃ³n nueva observaciÃ³n */}
                     <Button onClick={() => setShowForm(true)}>
                         <Plus className="h-4 w-4 mr-2" />
-                        Nueva Observación
+                        Nueva ObservaciÃ³n
                     </Button>
                 </div>
             </div>
@@ -84,17 +84,17 @@ export default function ScoutingPage() {
                 ) : (
                     <div className="h-[500px] flex items-center justify-center bg-gray-100 rounded-lg">
                         <p className="text-gray-500">
-                            Vista de mapa - Próximamente
+                            Vista de mapa - PrÃ³ximamente
                         </p>
                     </div>
                 )}
             </Card>
 
-            {/* Modal de nueva observación */}
+            {/* Modal de nueva observaciÃ³n */}
             <Dialog open={showForm} onOpenChange={setShowForm}>
                 <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle>Nueva Observación de Campo</DialogTitle>
+                        <DialogTitle>Nueva ObservaciÃ³n de Campo</DialogTitle>
                     </DialogHeader>
                     <ScoutingForm
                         orgId={organizationId}

@@ -1,9 +1,9 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { Cloud, Sun, CloudRain, Wind, Droplets, Thermometer, AlertTriangle, RefreshCw } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { BaseCard as Card } from '@/components/design-system';
+import { BaseButton as Button } from '@/components/design-system';
 import {
     obtenerClimaActual,
     obtenerPronostico7Dias,
@@ -49,7 +49,7 @@ export default function WeatherWidget({
             setAlertas(alerts);
         } catch (err) {
             console.error('Error cargando clima:', err);
-            setError('Error al cargar datos meteorológicos');
+            setError('Error al cargar datos meteorolÃ³gicos');
         } finally {
             setLoading(false);
         }
@@ -88,7 +88,7 @@ export default function WeatherWidget({
 
     return (
         <Card className="overflow-hidden">
-            {/* Alertas climáticas */}
+            {/* Alertas climÃ¡ticas */}
             {alertas.length > 0 && (
                 <div className="bg-amber-50 border-b border-amber-200 p-3">
                     <div className="flex items-center gap-2 text-amber-700 font-medium mb-2">
@@ -124,13 +124,13 @@ export default function WeatherWidget({
                 <div className="flex items-center gap-6">
                     {/* Temperatura principal */}
                     <div className="flex items-center gap-3">
-                        <span className="text-5xl">{condicionConfig?.icono || '🌤️'}</span>
+                        <span className="text-5xl">{condicionConfig?.icono || 'ðŸŒ¤ï¸'}</span>
                         <div>
                             <div className="text-4xl font-bold text-gray-900">
-                                {Math.round(climaActual.temperatura)}°
+                                {Math.round(climaActual.temperatura)}Â°
                             </div>
                             <div className="text-sm text-gray-500">
-                                Sensación: {Math.round(climaActual.sensacionTermica)}°
+                                SensaciÃ³n: {Math.round(climaActual.sensacionTermica)}Â°
                             </div>
                         </div>
                     </div>
@@ -157,10 +157,10 @@ export default function WeatherWidget({
                 </div>
             </div>
 
-            {/* Pronóstico 7 días */}
+            {/* PronÃ³stico 7 dÃ­as */}
             {showPronostico && pronostico.length > 0 && (
                 <div className="border-t px-4 py-3 bg-gray-50">
-                    <h4 className="text-sm font-medium text-gray-700 mb-3">Próximos 7 días</h4>
+                    <h4 className="text-sm font-medium text-gray-700 mb-3">PrÃ³ximos 7 dÃ­as</h4>
                     <div className="flex gap-3 overflow-x-auto pb-2">
                         {pronostico.map((dia, idx) => {
                             const diaConfig = CONDICION_CLIMA_CONFIG[dia.condicion];
@@ -172,12 +172,12 @@ export default function WeatherWidget({
                                     className="flex-shrink-0 text-center p-2 bg-white rounded-lg border min-w-[70px]"
                                 >
                                     <div className="text-xs text-gray-500 capitalize">{diaSemana}</div>
-                                    <div className="text-xl my-1">{diaConfig?.icono || '🌤️'}</div>
+                                    <div className="text-xl my-1">{diaConfig?.icono || 'ðŸŒ¤ï¸'}</div>
                                     <div className="text-sm font-medium">
-                                        {Math.round(dia.tempMaxima)}°
+                                        {Math.round(dia.tempMaxima)}Â°
                                     </div>
                                     <div className="text-xs text-gray-400">
-                                        {Math.round(dia.tempMinima)}°
+                                        {Math.round(dia.tempMinima)}Â°
                                     </div>
                                     {dia.precipitacionTotal > 0 && (
                                         <div className="text-xs text-blue-500 mt-1">

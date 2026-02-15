@@ -1,7 +1,7 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { BaseButton as Button } from '@/components/design-system';
 import { PDFGenerator, generateReport } from '@/services/pdf-generator';
 import type { ReportType, ReportConfig, CampaniaReportData, CostoReportData, ScoutingReportData, RendimientoReportData } from '@/types/reports';
 import { useAuth } from '@/contexts/AuthContext';
@@ -71,7 +71,7 @@ export function ReportButton({
     );
 }
 
-// Componente para múltiples tipos de reportes
+// Componente para mÃºltiples tipos de reportes
 interface ReportMenuProps {
     availableReports: {
         type: ReportType;
