@@ -28,7 +28,7 @@ export interface FieldLogbookEntry extends DomainAuditable {
   campaignId: string;
   fieldId: string;
   plotId?: string;
-  subplotId?: string;
+  loteDetalleId?: string;
   activityType:
     | 'siembra'
     | 'fertilizacion'
@@ -54,7 +54,7 @@ export interface TreatmentApplication extends DomainAuditable {
   campaignId: string;
   fieldId: string;
   plotId: string;
-  subplotId?: string;
+  loteDetalleId?: string;
   mode: 'manual' | 'bulk';
   issueType: 'plaga' | 'enfermedad' | 'maleza' | 'nutricion' | 'otro';
   productName: string;
@@ -74,7 +74,7 @@ export interface IrrigationPlan extends DomainAuditable {
   campaignId: string;
   fieldId: string;
   plotId: string;
-  subplotId?: string;
+  loteDetalleId?: string;
   planDate: Date;
   targetMm: number;
   appliedMm?: number;
@@ -83,7 +83,7 @@ export interface IrrigationPlan extends DomainAuditable {
   deviationMm?: number;
 }
 
-export interface SubplotGeometryVersion {
+export interface LoteGeometryVersion {
   version: number;
   geometryGeoJSON: string;
   changedAt: Date;
@@ -91,7 +91,7 @@ export interface SubplotGeometryVersion {
   reason?: string;
 }
 
-export interface Subplot extends DomainAuditable {
+export interface LoteDetalle extends DomainAuditable {
   id: string;
   organizationId: string;
   fieldId: string;
@@ -100,7 +100,7 @@ export interface Subplot extends DomainAuditable {
   code: string;
   areaHa: number;
   currentGeometryGeoJSON: string;
-  geometryHistory: SubplotGeometryVersion[];
+  geometryHistory: LoteGeometryVersion[];
 }
 
 export interface SensorReading extends DomainAuditable {
@@ -110,7 +110,7 @@ export interface SensorReading extends DomainAuditable {
   sourceDeviceId: string;
   fieldId?: string;
   plotId?: string;
-  subplotId?: string;
+  loteDetalleId?: string;
   metric:
     | 'soil_moisture'
     | 'air_temperature'
@@ -152,3 +152,5 @@ export interface DomainSchemaVersion {
   releasedAt: Date;
   notes: string;
 }
+
+

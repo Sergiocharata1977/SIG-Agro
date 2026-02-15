@@ -74,7 +74,7 @@ async function registerSchemaVersion(db) {
       {
         version: 'a1-v1.0.0',
         releasedAt: FieldValue.serverTimestamp(),
-        notes: 'Modelo base A1: logbooks, treatments, irrigation, subplots, sensor_readings, profitability_snapshots',
+        notes: 'Modelo base A1: logbooks, treatments, irrigation, lotes_detalle, sensor_readings, profitability_snapshots',
       },
       { merge: true }
     );
@@ -103,3 +103,4 @@ run().catch((error) => {
   console.error('Error migracion A1:', error.message);
   process.exit(1);
 });
+

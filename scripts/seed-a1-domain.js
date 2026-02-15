@@ -113,12 +113,12 @@ async function run() {
     { merge: true }
   );
 
-  await orgRef.collection('subplots').doc('subplot-demo').set(
+  await orgRef.collection('lotes_detalle').doc('lote-detalle-demo').set(
     {
       organizationId: ORG_ID,
       fieldId: FIELD_ID,
       plotId: PLOT_ID,
-      name: 'Subparcela Norte',
+      name: 'lote Norte',
       code: 'SP-N-001',
       areaHa: 22.5,
       currentGeometryGeoJSON: '{"type":"Polygon","coordinates":[[[-58.9,-27.4],[-58.89,-27.4],[-58.89,-27.41],[-58.9,-27.41],[-58.9,-27.4]]]}',
@@ -189,3 +189,5 @@ run().catch((error) => {
   console.error('Error seed A1:', error.message);
   process.exit(1);
 });
+
+

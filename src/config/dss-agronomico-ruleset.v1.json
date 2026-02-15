@@ -1,0 +1,144 @@
+{
+  "version": "1.0.0",
+  "name": "SIG Agro DSS v1",
+  "description": "Reglas agronomicas iniciales para monitoreo y accion temprana",
+  "rules": [
+    {
+      "id": "R001_SOIL_MOISTURE_LOW",
+      "title": "Humedad de suelo baja",
+      "description": "Detecta estres hidrico por baja humedad",
+      "severity": "warning",
+      "confidence": 0.82,
+      "recommendation": "Programar riego suplementario en ventana nocturna",
+      "explanation": "La humedad de suelo esta por debajo del umbral operativo",
+      "allConditionsRequired": true,
+      "enabled": true,
+      "conditions": [{ "metric": "soil_moisture", "operator": "<", "value": 22 }]
+    },
+    {
+      "id": "R002_NDVI_FALLING",
+      "title": "Descenso de vigor vegetativo",
+      "description": "Detecta descenso de NDVI",
+      "severity": "warning",
+      "confidence": 0.78,
+      "recommendation": "Verificar nutricion y disponibilidad hidrica",
+      "explanation": "El NDVI se encuentra por debajo del rango recomendado",
+      "enabled": true,
+      "conditions": [{ "metric": "ndvi", "operator": "<", "value": 0.45 }]
+    },
+    {
+      "id": "R003_HEAT_STRESS",
+      "title": "Estres termico",
+      "description": "Temperatura extrema con baja humedad",
+      "severity": "critical",
+      "confidence": 0.86,
+      "recommendation": "Ajustar calendario de labores y evaluar riego de alivio",
+      "explanation": "La combinacion temperatura-humedad indica estres termico",
+      "allConditionsRequired": true,
+      "enabled": true,
+      "conditions": [
+        { "metric": "air_temperature", "operator": ">", "value": 36 },
+        { "metric": "humidity", "operator": "<", "value": 30 }
+      ]
+    },
+    {
+      "id": "R004_HEAVY_RAIN_RISK",
+      "title": "Riesgo de exceso hidrico",
+      "description": "Lluvia pronosticada alta",
+      "severity": "info",
+      "confidence": 0.74,
+      "recommendation": "Revisar drenajes y postergar aplicaciones sensibles",
+      "explanation": "Se pronostican lluvias por encima del umbral",
+      "enabled": true,
+      "conditions": [{ "metric": "rain_forecast_mm", "operator": ">", "value": 40 }]
+    },
+    {
+      "id": "R005_PEST_PRESSURE_HIGH",
+      "title": "Presion de plagas alta",
+      "description": "Indice de plaga superior a limite",
+      "severity": "critical",
+      "confidence": 0.88,
+      "recommendation": "Aplicar protocolo de tratamiento validado",
+      "explanation": "El indice de plagas supero el umbral de accion",
+      "enabled": true,
+      "conditions": [{ "metric": "pest_index", "operator": ">=", "value": 70 }]
+    },
+    {
+      "id": "R006_DISEASE_RISK_HIGH",
+      "title": "Riesgo fitosanitario alto",
+      "description": "Riesgo de enfermedad elevado",
+      "severity": "critical",
+      "confidence": 0.84,
+      "recommendation": "Ejecutar scouting urgente y validar tratamiento",
+      "explanation": "El riesgo de enfermedad supera nivel critico",
+      "enabled": true,
+      "conditions": [{ "metric": "disease_risk", "operator": ">", "value": 65 }]
+    },
+    {
+      "id": "R007_WIND_OPERATION_BLOCK",
+      "title": "Viento alto para aplicacion",
+      "description": "Condicion no apta para pulverizacion",
+      "severity": "warning",
+      "confidence": 0.8,
+      "recommendation": "Reprogramar aplicacion para ventana segura",
+      "explanation": "Velocidad de viento superior al limite operativo",
+      "enabled": true,
+      "conditions": [{ "metric": "wind_speed", "operator": ">", "value": 25 }]
+    },
+    {
+      "id": "R008_SOIL_TEMP_LOW",
+      "title": "Temperatura de suelo baja",
+      "description": "Riesgo de emergencia lenta",
+      "severity": "info",
+      "confidence": 0.7,
+      "recommendation": "Monitorear velocidad de implantacion y ajustar fecha de siembra",
+      "explanation": "La temperatura de suelo esta por debajo del umbral recomendado",
+      "enabled": true,
+      "conditions": [{ "metric": "soil_temperature", "operator": "<", "value": 12 }]
+    },
+    {
+      "id": "R009_PRESSURE_DROP",
+      "title": "Descenso de presion atmosferica",
+      "description": "Posible evento meteorologico abrupto",
+      "severity": "info",
+      "confidence": 0.66,
+      "recommendation": "Revisar pronostico de corto plazo",
+      "explanation": "La presion atmosferica cae por debajo del umbral definido",
+      "enabled": true,
+      "conditions": [{ "metric": "pressure", "operator": "<", "value": 995 }]
+    },
+    {
+      "id": "R010_RAINFALL_DEFICIT",
+      "title": "Deficit acumulado de lluvias",
+      "description": "Agua acumulada por debajo del minimo",
+      "severity": "warning",
+      "confidence": 0.79,
+      "recommendation": "Revisar estrategia de riego y rotacion",
+      "explanation": "La lluvia acumulada esta por debajo del rango esperado",
+      "enabled": true,
+      "conditions": [{ "metric": "rain_7d_mm", "operator": "<", "value": 8 }]
+    },
+    {
+      "id": "R011_EXTREME_HUMIDITY",
+      "title": "Humedad relativa extrema",
+      "description": "Condicion propicia para enfermedad",
+      "severity": "warning",
+      "confidence": 0.77,
+      "recommendation": "Aumentar frecuencia de monitoreo sanitario",
+      "explanation": "La humedad relativa supera umbral de riesgo",
+      "enabled": true,
+      "conditions": [{ "metric": "humidity", "operator": ">", "value": 90 }]
+    },
+    {
+      "id": "R012_NDVI_RECOVERY",
+      "title": "Recuperacion de vigor",
+      "description": "NDVI en recuperacion operativa",
+      "severity": "info",
+      "confidence": 0.72,
+      "recommendation": "Mantener plan actual y monitorear tendencia",
+      "explanation": "El NDVI se mantiene en rango saludable",
+      "enabled": true,
+      "conditions": [{ "metric": "ndvi", "operator": ">=", "value": 0.62 }]
+    }
+  ]
+}

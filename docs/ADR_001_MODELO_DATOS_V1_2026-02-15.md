@@ -9,7 +9,7 @@ El plan multiagente requiere un modelo comun para cerrar brechas en:
 - cuaderno de campo,
 - tratamientos,
 - riego,
-- subparcelas con versionado,
+- lotes con versionado,
 - sensores/telemetria,
 - rentabilidad por unidad productiva.
 
@@ -20,7 +20,7 @@ Se adopta esquema de dominios v1 bajo `organizations/{orgId}` con colecciones:
 1. `field_logbooks`
 2. `treatments`
 3. `irrigation_plans`
-4. `subplots`
+4. `lotes_detalle`
 5. `sensor_readings`
 6. `profitability_snapshots`
 
@@ -28,7 +28,7 @@ Reglas estructurales:
 - Todos los documentos incluyen auditoria (`createdAt`, `updatedAt`, `createdBy`, `status`).
 - Todas las entidades son multi-tenant por `organizationId`.
 - `organizationId` activo se mantiene para compatibilidad; `organizationIds[]` para acceso multipertenencia.
-- Geometrias de subparcelas guardan historial de versionado.
+- Geometrias de lotes guardan historial de versionado.
 
 ## Consecuencias
 Positivas:
@@ -59,3 +59,4 @@ Trade-offs:
 - ADR aprobado.
 - Migracion y seed ejecutables.
 - Build y lint en verde.
+

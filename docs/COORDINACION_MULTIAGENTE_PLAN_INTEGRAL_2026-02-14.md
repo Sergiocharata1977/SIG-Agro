@@ -26,7 +26,7 @@ Roles:
 2. Cuaderno + tratamientos
 3. Riego
 4. DSS (alertas/plagas/enfermedades)
-5. Catastro/subparcelas GIS
+5. Catastro/lotes GIS
 6. Integraciones IoT/maquinaria
 7. Rentabilidad y contabilidad productiva
 8. UX/UI y navegacion
@@ -44,7 +44,7 @@ Roles:
 ### Fase B (Semanas 3-6): Modulos core
 - Cuaderno + tratamientos.
 - Riego.
-- Catastro/subparcelas.
+- Catastro/lotes.
 - Rentabilidad v1.
 
 ### Fase C (Semanas 7-9): Inteligencia e integraciones
@@ -74,7 +74,7 @@ Roles:
 Objetivo: definir y aplicar modelo de datos v1 unificado para productor->organizaciones->operaciones.
 Tareas:
 1. Consolidar esquema multi-organizacion en `users`, `organizations`, `members`.
-2. Diseñar colecciones de dominio: `field_logbooks`, `treatments`, `irrigation_plans`, `subplots`, `sensor_readings`, `profitability_snapshots`.
+2. Diseñar colecciones de dominio: `field_logbooks`, `treatments`, `irrigation_plans`, `lotes_detalle`, `sensor_readings`, `profitability_snapshots`.
 3. Definir contratos API y validaciones de entrada.
 4. Entregar ADR + migraciones + seed.
 DoD:
@@ -86,7 +86,7 @@ DoD:
 Objetivo: flujo unico de cuaderno de campo con trazabilidad completa por campana.
 Tareas:
 1. Crear modulo cuaderno E2E (alta/edicion/cierre).
-2. Agregar tratamientos manuales y masivos por lote/subparcela.
+2. Agregar tratamientos manuales y masivos por lote/lote.
 3. Evidencias: foto/doc/insumo/dosis/operario/maquinaria/fecha.
 4. Exportables regulatorios basicos.
 DoD:
@@ -97,7 +97,7 @@ DoD:
 ## Prompt Agente 3 - Riego
 Objetivo: planificacion y seguimiento de riego con KPIs.
 Tareas:
-1. ABM de planes de riego por lote/subparcela.
+1. ABM de planes de riego por lote/lote.
 2. Registro de ejecucion real vs plan.
 3. KPIs: mm aplicados, desvio, eficiencia.
 4. Alertas por incumplimiento de ventana.
@@ -116,15 +116,15 @@ DoD:
 - Motor DSS con al menos 10 reglas productivas iniciales.
 - Registro de por que se disparo cada alerta.
 
-## Prompt Agente 5 - Catastro y Subparcelas GIS
-Objetivo: gestion catastral y geometria subparcela con versionado.
+## Prompt Agente 5 - Catastro y lotes GIS
+Objetivo: gestion catastral y geometria lote con versionado.
 Tareas:
-1. ABM de subparcelas dentro de lote.
+1. ABM de lotes dentro de lote.
 2. Versionado de geometrias (historial de cambios).
 3. Vista comparativa temporal de delimitaciones.
 4. Reglas de validacion geometrica.
 DoD:
-- Subparcelas dibujables/editables y persistidas.
+- lotes dibujables/editables y persistidas.
 - Historial consultable.
 
 ## Prompt Agente 6 - Integraciones IoT y Maquinaria
@@ -221,7 +221,7 @@ Matriz de estado A1-A5:
 | A2 Cuaderno + Tratamientos | Pendiente de merge | Sin modulo `field_logbooks`/`treatments` visible |
 | A3 Riego | Pendiente de merge | Sin `irrigation_plans`/pantallas de riego |
 | A4 DSS Agronomico | Pendiente de merge | Sin motor DSS/ruleset/tests en repo local |
-| A5 Catastro/Subparcelas GIS | Pendiente de merge | Sin entidades `subplots`/versionado geometrico |
+| A5 Catastro/lotes GIS | Pendiente de merge | Sin entidades `lotes_detalle`/versionado geometrico |
 
 Accion requerida para unificacion:
 1. Cada agente debe entregar su rama/commit hash exacto.
@@ -278,3 +278,98 @@ Accion requerida para unificacion:
   - Firestore no impone schema; la validacion estricta queda para capas de servicios/API de A2-A7.
 - Proximo paso:
   - Ejecutar A2/A3/A4/A5 sobre este contrato de datos y comenzar integracion secuencial.
+
+### Reporte Agente 2 - 2026-02-15 22:00
+- Estado: completado
+- Avances:
+  - Se implemento modulo de Cuaderno de Campo en ruta dedicada con flujo de alta y consulta por campana/campo/lote.
+  - Se implemento modulo de Tratamientos (manual/masivo) integrado al mismo flujo operativo.
+  - Se crearon servicios de dominio para colecciones `field_logbooks` y `treatments`.
+  - Se implemento exportable regulatorio basico en CSV para tratamientos.
+  - Se agrego acceso de navegacion al modulo de Cuaderno desde sidebar.
+- Archivos modificados:
+  - `src/app/(dashboard)/cuaderno/page.tsx`
+  - `src/services/field-logbooks.ts`
+  - `src/services/treatments.ts`
+  - `src/components/layout/Sidebar.tsx`
+  - `tests/unit/treatments.service.test.ts`
+- Riesgos/Bloqueos:
+  - Queda pendiente una capa API dedicada para operaciones batch y firma regulatoria avanzada.
+- Proximo paso:
+  - Continuar con A3 (Riego) y A4 (DSS) usando este flujo como base de integracion.
+
+### Reporte Agente 3 - 2026-02-15 22:40
+- Estado: completado
+- Avances:
+  - Se implemento modulo de planificacion de riego con ABM basico y seguimiento operativo.
+  - Se agrego servicio de dominio `irrigation_plans` con CRUD y calculo de KPIs.
+  - Se implementaron alertas de incumplimiento de ventana y eficiencia/desvio.
+  - Se agrego ruta funcional `/riego` integrada al menu de navegacion.
+  - Se agregaron tests unitarios para resumen y alertas de riego.
+- Archivos modificados:
+  - `src/services/irrigation-plans.ts`
+  - `src/app/(dashboard)/riego/page.tsx`
+  - `src/components/layout/Sidebar.tsx`
+  - `tests/unit/irrigation-plans.service.test.ts`
+- Riesgos/Bloqueos:
+  - Falta integrar telemetria real de sensores (A6) para automatizar recomendacion de riego.
+- Proximo paso:
+  - Continuar con A4 (DSS) y conectar alertas de riego al motor explicable.
+
+
+### Reporte Agente 4 - 2026-02-15 23:35
+- Estado: completado
+- Avances:
+  - Se implemento motor DSS agronomico formal con ruleset versionado JSON v1.0.0.
+  - Se agrego salida explicable con severidad, confianza, recomendacion y explicacion.
+  - Se implemento bitacora por regla (`executionLog`) con estado, tiempos, condiciones y codigos de error.
+  - Se agrego SLA tecnico configurable (limite de reglas, tiempo total y por regla).
+  - Se expuso endpoint de evaluacion `/api/agro/dss/evaluate`.
+- Archivos modificados:
+  - `src/types/dss-agronomico.ts`
+  - `src/config/dss-agronomico-ruleset.v1.json`
+  - `src/services/dss/AgronomicDssEngine.ts`
+  - `src/app/api/agro/dss/evaluate/route.ts`
+  - `tests/unit/agronomic-dss-engine.test.ts`
+- Riesgos/Bloqueos:
+  - Falta calibracion por cultivo/region con datos historicos reales.
+- Proximo paso:
+  - Integrar disparo DSS automatico desde flujos de riego, telemetria e imagen satelital.
+
+### Reporte Agente 5 - 2026-02-15 23:50
+- Estado: completado
+- Avances:
+  - Se implemento modulo de Catastro de Lotes con ABM de lotes de detalle.
+  - Se implemento versionado de geometrias por lote y historial consultable.
+  - Se agrego comparativa temporal entre versiones de geometria (delta ha y delta %).
+  - Se implementaron validaciones geometricas basicas (GeoJSON, cierre de poligono, rango y area > 0).
+  - Se agrego ruta funcional `/lotes` integrada al menu.
+- Archivos modificados:
+  - `src/services/lotes-detalle.ts`
+  - `src/app/(dashboard)/lotes/page.tsx`
+  - `src/components/layout/Sidebar.tsx`
+  - `tests/unit/lotes-detalle.validation.test.ts`
+- Riesgos/Bloqueos:
+  - Validacion topologica avanzada (autointerseccion) queda para iteracion siguiente.
+- Proximo paso:
+  - Integrar editor geometrico en mapa con dibujo asistido.
+
+### Reporte Agente 6 - 2026-02-16 00:05
+- Estado: completado
+- Avances:
+  - Se implemento hub de integraciones para telemetria IoT y eventos de maquinaria.
+  - Se agrego normalizacion de payload de sensores y mapeo de metricas.
+  - Se implemento idempotencia por `externalEventId` y logging de eventos de integracion.
+  - Se implementaron endpoints API para ingest IoT y tareas/eventos de maquinaria.
+  - Se agregaron tests unitarios de normalizacion de telemetria.
+- Archivos modificados:
+  - `src/types/integrations.ts`
+  - `src/services/integration-hub.ts`
+  - `src/app/api/integrations/iot/ingest/route.ts`
+  - `src/app/api/integrations/machinery/tasks/route.ts`
+  - `src/app/api/integrations/machinery/events/route.ts`
+  - `tests/unit/integration-hub.normalization.test.ts`
+- Riesgos/Bloqueos:
+  - Conectores reales de proveedor/ISOBUS aun no implementados (modo simulado v1).
+- Proximo paso:
+  - Incorporar adaptadores por proveedor y observabilidad de latencia de integracion.

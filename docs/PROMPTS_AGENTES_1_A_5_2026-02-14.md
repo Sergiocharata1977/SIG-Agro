@@ -42,7 +42,7 @@ Objetivo: definir y aplicar modelo de datos v1 unificado para productor -> organ
 - `field_logbooks`
 - `treatments`
 - `irrigation_plans`
-- `subplots`
+- `lotes_detalle`
 - `sensor_readings`
 - `profitability_snapshots`
 3. Definir contratos API y validaciones de entrada (tipos + payloads).
@@ -65,7 +65,7 @@ Objetivo: implementar flujo unico de cuaderno de campo con trazabilidad completa
 
 ### Tareas
 1. Crear modulo cuaderno E2E (alta, edicion, cierre).
-2. Implementar tratamientos manuales y masivos por lote/subparcela.
+2. Implementar tratamientos manuales y masivos por lote/lote.
 3. Registrar evidencias: foto/doc, insumo, dosis, operario, maquinaria, fecha.
 4. Generar exportables regulatorios basicos.
 
@@ -85,7 +85,7 @@ Sos el Agente 3 (Riego) del proyecto SIG Agro.
 Objetivo: planificacion y seguimiento de riego con KPIs operativos.
 
 ### Tareas
-1. ABM de planes de riego por lote/subparcela.
+1. ABM de planes de riego por lote/lote.
 2. Registro de ejecucion real vs plan.
 3. KPIs: mm aplicados, desvio, eficiencia.
 4. Alertas por incumplimiento de ventana.
@@ -122,21 +122,22 @@ Actualizar `docs/COORDINACION_MULTIAGENTE_PLAN_INTEGRAL_2026-02-14.md` con el fo
 
 ---
 
-## Prompt Agente 5 - Catastro y Subparcelas GIS
-Sos el Agente 5 (Catastro y Subparcelas GIS) del proyecto SIG Agro.
-Objetivo: implementar gestion catastral y geometria subparcela con versionado.
+## Prompt Agente 5 - Catastro y lotes GIS
+Sos el Agente 5 (Catastro y lotes GIS) del proyecto SIG Agro.
+Objetivo: implementar gestion catastral y geometria lote con versionado.
 
 ### Tareas
-1. ABM de subparcelas dentro de lote.
+1. ABM de lotes dentro de lote.
 2. Versionado de geometrias (historial de cambios).
 3. Vista comparativa temporal de delimitaciones.
 4. Reglas de validacion geometrica (consistencia topologica basica).
 
 ### Definition of Done
-- Subparcelas dibujables/editables/persistidas.
+- lotes dibujables/editables/persistidas.
 - Historial consultable por usuario/fecha.
 - Validaciones minimas funcionando.
 - No regressions en lint/build.
 
 ### Reporte obligatorio
 Actualizar `docs/COORDINACION_MULTIAGENTE_PLAN_INTEGRAL_2026-02-14.md` con el formato de reporte al cierre de cada bloque.
+

@@ -10,9 +10,9 @@ Objetivo: controlar cierre de agentes, detectar incompletos y definir lanzamient
 | A1 Arquitectura y Datos | Pendiente | No se detectan nuevas colecciones/ADRs/migraciones A1 | Lanzar A1 y exigir PR/commit hash |
 | A2 Cuaderno + Tratamientos | Pendiente | No hay modulo dedicado `field_logbooks`/`treatments` | Lanzar A2 despues de A1 |
 | A3 Riego | Pendiente | No hay modulo dedicado de planificacion de riego | Lanzar A3 despues de A1 |
-| A4 DSS Agronomico | Pendiente | No existen artefactos DSS reportados en `src/services/dss` | Lanzar A4 despues de A1 |
-| A5 Catastro/Subparcelas | Pendiente | No existen `subplots` ni versionado geometrico | Lanzar A5 despues de A1 |
-| A6 Integraciones IoT/Maquinaria | No iniciado | No hay pipelines/normalizacion IoT dedicados | Lanzar A6 tras base A1 |
+| A4 DSS Agronomico | Completado | Motor DSS + ruleset + endpoint + tests unitarios | Integrar calibracion por cultivo/region |
+| A5 Catastro/lotes | Completado | Modulo lotes con versionado geometrico + comparativa + validaciones | Integrar editor geometrico de mapa |
+| A6 Integraciones IoT/Maquinaria | Completado v1 simulado | Hub de integraciones + idempotencia + APIs + tests unitarios | Conectar adaptadores reales por proveedor |
 | A7 Rentabilidad Productiva | Parcial legacy | Hay piezas de costos/margen dispersas, no tablero integrado | Completar A7 con dashboard unificado |
 | A8 UX/UI y Navegacion | Parcial-alto | Sidebar/header/tokens y ABM organizaciones implementados | Cerrar checklist UX cross-modulo |
 | A9 QA/E2E/Observabilidad | Parcial | Hay tests API y e2e smoke de alertas/notificaciones | Expandir cobertura journeys criticos |
@@ -32,9 +32,6 @@ Pendientes de lanzamiento efectivo:
 - A1
 - A2
 - A3
-- A4
-- A5
-- A6
 - A7 (fase de cierre, no finalizado)
 - A9 (fase de cierre, no finalizado)
 
@@ -69,3 +66,4 @@ Ya lanzados con avance en repo local:
 - Proximo paso:
   - ...
 ```
+

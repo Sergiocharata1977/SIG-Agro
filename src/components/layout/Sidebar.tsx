@@ -13,6 +13,7 @@ import {
     ChevronLeft,
     ChevronRight,
     FileText,
+    Droplets,
     Landmark,
     LogOut,
     MapPinned,
@@ -108,10 +109,28 @@ export default function Sidebar() {
             module: 'campos',
         },
         {
+            icon: Pin,
+            label: 'Lotes GIS',
+            href: '/lotes',
+            active: pathname?.startsWith('/lotes') || false,
+            feature: 'mapa_gis',
+            module: 'campos',
+        },
+
+        {
             icon: Sprout,
             label: 'Campanas',
             href: '/campanias',
             active: pathname?.startsWith('/campanias') || false,
+            feature: 'campanias',
+            module: 'campanias',
+        },
+
+        {
+            icon: Droplets,
+            label: 'Riego',
+            href: '/riego',
+            active: pathname?.startsWith('/riego') || false,
             feature: 'campanias',
             module: 'campanias',
         },
@@ -331,5 +350,8 @@ export default function Sidebar() {
         </>
     );
 }
+
+
+
 
 
