@@ -241,7 +241,7 @@ export default function DashboardPage() {
             return;
         }
         if (user?.role === 'super_admin') {
-            router.push('/super-admin/organizaciones');
+            router.push('/super-admin/productores');
         }
     }, [firebaseUser, user, authLoading, router]);
 

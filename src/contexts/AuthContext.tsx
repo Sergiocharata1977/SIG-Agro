@@ -14,7 +14,7 @@ import {
     updateProfile,
     User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
 import { auth, db } from '@/firebase/config';
 import { Organization, User, UserRole } from '@/types/organization';
 import {
@@ -58,6 +58,18 @@ interface SignUpData {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function normalizeRole(value: unknown): UserRole | null {
+    if (typeof value !== 'string') return null;
+    const normalized = value.trim().toLowerCase().replace(/\s+/g, '_').replace(/-/g, '_');
+    if (normalized === 'superadmin') return 'super_admin';
+    if (normalized === 'super_admin') return 'super_admin';
+    if (normalized === 'owner') return 'owner';
+    if (normalized === 'admin') return 'admin';
+    if (normalized === 'operator') return 'operator';
+    if (normalized === 'viewer') return 'viewer';
+    return null;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
     const [user, setUser] = useState<User | null>(null);
@@ -71,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setFirebaseUser(fbUser);
 
             if (fbUser) {
-                await loadUserData(fbUser.uid);
+                await loadUserData(fbUser);
             } else {
                 setUser(null);
                 setOrganization(null);
@@ -84,9 +96,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return () => unsubscribe();
     }, []);
 
-    const loadUserData = async (userId: string) => {
+    const loadUserData = async (fbUser: FirebaseUser) => {
         try {
+            const userId = fbUser.uid;
             const userData = await obtenerUsuario(userId);
+            const tokenResult = await fbUser.getIdTokenResult();
+            const claimRole = normalizeRole(tokenResult.claims?.role);
 
             if (userData) {
                 const orgs = await obtenerOrganizacionesUsuario(userId, userData);
@@ -105,12 +120,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
                 setUser({
                     ...userData,
+                    role: claimRole || normalizeRole((userData as unknown as { rol?: string }).rol) || normalizeRole(userData.role) || 'owner',
                     organizationId: activeOrgId || '',
                     organizationIds: Array.from(new Set([...(userData.organizationIds || []), ...orgs.map((o) => o.id)])),
                     accessAllOrganizations: userData.accessAllOrganizations !== false,
                 });
                 setOrganization(activeOrg || null);
                 await actualizarUltimoLogin(userId);
+                return;
+            }
+
+            // Autobootstrap para super admin cuando la coleccion users fue eliminada.
+            if (claimRole === 'super_admin') {
+                await setDoc(doc(db, 'users', userId), {
+                    email: fbUser.email || '',
+                    displayName: fbUser.displayName || fbUser.email?.split('@')[0] || 'Super Admin',
+                    role: 'super_admin',
+                    status: 'active',
+                    organizationId: '',
+                    organizationIds: [],
+                    accessAllOrganizations: true,
+                    modulosHabilitados: null,
+                    createdAt: Timestamp.now(),
+                    updatedAt: Timestamp.now(),
+                    lastLogin: Timestamp.now(),
+                }, { merge: true });
+
+                setUser({
+                    id: userId,
+                    email: fbUser.email || '',
+                    displayName: fbUser.displayName || fbUser.email?.split('@')[0] || 'Super Admin',
+                    role: 'super_admin',
+                    status: 'active',
+                    organizationId: '',
+                    organizationIds: [],
+                    accessAllOrganizations: true,
+                    modulosHabilitados: null,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    lastLogin: new Date(),
+                });
+                setOrganization(null);
+                setOrganizations([]);
                 return;
             }
 
@@ -135,7 +186,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setLoading(true);
             setError(null);
             const result = await signInWithEmailAndPassword(auth, email, password);
-            await loadUserData(result.user.uid);
+            await loadUserData(result.user);
         } catch (err: unknown) {
             const errorMessage = getErrorMessage(err);
             setError(errorMessage);
@@ -169,7 +220,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 data.displayName
             );
 
-            await loadUserData(newFirebaseUser.uid);
+            await loadUserData(newFirebaseUser);
         } catch (err: unknown) {
             const errorMessage = getErrorMessage(err);
             setError(errorMessage);
