@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Sidebar from '@/components/layout/Sidebar';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
@@ -14,6 +14,7 @@ export default function DashboardLayout({
 }) {
     const { firebaseUser, user, loading } = useAuth();
     const router = useRouter();
+    const pathname = usePathname();
     const isSuperAdmin = user?.role === 'super_admin' || isSuperAdminEmail(firebaseUser?.email);
 
     useEffect(() => {
@@ -23,8 +24,12 @@ export default function DashboardLayout({
         }
         if (!loading && isSuperAdmin) {
             router.replace('/super-admin/productores');
+            return;
         }
-    }, [firebaseUser, isSuperAdmin, loading, router]);
+        if (!loading && firebaseUser && !isSuperAdmin && !user?.organizationId && pathname !== '/organizaciones') {
+            router.replace('/organizaciones');
+        }
+    }, [firebaseUser, isSuperAdmin, loading, pathname, router, user?.organizationId]);
 
     // Show loading state while checking authentication
     if (loading) {

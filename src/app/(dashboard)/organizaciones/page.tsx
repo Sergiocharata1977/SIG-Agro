@@ -35,7 +35,7 @@ export default function OrganizacionesPage() {
   const [query, setQuery] = useState('');
   const [showForm, setShowForm] = useState(false);
 
-  const canManage = canPerformAction('admin');
+  const canManage = canPerformAction('admin') || organizations.length === 0;
 
   const sortedOrganizations = useMemo(() => [...organizations].sort((a, b) => a.name.localeCompare(b.name)), [organizations]);
 

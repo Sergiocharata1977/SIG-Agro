@@ -90,6 +90,9 @@ export default function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const contextualPlotId = searchParams.get('plotId');
+  const hasActiveOrganization = Boolean(
+    organizationId && organizations.some((org) => org.id === organizationId)
+  );
 
   useEffect(() => {
     mobileToggleFn = () => setMobileOpen((prev) => !prev);
@@ -297,9 +300,11 @@ export default function Sidebar() {
 
   useEffect(() => {
     const defaults: Record<string, boolean> = {};
-    for (const g of groups) defaults[g.key] = g.active;
+    for (const g of groups) {
+      defaults[g.key] = hasActiveOrganization ? g.active : g.key === 'organizacion';
+    }
     setExpandedGroups((prev) => ({ ...defaults, ...prev }));
-  }, [groups]);
+  }, [groups, hasActiveOrganization]);
 
   const isSuperAdmin = user?.role === 'super_admin' || isSuperAdminEmail(firebaseUser?.email);
   if (isSuperAdmin) return null;
@@ -309,8 +314,12 @@ export default function Sidebar() {
   const userInitial = userName.charAt(0).toUpperCase();
 
   const filteredGroups = groups
+    .filter((group) => hasActiveOrganization || group.key === 'organizacion')
     .filter((group) => {
-      if (group.module === 'admin') return canPerformAction('admin');
+      if (group.module === 'admin') {
+        if (group.key === 'organizacion') return true;
+        return canPerformAction('admin');
+      }
       if (group.feature && organization) {
         const enabled = organization.features[group.feature as keyof typeof organization.features];
         if (!enabled) return false;
@@ -320,7 +329,10 @@ export default function Sidebar() {
     .map((group) => ({
       ...group,
       items: group.items.filter((item) => {
-        if (item.module === 'admin') return canPerformAction('admin');
+        if (item.module === 'admin') {
+          if (item.href === '/organizaciones') return true;
+          return canPerformAction('admin');
+        }
         if (item.feature && organization) {
           const enabled = organization.features[item.feature as keyof typeof organization.features];
           if (!enabled) return false;
@@ -330,7 +342,7 @@ export default function Sidebar() {
     }))
     .filter((group) => group.items.length > 0);
 
-  if (pathname === '/dashboard' && contextualPlotId) {
+  if (hasActiveOrganization && pathname === '/dashboard' && contextualPlotId) {
     filteredGroups.unshift({
       key: 'contexto-lote',
       title: `Campo contextual`,
@@ -435,15 +447,13 @@ export default function Sidebar() {
                 </div>
               )}
 
-              {canPerformAction('admin') && (
-                <Link
-                  href="/organizaciones"
-                  onClick={() => setMobileOpen(false)}
-                  className="inline-flex items-center justify-center w-full rounded-lg bg-emerald-600/20 px-2.5 py-2 text-xs font-medium text-emerald-300 hover:bg-emerald-600/30"
-                >
-                  ABM Organizaciones
-                </Link>
-              )}
+              <Link
+                href="/organizaciones"
+                onClick={() => setMobileOpen(false)}
+                className="inline-flex items-center justify-center w-full rounded-lg bg-emerald-600/20 px-2.5 py-2 text-xs font-medium text-emerald-300 hover:bg-emerald-600/30"
+              >
+                ABM Organizaciones
+              </Link>
             </div>
           </div>
         )}

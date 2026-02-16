@@ -170,8 +170,12 @@ export default function DashboardPage() {
     }
     if (isSuperAdmin) {
       router.replace('/super-admin/productores');
+      return;
     }
-  }, [authLoading, firebaseUser, isSuperAdmin, router]);
+    if (!user?.organizationId) {
+      router.replace('/organizaciones');
+    }
+  }, [authLoading, firebaseUser, isSuperAdmin, router, user?.organizationId]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -274,6 +278,7 @@ export default function DashboardPage() {
   }
 
   if (!firebaseUser || isSuperAdmin) return null;
+  if (!user?.organizationId) return null;
 
   return (
     <div className="h-screen flex overflow-hidden bg-slate-100">
