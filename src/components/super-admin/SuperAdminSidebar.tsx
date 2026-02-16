@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import {
-  Building2,
   LogOut,
   Palette,
   Settings,
@@ -22,12 +21,6 @@ export default function SuperAdminSidebar() {
       label: 'Productores',
       href: '/super-admin/productores',
       active: pathname?.startsWith('/super-admin/productores'),
-    },
-    {
-      icon: Building2,
-      label: 'Organizaciones',
-      href: '/super-admin/organizaciones',
-      active: pathname?.startsWith('/super-admin/organizaciones'),
     },
     {
       icon: Palette,

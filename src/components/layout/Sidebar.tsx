@@ -420,6 +420,15 @@ export default function Sidebar() {
                 <option key={org.id} value={org.id}>{org.name}</option>
               ))}
             </select>
+            {organizations.length === 0 && canPerformAction('admin') && (
+              <Link
+                href="/organizaciones"
+                onClick={() => setMobileOpen(false)}
+                className="inline-flex items-center justify-center w-full rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-1.5 text-xs font-medium text-emerald-300 hover:bg-emerald-500/20"
+              >
+                Crear organizacion
+              </Link>
+            )}
           </div>
         )}
 
