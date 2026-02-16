@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAdminFirestore } from '@/lib/firebase/admin-server';
+import { getAdminAuth, getAdminFirestore } from '@/lib/firebase/admin-server';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -17,6 +17,7 @@ type ProducerPayload = {
   direccion?: string;
   razonSocial?: string;
   cuit?: string;
+  password?: string;
   activo?: boolean;
 };
 
@@ -92,13 +93,42 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+    const password = normalizeString(body.password);
+    if (!password || password.length < 6) {
+      return NextResponse.json(
+        { error: 'La clave inicial es obligatoria y debe tener al menos 6 caracteres' },
+        { status: 400 }
+      );
+    }
 
     const adminDb = getAdminFirestore();
+    const adminAuth = getAdminAuth();
     const producerId = body.id && normalizeString(body.id) ? normalizeString(body.id) : buildProducerId(nombre);
     const now = new Date();
+    const displayName = `${nombre} ${normalizeString(body.apellido)}`.trim() || nombre;
+
+    let authUser;
+    try {
+      authUser = await adminAuth.createUser({
+        email,
+        password,
+        displayName,
+        emailVerified: true,
+        disabled: body.activo === false,
+      });
+    } catch (error) {
+      const code = (error as { code?: string }).code || '';
+      if (code.includes('email-already-exists')) {
+        return NextResponse.json(
+          { error: 'El email ya existe en Auth. Usa editar para resetear clave o cambia email.' },
+          { status: 409 }
+        );
+      }
+      throw error;
+    }
 
     const producerDoc = {
-      userId: normalizeString(body.userId) || producerId,
+      userId: authUser.uid,
       email,
       nombre,
       apellido: normalizeString(body.apellido),
@@ -115,6 +145,21 @@ export async function POST(req: NextRequest) {
     };
 
     await adminDb.collection('agro_productores').doc(producerId).set(producerDoc, { merge: true });
+    await adminDb.collection('users').doc(authUser.uid).set(
+      {
+        email,
+        displayName,
+        role: 'owner',
+        status: body.activo === false ? 'inactive' : 'active',
+        organizationId: '',
+        organizationIds: [],
+        accessAllOrganizations: true,
+        modulosHabilitados: null,
+        createdAt: now,
+        updatedAt: now,
+      },
+      { merge: true }
+    );
 
     return NextResponse.json(
       {
@@ -144,6 +189,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     const adminDb = getAdminFirestore();
+    const adminAuth = getAdminAuth();
     const ref = adminDb.collection('agro_productores').doc(id);
     const snap = await ref.get();
 
@@ -154,6 +200,11 @@ export async function PATCH(req: NextRequest) {
     const updateData: Record<string, unknown> = {
       updatedAt: new Date(),
     };
+    const current = (snap.data() || {}) as Record<string, unknown>;
+    const password = normalizeString(body.password);
+    if (password && password.length < 6) {
+      return NextResponse.json({ error: 'La nueva clave debe tener al menos 6 caracteres' }, { status: 400 });
+    }
 
     const updatableFields: Array<keyof ProducerPayload> = [
       'userId',
@@ -181,6 +232,31 @@ export async function PATCH(req: NextRequest) {
     });
 
     await ref.set(updateData, { merge: true });
+
+    const currentUserId = normalizeString(body.userId) || normalizeString(current.userId);
+    const nextEmail = body.email !== undefined ? normalizeString(body.email) : normalizeString(current.email);
+    const nextDisplayName = `${body.nombre !== undefined ? normalizeString(body.nombre) : normalizeString(current.nombre)} ${body.apellido !== undefined ? normalizeString(body.apellido) : normalizeString(current.apellido)}`.trim();
+    const nextDisabled = body.activo !== undefined ? !Boolean(body.activo) : current.activo === false;
+
+    if (currentUserId) {
+      const authUpdate: Record<string, unknown> = {
+        disabled: nextDisabled,
+      };
+      if (nextEmail) authUpdate.email = nextEmail;
+      if (nextDisplayName) authUpdate.displayName = nextDisplayName;
+      if (password) authUpdate.password = password;
+      await adminAuth.updateUser(currentUserId, authUpdate);
+
+      await adminDb.collection('users').doc(currentUserId).set(
+        {
+          email: nextEmail,
+          displayName: nextDisplayName || undefined,
+          status: nextDisabled ? 'inactive' : 'active',
+          updatedAt: new Date(),
+        },
+        { merge: true }
+      );
+    }
 
     const updated = await ref.get();
     return NextResponse.json({ producer: mapProducer(updated.id, (updated.data() || {}) as Record<string, unknown>) });

@@ -81,3 +81,10 @@ export function getAdminFirestore() {
     return adminApp.firestore();
 }
 
+export function getAdminAuth() {
+    if (!adminApp) {
+        adminApp = initializeAdmin();
+    }
+    return adminApp.auth();
+}
+

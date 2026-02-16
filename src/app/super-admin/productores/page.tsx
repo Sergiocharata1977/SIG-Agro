@@ -40,6 +40,7 @@ type ProducerForm = {
   id?: string;
   userId: string;
   email: string;
+  password: string;
   nombre: string;
   apellido: string;
   telefono: string;
@@ -51,6 +52,7 @@ type ProducerForm = {
 const EMPTY_FORM: ProducerForm = {
   userId: '',
   email: '',
+  password: '',
   nombre: '',
   apellido: '',
   telefono: '',
@@ -115,6 +117,7 @@ export default function SuperAdminProductoresPage() {
       id: producer.id,
       userId: producer.userId || '',
       email: producer.email || '',
+      password: '',
       nombre: producer.nombre || '',
       apellido: producer.apellido || '',
       telefono: producer.telefono || '',
@@ -130,8 +133,15 @@ export default function SuperAdminProductoresPage() {
     setSaving(true);
     setError(null);
 
+    if (!form.id && form.password.trim().length < 6) {
+      setError('La clave inicial es obligatoria y debe tener al menos 6 caracteres');
+      setSaving(false);
+      return;
+    }
+
     const payload = {
       ...form,
+      password: form.password || undefined,
       userId: form.userId || form.id || undefined,
     };
 
@@ -308,6 +318,17 @@ export default function SuperAdminProductoresPage() {
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="email">Email *</Label>
                 <BaseInput id="email" type="email" value={form.email} onChange={e => setForm(prev => ({ ...prev, email: e.target.value }))} required />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="password">{form.id ? 'Nueva clave (opcional)' : 'Clave inicial *'}</Label>
+                <BaseInput
+                  id="password"
+                  type="password"
+                  value={form.password}
+                  onChange={e => setForm(prev => ({ ...prev, password: e.target.value }))}
+                  placeholder={form.id ? 'Dejar vacio para no cambiar' : 'Minimo 6 caracteres'}
+                  required={!form.id}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="telefono">Telefono</Label>
