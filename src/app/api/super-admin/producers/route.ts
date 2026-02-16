@@ -69,7 +69,8 @@ export async function GET() {
     return NextResponse.json({ producers });
   } catch (error) {
     console.error('Error GET producers:', error);
-    return NextResponse.json({ error: 'Error interno' }, { status: 500 });
+    const detail = error instanceof Error ? error.message : 'unknown';
+    return NextResponse.json({ error: 'Error interno', detail }, { status: 500 });
   }
 }
 
@@ -125,7 +126,8 @@ export async function POST(req: NextRequest) {
     );
   } catch (error) {
     console.error('Error POST producer:', error);
-    return NextResponse.json({ error: 'Error interno' }, { status: 500 });
+    const detail = error instanceof Error ? error.message : 'unknown';
+    return NextResponse.json({ error: 'Error interno', detail }, { status: 500 });
   }
 }
 
@@ -181,6 +183,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ producer: mapProducer(updated.id, (updated.data() || {}) as Record<string, unknown>) });
   } catch (error) {
     console.error('Error PATCH producer:', error);
-    return NextResponse.json({ error: 'Error interno' }, { status: 500 });
+    const detail = error instanceof Error ? error.message : 'unknown';
+    return NextResponse.json({ error: 'Error interno', detail }, { status: 500 });
   }
 }

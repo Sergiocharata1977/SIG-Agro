@@ -98,7 +98,7 @@ export default function SuperAdminProductoresPage() {
     try {
       const res = await fetch('/api/super-admin/producers');
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'No se pudo cargar productores');
+      if (!res.ok) throw new Error(data.detail || data.error || 'No se pudo cargar productores');
       setProducers(Array.isArray(data.producers) ? data.producers : []);
     } catch (err) {
       console.error(err);
@@ -147,7 +147,7 @@ export default function SuperAdminProductoresPage() {
         body: JSON.stringify(payload),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Error al guardar productor');
+      if (!res.ok) throw new Error(data.detail || data.error || 'Error al guardar productor');
 
       setDialogOpen(false);
       setForm(EMPTY_FORM);
@@ -171,7 +171,7 @@ export default function SuperAdminProductoresPage() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'No se pudo actualizar estado');
+      if (!res.ok) throw new Error(data.detail || data.error || 'No se pudo actualizar estado');
       await loadProducers();
     } catch (err) {
       console.error(err);
