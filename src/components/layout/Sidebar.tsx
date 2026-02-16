@@ -408,27 +408,43 @@ export default function Sidebar() {
         </div>
 
         {!collapsed && (
-          <div className="px-4 py-3 border-b border-slate-800 bg-slate-900/40 space-y-2">
+          <div className="px-4 py-3 bg-slate-900/30 space-y-2">
             <div className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Organizacion activa</div>
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-md bg-sky-700 text-white grid place-items-center text-xs font-bold">{(organization?.name || 'O').charAt(0).toUpperCase()}</div>
-              <div className="text-sm font-medium text-slate-200 truncate">{organization?.name || 'Sin organizacion'}</div>
+
+            <div className="rounded-xl bg-slate-900/70 p-2.5 space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-md bg-sky-700 text-white grid place-items-center text-xs font-bold">{(organization?.name || 'O').charAt(0).toUpperCase()}</div>
+                <div className="text-sm font-medium text-slate-100 truncate">{organization?.name || 'Sin organizacion'}</div>
+              </div>
+
+              {organizations.length > 1 && (
+                <select
+                  value={organizationId || ''}
+                  onChange={(e) => void setActiveOrganization(e.target.value)}
+                  className="w-full text-sm rounded-lg bg-slate-950/70 text-slate-100 px-2.5 py-2 outline-none focus:ring-2 focus:ring-sky-600/40"
+                >
+                  {organizations.map((org) => (
+                    <option key={org.id} value={org.id}>{org.name}</option>
+                  ))}
+                </select>
+              )}
+
+              {organizations.length <= 1 && (
+                <div className="text-xs text-slate-400 px-1">
+                  {organizations.length === 0 ? 'Todavia no tenes organizaciones creadas.' : 'Tenes 1 organizacion vinculada.'}
+                </div>
+              )}
+
+              {canPerformAction('admin') && (
+                <Link
+                  href="/organizaciones"
+                  onClick={() => setMobileOpen(false)}
+                  className="inline-flex items-center justify-center w-full rounded-lg bg-emerald-600/20 px-2.5 py-2 text-xs font-medium text-emerald-300 hover:bg-emerald-600/30"
+                >
+                  ABM Organizaciones
+                </Link>
+              )}
             </div>
-            <select value={organizationId || ''} onChange={(e) => void setActiveOrganization(e.target.value)} className="w-full text-sm rounded-md bg-slate-900 border border-slate-700 text-slate-100 px-2 py-1.5" disabled={organizations.length === 0}>
-              {organizations.length === 0 && <option value="">Sin organizaciones</option>}
-              {organizations.map((org) => (
-                <option key={org.id} value={org.id}>{org.name}</option>
-              ))}
-            </select>
-            {organizations.length === 0 && canPerformAction('admin') && (
-              <Link
-                href="/organizaciones"
-                onClick={() => setMobileOpen(false)}
-                className="inline-flex items-center justify-center w-full rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-1.5 text-xs font-medium text-emerald-300 hover:bg-emerald-500/20"
-              >
-                Crear organizacion
-              </Link>
-            )}
           </div>
         )}
 
