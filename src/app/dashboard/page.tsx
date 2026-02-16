@@ -1,404 +1,452 @@
-'use client';
+﻿'use client';
 
-/**
- * Dashboard Principal - SIG Agro
- * Sidebar + Mapa + Panel de Alertas/KPIs
- * Integrado con nuevas colecciones fields/plots/crops
- */
-
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { useAuth } from '@/contexts/AuthContext';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { AlertTriangle, Bell, CalendarDays, CheckCircle2, DollarSign, Layers3, MapPinned, Tractor } from 'lucide-react';
 import Sidebar, { toggleMobileSidebar } from '@/components/layout/Sidebar';
+import { useAuth } from '@/contexts/AuthContext';
+import { isSuperAdminEmail } from '@/lib/auth-utils';
 import type { Field, Plot, Crop } from '@/types/sig-agro';
 import type { Alert } from '@/types/sig-agro-advanced';
+import type { OperationRecord } from '@/types/contabilidad-simple';
 import { obtenerFields } from '@/services/fields';
 import { obtenerPlots } from '@/services/plots';
-import { obtenerCrops, getCampaniaActual } from '@/services/crops';
+import { obtenerCrops, getCampaniaActual, obtenerCampaniasDisponibles } from '@/services/crops';
 import { obtenerAlertas, obtenerConteoNoLeidas } from '@/services/alerts';
-import { CULTIVOS_CONFIG, ESTADOS_LOTE_CONFIG } from '@/types/sig-agro';
-import { TIPOS_ALERTA_CONFIG, SEVERIDAD_CONFIG } from '@/types/sig-agro-advanced';
+import { listOperationsByOrg } from '@/services/operations-registry';
 import { BaseButton } from '@/components/design-system';
-import { isSuperAdminEmail } from '@/lib/auth-utils';
+import { CULTIVOS_CONFIG } from '@/types/sig-agro';
+import { TIPOS_ALERTA_CONFIG, SEVERIDAD_CONFIG } from '@/types/sig-agro-advanced';
 
-// Importar mapa dinámicamente
-const MapaGeneral = dynamic(
-    () => import('@/components/mapa/MapaGeneral'),
-    {
-        ssr: false,
-        loading: () => (
-            <div className="h-full bg-gray-200 animate-pulse flex items-center justify-center">
-                <span className="text-gray-500">Cargando mapa...</span>
-            </div>
-        )
-    }
-);
+const MapaGeneral = dynamic(() => import('@/components/mapa/MapaGeneral'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-full bg-slate-100 animate-pulse flex items-center justify-center">
+      <span className="text-slate-500 text-sm">Cargando mapa...</span>
+    </div>
+  ),
+});
 
-// KPI Card
-function KPICard({ icon, label, value, subvalue, color }: {
-    icon: string;
-    label: string;
-    value: string | number;
-    subvalue?: string;
-    color?: string;
-}) {
-    return (
-        <div className={`bg-white rounded-lg p-4 shadow-sm border-l-4 ${color || 'border-green-500'}`}>
-            <div className="flex items-center gap-2 mb-1">
-                <span className="text-xl">{icon}</span>
-                <span className="text-sm text-gray-600">{label}</span>
-            </div>
-            <div className="text-2xl font-bold text-gray-900">{value}</div>
-            {subvalue && <div className="text-xs text-gray-500 mt-1">{subvalue}</div>}
-        </div>
-    );
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(value || 0);
 }
 
-// Panel de Alertas
-function AlertasPanel({ alertas, onVerTodas }: {
-    alertas: Alert[];
-    onVerTodas: () => void;
-}) {
-    if (alertas.length === 0) {
-        return (
-            <div className="bg-green-50 rounded-lg p-4 text-center">
-                <span className="text-3xl">✅</span>
-                <p className="text-green-700 mt-2 text-sm">Sin alertas activas</p>
-            </div>
-        );
-    }
-
-    return (
-        <div className="bg-white rounded-lg shadow-sm">
-            <div className="p-3 border-b flex items-center justify-between">
-                <h3 className="font-medium text-gray-900">Alertas Recientes</h3>
-                <BaseButton
-                    onClick={onVerTodas}
-                    variant="outline"
-                    size="sm"
-                >
-                    Ver todas
-                </BaseButton>
-            </div>
-            <div className="divide-y max-h-64 overflow-y-auto">
-                {alertas.slice(0, 5).map(alerta => {
-                    const config = TIPOS_ALERTA_CONFIG[alerta.tipo];
-                    const severidad = SEVERIDAD_CONFIG[alerta.severidad];
-                    return (
-                        <div key={alerta.id} className={`p-3 ${severidad.bgColor}`}>
-                            <div className="flex items-start gap-2">
-                                <span className="text-lg">{config.icon}</span>
-                                <div className="flex-1 min-w-0">
-                                    <p className="font-medium text-sm text-gray-900 truncate">
-                                        {alerta.titulo}
-                                    </p>
-                                    <p className="text-xs text-gray-600 line-clamp-2">
-                                        {alerta.descripcion}
-                                    </p>
-                                </div>
-                                <span className={`text-xs px-2 py-0.5 rounded ${severidad.color} ${severidad.bgColor}`}>
-                                    {severidad.label}
-                                </span>
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-        </div>
-    );
+function currentMonthCount(operations: OperationRecord[]) {
+  const now = new Date();
+  const m = now.getMonth();
+  const y = now.getFullYear();
+  return operations.filter((op) => {
+    const d = new Date(op.fecha);
+    return d.getMonth() === m && d.getFullYear() === y;
+  }).length;
 }
 
-// Cultivos Activos Card
-function CultivosActivosCard({ crops }: { crops: Crop[] }) {
-    const porCultivo: Record<string, number> = {};
-    crops.forEach(c => {
-        porCultivo[c.cultivo] = (porCultivo[c.cultivo] || 0) + 1;
-    });
-
-    return (
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-            <h3 className="font-medium text-gray-900 mb-3">Cultivos Campaña {getCampaniaActual()}</h3>
-            <div className="space-y-2">
-                {Object.entries(porCultivo).map(([cultivo, cantidad]) => {
-                    const config = CULTIVOS_CONFIG[cultivo as keyof typeof CULTIVOS_CONFIG] || CULTIVOS_CONFIG.otro;
-                    return (
-                        <div key={cultivo} className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <span>{config.icon}</span>
-                                <span className="text-sm">{config.label}</span>
-                            </div>
-                            <span className={`text-sm px-2 py-0.5 rounded ${config.color}`}>
-                                {cantidad} lote{cantidad > 1 ? 's' : ''}
-                            </span>
-                        </div>
-                    );
-                })}
-                {Object.keys(porCultivo).length === 0 && (
-                    <p className="text-sm text-gray-500 text-center py-2">
-                        Sin cultivos registrados
-                    </p>
-                )}
-            </div>
-        </div>
-    );
+function calculateFinance(operations: OperationRecord[]) {
+  const isVentaDirecta = (op: OperationRecord) => op.type === 'entrega_acopiador' && Boolean((op.metadata as { esVenta?: boolean } | undefined)?.esVenta);
+  const costos = operations
+    .filter((op) => ['compra_insumo', 'aplicacion_insumo', 'pago'].includes(op.type))
+    .reduce((sum, op) => sum + (op.amount || 0), 0);
+  const ingresos = operations
+    .filter((op) => ['venta', 'cobro'].includes(op.type) || isVentaDirecta(op))
+    .reduce((sum, op) => sum + (op.amount || 0), 0);
+  return { costos, ingresos, margen: ingresos - costos };
 }
 
-// Header
 function DashboardHeader({
-    field,
-    fields,
-    onFieldChange,
-    alertasNoLeidas
+  selectedField,
+  fields,
+  selectedCampaign,
+  campaigns,
+  onFieldChange,
+  onCampaignChange,
+  activeAlerts,
 }: {
-    field: Field | null;
-    fields: Field[];
-    onFieldChange: (id: string) => void;
-    alertasNoLeidas: number;
+  selectedField: Field | null;
+  fields: Field[];
+  selectedCampaign: string;
+  campaigns: string[];
+  onFieldChange: (id: string) => void;
+  onCampaignChange: (campaign: string) => void;
+  activeAlerts: number;
 }) {
-    const { user } = useAuth();
+  const { user } = useAuth();
 
-    return (
-        <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-2 md:px-4">
-            <div className="flex items-center gap-2 md:gap-4">
-                {/* Botón hamburguesa móvil */}
-                <button
-                    onClick={toggleMobileSidebar}
-                    className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 md:hidden"
-                    aria-label="Abrir menú"
-                >
-                    <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                </button>
-                <div className="flex items-center gap-2">
-                    <span className="text-green-600 hidden sm:block">📍</span>
-                    <div>
-                        <span className="font-semibold text-gray-900 text-sm md:text-base">
-                            {field?.nombre || 'Sin campo seleccionado'}
-                        </span>
-                        {field && (
-                            <span className="text-xs md:text-sm text-gray-500 ml-2 hidden sm:inline">
-                                {field.departamento}, {field.provincia} • {field.superficieTotal} ha
-                            </span>
-                        )}
-                    </div>
-                </div>
-            </div>
+  return (
+    <header className="h-16 bg-white border-b border-slate-200 px-3 md:px-4 flex items-center justify-between gap-3">
+      <div className="flex items-center gap-2 md:gap-3 min-w-0">
+        <button onClick={toggleMobileSidebar} className="w-10 h-10 flex md:hidden items-center justify-center rounded-md hover:bg-slate-100" aria-label="Abrir menu">
+          <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
 
-            <div className="flex items-center gap-2 md:gap-3">
-                {/* Badge de alertas */}
-                {alertasNoLeidas > 0 && (
-                    <div className="flex items-center gap-1 bg-red-100 text-red-700 px-2 py-1 rounded">
-                        <span>🔔</span>
-                        <span className="text-sm font-medium">{alertasNoLeidas}</span>
-                    </div>
-                )}
+        <div className="hidden lg:flex items-center gap-2 text-slate-700 text-sm">
+          {activeAlerts > 0 ? <AlertTriangle className="w-4 h-4 text-amber-600" /> : <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+          <span>{activeAlerts > 0 ? `${activeAlerts} alertas activas` : 'Operacion estable'}</span>
+        </div>
+      </div>
 
-                {/* Selector de campo */}
-                <select
-                    className="text-xs md:text-sm border border-gray-300 rounded-lg px-2 md:px-3 py-1.5 bg-white max-w-[120px] md:max-w-none truncate"
-                    value={field?.id || ''}
-                    onChange={(e) => onFieldChange(e.target.value)}
-                >
-                    <option value="" disabled>Seleccionar campo</option>
-                    {fields.map(f => (
-                        <option key={f.id} value={f.id}>{f.nombre}</option>
-                    ))}
-                </select>
+      <div className="flex items-center gap-2 md:gap-3">
+        <select
+          className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-700 min-w-[180px]"
+          value={selectedField?.id || ''}
+          onChange={(e) => onFieldChange(e.target.value)}
+        >
+          <option value="" disabled>Campo activo</option>
+          {fields.map((field) => (
+            <option key={field.id} value={field.id}>{field.nombre}</option>
+          ))}
+        </select>
 
-                {/* Usuario */}
-                <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600 hidden lg:block">{user?.email}</span>
-                    <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                        {user?.email?.charAt(0).toUpperCase() || 'U'}
-                    </div>
-                </div>
-            </div>
-        </header>
-    );
+        <select
+          className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-700 min-w-[150px]"
+          value={selectedCampaign}
+          onChange={(e) => onCampaignChange(e.target.value)}
+        >
+          {campaigns.map((campaign) => (
+            <option key={campaign} value={campaign}>{campaign}</option>
+          ))}
+        </select>
+
+        <div className="w-9 h-9 bg-slate-700 rounded-full text-white text-sm font-semibold grid place-items-center" title={user?.email || ''}>
+          {(user?.email || 'U').charAt(0).toUpperCase()}
+        </div>
+      </div>
+    </header>
+  );
 }
 
-// Dashboard Page
+function KpiCard({ icon, label, value, subtitle, tone = 'default' }: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  subtitle?: string;
+  tone?: 'default' | 'success' | 'danger' | 'warning';
+}) {
+  const toneStyles = {
+    default: 'border-slate-200 text-slate-900',
+    success: 'border-emerald-200 text-emerald-700',
+    danger: 'border-rose-200 text-rose-700',
+    warning: 'border-amber-200 text-amber-700',
+  } as const;
+
+  return (
+    <div className="rounded-xl border bg-white p-4 shadow-sm">
+      <div className="flex items-center gap-2 text-slate-600 text-sm mb-2">
+        {icon}
+        <span>{label}</span>
+      </div>
+      <div className={`text-2xl font-semibold ${toneStyles[tone]}`}>{value}</div>
+      {subtitle && <div className="text-xs text-slate-500 mt-1">{subtitle}</div>}
+    </div>
+  );
+}
+
 export default function DashboardPage() {
-    const { firebaseUser, user, loading: authLoading } = useAuth();
-    const router = useRouter();
-    const isSuperAdmin = user?.role === 'super_admin' || isSuperAdminEmail(firebaseUser?.email);
+  const { firebaseUser, user, loading: authLoading } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const isSuperAdmin = user?.role === 'super_admin' || isSuperAdminEmail(firebaseUser?.email);
 
-    // Estados
-    const [fields, setFields] = useState<Field[]>([]);
-    const [plots, setPlots] = useState<Plot[]>([]);
-    const [crops, setCrops] = useState<Crop[]>([]);
-    const [alertas, setAlertas] = useState<Alert[]>([]);
-    const [alertasNoLeidas, setAlertasNoLeidas] = useState(0);
+  const [fields, setFields] = useState<Field[]>([]);
+  const [plots, setPlots] = useState<Plot[]>([]);
+  const [crops, setCrops] = useState<Crop[]>([]);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [operations, setOperations] = useState<OperationRecord[]>([]);
+  const [alertCount, setAlertCount] = useState(0);
 
-    const [fieldActual, setFieldActual] = useState<Field | null>(null);
-    const [loadingData, setLoadingData] = useState(true);
+  const [selectedField, setSelectedField] = useState<Field | null>(null);
+  const [selectedCampaign, setSelectedCampaign] = useState(getCampaniaActual());
+  const [campaigns, setCampaigns] = useState<string[]>([getCampaniaActual()]);
+  const [selectedPlot, setSelectedPlot] = useState<Plot | null>(null);
+  const [loadingData, setLoadingData] = useState(true);
 
-    // Redirección
-    useEffect(() => {
-        if (authLoading) return;
-        if (!firebaseUser) {
-            router.push('/auth/login');
-            return;
+  useEffect(() => {
+    if (authLoading) return;
+    if (!firebaseUser) {
+      router.replace('/auth/login');
+      return;
+    }
+    if (isSuperAdmin) {
+      router.replace('/super-admin/productores');
+    }
+  }, [authLoading, firebaseUser, isSuperAdmin, router]);
+
+  useEffect(() => {
+    const loadData = async () => {
+      if (!user?.organizationId) return;
+      try {
+        setLoadingData(true);
+        const orgId = user.organizationId;
+
+        const [f, p, c, a, cnt, ops, campList] = await Promise.all([
+          obtenerFields(orgId, { activo: true }),
+          obtenerPlots(orgId, { activo: true }),
+          obtenerCrops(orgId),
+          obtenerAlertas(orgId, { soloNoResueltas: true, limite: 10 }),
+          obtenerConteoNoLeidas(orgId),
+          listOperationsByOrg(orgId, 80),
+          obtenerCampaniasDisponibles(orgId),
+        ]);
+
+        setFields(f);
+        setPlots(p);
+        setCrops(c);
+        setAlerts(a);
+        setAlertCount(cnt);
+        setOperations(ops);
+
+        const availableCampaigns = campList.length ? campList : [getCampaniaActual()];
+        setCampaigns(availableCampaigns);
+        setSelectedCampaign((prev) => (availableCampaigns.includes(prev) ? prev : availableCampaigns[0]));
+
+        if (!selectedField && f.length > 0) {
+          setSelectedField(f[0]);
         }
-        if (isSuperAdmin) {
-            router.replace('/super-admin/productores');
-        }
-    }, [firebaseUser, isSuperAdmin, authLoading, router]);
-
-    // Cargar datos
-    useEffect(() => {
-        const loadData = async () => {
-            if (!user?.organizationId) return;
-
-            try {
-                setLoadingData(true);
-                const orgId = user.organizationId;
-
-                // Cargar en paralelo
-                const [fieldsData, plotsData, cropsData, alertasData] = await Promise.all([
-                    obtenerFields(orgId, { activo: true }),
-                    obtenerPlots(orgId, { activo: true }),
-                    obtenerCrops(orgId, { campania: getCampaniaActual() }),
-                    obtenerAlertas(orgId, { soloNoResueltas: true, limite: 10 })
-                ]);
-
-                setFields(fieldsData);
-                setPlots(plotsData);
-                setCrops(cropsData);
-                setAlertas(alertasData);
-
-                // Contar no leídas
-                const noLeidas = await obtenerConteoNoLeidas(orgId);
-                setAlertasNoLeidas(noLeidas);
-
-                // Seleccionar primer campo
-                if (fieldsData.length > 0) {
-                    setFieldActual(fieldsData[0]);
-                }
-            } catch (error) {
-                console.error('Error cargando datos:', error);
-            } finally {
-                setLoadingData(false);
-            }
-        };
-
-        if (!authLoading && user?.organizationId) {
-            loadData();
-        }
-    }, [authLoading, user?.organizationId]);
-
-    // Handler cambio de campo
-    const handleFieldChange = (fieldId: string) => {
-        const selected = fields.find(f => f.id === fieldId);
-        if (selected) setFieldActual(selected);
+      } catch (error) {
+        console.error('Error cargando dashboard productor:', error);
+      } finally {
+        setLoadingData(false);
+      }
     };
 
-    // Filtrar plots del campo actual
-    const plotsDelCampo = fieldActual
-        ? plots.filter(p => p.fieldId === fieldActual.id)
-        : plots;
-
-    // Loading
-    if (authLoading) {
-        return (
-            <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center animate-pulse">
-                        <span className="text-2xl">🌾</span>
-                    </div>
-                    <p className="text-gray-600">Cargando...</p>
-                </div>
-            </div>
-        );
+    if (!authLoading && user?.organizationId) {
+      void loadData();
     }
+  }, [authLoading, user?.organizationId]);
 
-    if (!firebaseUser) return null;
-    if (isSuperAdmin) return null;
+  useEffect(() => {
+    const plotId = searchParams.get('plotId');
+    if (!plotId) {
+      setSelectedPlot(null);
+      return;
+    }
+    const found = plots.find((plot) => plot.id === plotId) || null;
+    setSelectedPlot(found);
+  }, [plots, searchParams]);
 
-    // Calcular KPIs
-    const superficieTotal = fields.reduce((acc, f) => acc + (f.superficieTotal || 0), 0);
-    const lotesSembrados = plots.filter(p => ['sembrado', 'desarrollo', 'floracion'].includes(p.estado)).length;
+  const plotsByField = useMemo(() => {
+    if (!selectedField) return plots;
+    return plots.filter((plot) => plot.fieldId === selectedField.id);
+  }, [plots, selectedField]);
 
+  const cropsByCampaign = useMemo(() => crops.filter((crop) => crop.campania === selectedCampaign), [crops, selectedCampaign]);
+
+  const hectares = useMemo(() => plotsByField.reduce((sum, plot) => sum + (plot.superficie || 0), 0), [plotsByField]);
+
+  const fieldsCount = fields.length;
+  const cultivosCount = cropsByCampaign.length;
+  const opsMonth = currentMonthCount(operations);
+  const finance = calculateFinance(operations);
+  const marginTone = finance.margen >= 0 ? 'success' : 'danger';
+
+  const plotCostRanking = useMemo(() => {
+    const map = new Map<string, number>();
+    operations
+      .filter((op) => ['compra_insumo', 'aplicacion_insumo', 'pago'].includes(op.type) && op.plotId)
+      .forEach((op) => {
+        const key = op.plotId as string;
+        map.set(key, (map.get(key) || 0) + (op.amount || 0));
+      });
+
+    return Array.from(map.entries())
+      .map(([plotId, amount]) => ({
+        plotId,
+        amount,
+        plotName: plots.find((plot) => plot.id === plotId)?.nombre || plotId,
+      }))
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 5);
+  }, [operations, plots]);
+
+  const activeCropForSelectedPlot = useMemo(() => {
+    if (!selectedPlot) return null;
+    return cropsByCampaign.find((crop) => crop.plotId === selectedPlot.id) || null;
+  }, [selectedPlot, cropsByCampaign]);
+
+  if (authLoading) {
     return (
-        <div className="h-screen flex overflow-hidden bg-gray-100">
-            {/* Sidebar */}
-            <Sidebar />
-
-            {/* Contenido principal */}
-            <div className="flex-1 flex flex-col overflow-hidden">
-                {/* Header */}
-                <DashboardHeader
-                    field={fieldActual}
-                    fields={fields}
-                    onFieldChange={handleFieldChange}
-                    alertasNoLeidas={alertasNoLeidas}
-                />
-
-                {/* Contenido: Mapa + Panel lateral */}
-                <div className="flex-1 flex flex-col md:flex-row overflow-auto md:overflow-hidden p-2 md:p-4 gap-2 md:gap-4">
-                    {/* Mapa (70% en desktop, altura fija en móvil) */}
-                    <div className="h-64 md:h-auto md:flex-[7] rounded-xl overflow-hidden shadow-lg border border-gray-200 flex-shrink-0">
-                        {loadingData ? (
-                            <div className="h-full bg-gray-200 animate-pulse flex items-center justify-center">
-                                <span className="text-gray-500">Cargando mapa...</span>
-                            </div>
-                        ) : (
-                            <MapaGeneral
-                                campos={fields as any}
-                                lotes={plotsDelCampo as any}
-                                onCampoClick={(c) => console.log('Campo:', c)}
-                                onLoteClick={(l) => router.push(`/campos/${fieldActual?.id}/lotes/${l.id}`)}
-                            />
-                        )}
-                    </div>
-
-                    {/* Panel lateral (30% en desktop, debajo del mapa en móvil) */}
-                    <div className="md:flex-[3] flex flex-col gap-2 md:gap-4 overflow-visible md:overflow-y-auto">
-                        {/* KPIs - Grid 2x2 */}
-                        <div className="grid grid-cols-2 gap-2 md:gap-3">
-                            <KPICard
-                                icon="🏞️"
-                                label="Campos"
-                                value={fields.length}
-                                subvalue={`${superficieTotal.toLocaleString()} ha`}
-                                color="border-green-500"
-                            />
-                            <KPICard
-                                icon="📍"
-                                label="Lotes"
-                                value={plots.length}
-                                subvalue={`${lotesSembrados} sembrados`}
-                                color="border-blue-500"
-                            />
-                            <KPICard
-                                icon="🌱"
-                                label="Cultivos"
-                                value={crops.length}
-                                subvalue={getCampaniaActual()}
-                                color="border-amber-500"
-                            />
-                            <KPICard
-                                icon="🔔"
-                                label="Alertas"
-                                value={alertasNoLeidas}
-                                subvalue={alertasNoLeidas > 0 ? 'Sin leer' : 'Todo OK'}
-                                color={alertasNoLeidas > 0 ? 'border-red-500' : 'border-green-500'}
-                            />
-                        </div>
-
-                        {/* Cultivos activos */}
-                        <CultivosActivosCard crops={crops} />
-
-                        {/* Alertas */}
-                        <AlertasPanel
-                            alertas={alertas}
-                            onVerTodas={() => router.push('/alertas')}
-                        />
-                    </div>
-                </div>
-            </div>
-        </div>
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center">
+        <div className="text-sm text-slate-600">Cargando sesion...</div>
+      </div>
     );
+  }
+
+  if (!firebaseUser || isSuperAdmin) return null;
+
+  return (
+    <div className="h-screen flex overflow-hidden bg-slate-100">
+      <Sidebar />
+
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <DashboardHeader
+          selectedField={selectedField}
+          fields={fields}
+          selectedCampaign={selectedCampaign}
+          campaigns={campaigns}
+          onFieldChange={(fieldId) => {
+            const field = fields.find((f) => f.id === fieldId) || null;
+            setSelectedField(field);
+            setSelectedPlot(null);
+            router.replace('/dashboard');
+          }}
+          onCampaignChange={setSelectedCampaign}
+          activeAlerts={alertCount}
+        />
+
+        <div className="flex-1 overflow-auto p-3 md:p-4 space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+            <KpiCard icon={<MapPinned className="w-4 h-4" />} label="Campos activos" value={String(fieldsCount)} />
+            <KpiCard icon={<Layers3 className="w-4 h-4" />} label="Hectareas sembradas" value={`${hectares.toLocaleString('es-AR')} ha`} />
+            <KpiCard icon={<Tractor className="w-4 h-4" />} label="Actividades del mes" value={String(opsMonth)} />
+            <KpiCard icon={<DollarSign className="w-4 h-4" />} label="Costo campana" value={formatCurrency(finance.costos)} tone="warning" />
+            <KpiCard icon={<DollarSign className="w-4 h-4" />} label="Ingreso estimado" value={formatCurrency(finance.ingresos)} tone="success" />
+            <KpiCard icon={<Bell className="w-4 h-4" />} label="Margen estimado" value={formatCurrency(finance.margen)} tone={marginTone} subtitle={selectedCampaign} />
+          </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
+            <div className="xl:col-span-8 space-y-4">
+              <div className="rounded-xl border border-slate-200 bg-white overflow-hidden h-[460px]">
+                {loadingData ? (
+                  <div className="h-full bg-slate-100 animate-pulse flex items-center justify-center text-sm text-slate-500">Cargando mapa...</div>
+                ) : (
+                  <MapaGeneral
+                    campos={fields as any}
+                    lotes={plotsByField as any}
+                    onCampoClick={(field: Field) => setSelectedField(field)}
+                    onLoteClick={(plot: Plot) => {
+                      setSelectedPlot(plot);
+                      router.replace(`/dashboard?plotId=${plot.id}`);
+                    }}
+                  />
+                )}
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-white p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-slate-900">Costo por lote</h3>
+                  <span className="text-xs text-slate-500">Campana {selectedCampaign}</span>
+                </div>
+                {plotCostRanking.length === 0 ? (
+                  <p className="text-sm text-slate-500">Sin datos de costos por lote.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {plotCostRanking.map((row) => (
+                      <div key={row.plotId} className="flex items-center gap-3">
+                        <div className="w-40 text-sm text-slate-700 truncate">{row.plotName}</div>
+                        <div className="flex-1 h-2 rounded bg-slate-100 overflow-hidden">
+                          <div className="h-full bg-slate-700" style={{ width: `${Math.min(100, (row.amount / Math.max(plotCostRanking[0].amount, 1)) * 100)}%` }} />
+                        </div>
+                        <div className="text-sm font-medium text-slate-800">{formatCurrency(row.amount)}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="xl:col-span-4 space-y-4">
+              <div className="rounded-xl border border-slate-200 bg-white p-4">
+                <h3 className="font-semibold text-slate-900 mb-2">Detalle de lote</h3>
+                {!selectedPlot ? (
+                  <p className="text-sm text-slate-500">Selecciona un lote en el mapa para ver detalle.</p>
+                ) : (
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between"><span className="text-slate-500">Lote</span><span className="font-medium text-slate-900">{selectedPlot.nombre}</span></div>
+                    <div className="flex justify-between"><span className="text-slate-500">Superficie</span><span className="text-slate-900">{selectedPlot.superficie || 0} ha</span></div>
+                    <div className="flex justify-between"><span className="text-slate-500">Estado</span><span className="text-slate-900">{selectedPlot.estado}</span></div>
+                    <div className="flex justify-between"><span className="text-slate-500">Cultivo</span><span className="text-slate-900">{activeCropForSelectedPlot?.cultivo || 'Sin asignar'}</span></div>
+                    <div className="flex justify-between"><span className="text-slate-500">Rendimiento proyectado</span><span className="text-slate-900">{activeCropForSelectedPlot?.rendimientoEstimado ? `${activeCropForSelectedPlot.rendimientoEstimado} kg/ha` : 'Pendiente'}</span></div>
+                    <div className="pt-2">
+                      <div className="flex flex-wrap gap-2">
+                        <BaseButton variant="outline" size="sm" onClick={() => router.push(`/campos/${selectedPlot.fieldId}`)}>Ver ficha del campo</BaseButton>
+                        <BaseButton variant="outline" size="sm" onClick={() => router.push(`/operaciones?plotId=${selectedPlot.id}`)}>Actividades</BaseButton>
+                        <BaseButton variant="outline" size="sm" onClick={() => router.push(`/rentabilidad?plotId=${selectedPlot.id}`)}>Costos y margen</BaseButton>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-white p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-slate-900">Actividad reciente</h3>
+                  <CalendarDays className="w-4 h-4 text-slate-500" />
+                </div>
+                {operations.length === 0 ? (
+                  <p className="text-sm text-slate-500">Sin actividad registrada.</p>
+                ) : (
+                  <div className="space-y-2 max-h-52 overflow-y-auto">
+                    {operations.slice(0, 8).map((op) => (
+                      <div key={op.id} className="border-l-2 border-slate-300 pl-3 py-1">
+                        <p className="text-sm text-slate-900">{op.descripcion}</p>
+                        <p className="text-xs text-slate-500">{new Date(op.fecha).toLocaleDateString('es-AR')} · {formatCurrency(op.amount)}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-white p-4">
+                <h3 className="font-semibold text-slate-900 mb-3">Alertas inteligentes</h3>
+                {alerts.length === 0 ? (
+                  <div className="flex items-center gap-2 text-emerald-700 text-sm"><CheckCircle2 className="w-4 h-4" /> Sin alertas activas</div>
+                ) : (
+                  <div className="space-y-2">
+                    {alerts.slice(0, 5).map((alert) => {
+                      const tipo = TIPOS_ALERTA_CONFIG[alert.tipo];
+                      const sev = SEVERIDAD_CONFIG[alert.severidad];
+                      return (
+                        <div key={alert.id} className={`rounded-md border p-2 ${sev.bgColor}`}>
+                          <div className="text-sm font-medium text-slate-900">{tipo.icon} {alert.titulo}</div>
+                          <div className="text-xs text-slate-600">{alert.descripcion}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-white p-4">
+                <h3 className="font-semibold text-slate-900 mb-2">Cultivos campana {selectedCampaign}</h3>
+                {cropsByCampaign.length === 0 ? (
+                  <p className="text-sm text-slate-500">Sin cultivos registrados.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {Object.entries(
+                      cropsByCampaign.reduce<Record<string, number>>((acc, crop) => {
+                        acc[crop.cultivo] = (acc[crop.cultivo] || 0) + 1;
+                        return acc;
+                      }, {})
+                    ).map(([cultivo, count]) => {
+                      const cfg = CULTIVOS_CONFIG[cultivo as keyof typeof CULTIVOS_CONFIG] || CULTIVOS_CONFIG.otro;
+                      return (
+                        <div key={cultivo} className="flex items-center justify-between text-sm">
+                          <span className="text-slate-700">{cfg.icon} {cfg.label}</span>
+                          <span className="text-slate-900 font-medium">{count}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {selectedPlot && (
+          <div className="xl:hidden sticky bottom-0 z-20 bg-white border-t border-slate-200 p-2">
+            <div className="text-xs text-slate-500 mb-1 px-1">Lote activo: {selectedPlot.nombre}</div>
+            <div className="grid grid-cols-3 gap-2">
+              <BaseButton size="sm" variant="outline" onClick={() => router.push(`/operaciones?plotId=${selectedPlot.id}`)}>Actividades</BaseButton>
+              <BaseButton size="sm" variant="outline" onClick={() => router.push(`/rentabilidad?plotId=${selectedPlot.id}`)}>Costos</BaseButton>
+              <BaseButton size="sm" variant="outline" onClick={() => router.push(`/campos/${selectedPlot.fieldId}`)}>Ficha</BaseButton>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
+
