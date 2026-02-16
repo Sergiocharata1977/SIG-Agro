@@ -5,20 +5,26 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Sidebar from '@/components/layout/Sidebar';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
+import { isSuperAdminEmail } from '@/lib/auth-utils';
 
 export default function DashboardLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
-    const { firebaseUser, loading } = useAuth();
+    const { firebaseUser, user, loading } = useAuth();
     const router = useRouter();
+    const isSuperAdmin = user?.role === 'super_admin' || isSuperAdminEmail(firebaseUser?.email);
 
     useEffect(() => {
         if (!loading && !firebaseUser) {
-            router.push('/auth/login');
+            router.replace('/auth/login');
+            return;
         }
-    }, [firebaseUser, loading, router]);
+        if (!loading && isSuperAdmin) {
+            router.replace('/super-admin/productores');
+        }
+    }, [firebaseUser, isSuperAdmin, loading, router]);
 
     // Show loading state while checking authentication
     if (loading) {
@@ -33,7 +39,7 @@ export default function DashboardLayout({
     }
 
     // Don't render dashboard content if not authenticated
-    if (!firebaseUser) {
+    if (!firebaseUser || isSuperAdmin) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-100">
                 <div className="text-center">

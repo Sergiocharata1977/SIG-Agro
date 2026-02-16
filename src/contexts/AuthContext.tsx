@@ -25,7 +25,7 @@ import {
     obtenerOrganizacionesUsuario,
     obtenerUsuario,
 } from '@/services/organizations';
-import { resolveUserRole } from '@/lib/auth-utils';
+import { isSuperAdminEmail, resolveUserRole } from '@/lib/auth-utils';
 
 interface AuthContextType {
     firebaseUser: FirebaseUser | null;
@@ -87,10 +87,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const loadUserData = async (fbUser: FirebaseUser) => {
+        let tokenClaims: Record<string, unknown> = {};
         try {
             const userId = fbUser.uid;
+            const tokenResult = await fbUser.getIdTokenResult(true);
+            tokenClaims = tokenResult.claims as Record<string, unknown>;
             const userData = await obtenerUsuario(userId);
-            const tokenResult = await fbUser.getIdTokenResult();
 
             if (userData) {
                 const orgs = await obtenerOrganizacionesUsuario(userId, userData);
@@ -107,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     ? orgs.find((org) => org.id === activeOrgId) || await obtenerOrganizacion(activeOrgId)
                     : null;
 
-                const resolvedRole = resolveUserRole(userData, tokenResult.claims);
+                const resolvedRole = resolveUserRole(userData, tokenClaims, fbUser.email);
 
                 setUser({
                     ...userData,
@@ -118,10 +120,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 });
                 setOrganization(activeOrg || null);
                 await actualizarUltimoLogin(userId);
+                console.info('[AuthDebug] user loaded', {
+                    uid: userId,
+                    email: fbUser.email || '',
+                    claimRole: tokenClaims.role || tokenClaims.rol || null,
+                    firestoreRole: (userData as { role?: string }).role || null,
+                    firestoreRol: (userData as { rol?: string }).rol || null,
+                    resolvedRole,
+                });
                 return;
             }
 
-            const resolvedRole = resolveUserRole(null, tokenResult.claims);
+            const resolvedRole = resolveUserRole(null, tokenClaims, fbUser.email);
 
             // Autobootstrap para super admin cuando la coleccion users fue eliminada.
             if (resolvedRole === 'super_admin') {
@@ -155,6 +165,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 });
                 setOrganization(null);
                 setOrganizations([]);
+                console.info('[AuthDebug] super admin auto-bootstrapped', {
+                    uid: userId,
+                    email: fbUser.email || '',
+                    claimRole: tokenClaims.role || tokenClaims.rol || null,
+                });
                 return;
             }
 
@@ -169,8 +184,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(null);
             setOrganization(null);
             setOrganizations([]);
+            console.info('[AuthDebug] user profile not found', {
+                uid: userId,
+                email: fbUser.email || '',
+                claimRole: tokenClaims.role || tokenClaims.rol || null,
+            });
         } catch (err) {
             console.error('Error loading user data:', err);
+            const roleFromFallback = resolveUserRole(null, tokenClaims, fbUser.email);
+            if (roleFromFallback === 'super_admin' || isSuperAdminEmail(fbUser.email)) {
+                setUser({
+                    id: fbUser.uid,
+                    email: fbUser.email || '',
+                    displayName: fbUser.displayName || fbUser.email?.split('@')[0] || 'Super Admin',
+                    role: 'super_admin',
+                    status: 'active',
+                    organizationId: '',
+                    organizationIds: [],
+                    accessAllOrganizations: true,
+                    modulosHabilitados: null,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    lastLogin: new Date(),
+                });
+                setOrganization(null);
+                setOrganizations([]);
+                console.info('[AuthDebug] super admin fallback enabled after error', {
+                    uid: fbUser.uid,
+                    email: fbUser.email || '',
+                    claimRole: tokenClaims.role || tokenClaims.rol || null,
+                });
+                return;
+            }
         }
     };
 
@@ -339,5 +384,4 @@ function getErrorMessage(error: unknown): string {
 
     return 'Error desconocido';
 }
-
 

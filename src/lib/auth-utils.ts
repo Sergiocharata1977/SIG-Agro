@@ -1,5 +1,24 @@
 import { UserRole } from '@/types/organization';
 
+const DEFAULT_SUPER_ADMIN_EMAILS = [
+    'superadmin@donjuangis.com',
+    'admin.sigagro@donjuangis.com',
+];
+
+function getConfiguredSuperAdminEmails(): string[] {
+    const raw = process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAILS;
+    const configured = raw
+        ? raw.split(',').map((item) => item.trim().toLowerCase()).filter(Boolean)
+        : [];
+    const merged = new Set([...DEFAULT_SUPER_ADMIN_EMAILS, ...configured]);
+    return Array.from(merged);
+}
+
+export function isSuperAdminEmail(email?: string | null): boolean {
+    if (!email) return false;
+    return getConfiguredSuperAdminEmails().includes(email.trim().toLowerCase());
+}
+
 /**
  * Normaliza un string de rol a uno de los tipos validos de UserRole.
  * Maneja variantes como 'super_admin', 'super-admin', 'superadmin', etc.
@@ -25,7 +44,7 @@ export function normalizeRole(value: unknown): UserRole {
  * 2. Campo 'role' en userData
  * 3. Campo 'rol' en userData (legacy)
  */
-export function resolveUserRole(userData: any, tokenClaims: any): UserRole {
+export function resolveUserRole(userData: any, tokenClaims: any, email?: string | null): UserRole {
     // 1. Prioridad: Claim del token
     const claimRole = tokenClaims?.role || tokenClaims?.rol;
     if (claimRole) {
@@ -40,6 +59,10 @@ export function resolveUserRole(userData: any, tokenClaims: any): UserRole {
     // 3. Campo 'rol' en Firestore (legacy fallback)
     if (userData?.rol) {
         return normalizeRole(userData.rol);
+    }
+
+    if (isSuperAdminEmail(email)) {
+        return 'super_admin';
     }
 
     return 'viewer'; // Fallback por defecto

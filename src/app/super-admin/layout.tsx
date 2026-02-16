@@ -9,6 +9,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import SuperAdminSidebar from '@/components/super-admin/SuperAdminSidebar';
+import { isSuperAdminEmail } from '@/lib/auth-utils';
 
 export default function SuperAdminLayout({
     children,
@@ -17,22 +18,23 @@ export default function SuperAdminLayout({
 }) {
     const { user, firebaseUser, loading } = useAuth();
     const router = useRouter();
+    const isSuperAdmin = user?.role === 'super_admin' || isSuperAdminEmail(firebaseUser?.email);
 
     useEffect(() => {
         if (loading) return;
 
         // Si no hay usuario, redirigir al login
         if (!firebaseUser) {
-            router.push('/auth/login');
+            router.replace('/auth/login');
             return;
         }
 
         // Si no es super_admin, redirigir al dashboard normal
-        if (user && user.role !== 'super_admin') {
-            router.push('/dashboard');
+        if (!isSuperAdmin) {
+            router.replace('/dashboard');
             return;
         }
-    }, [user, firebaseUser, loading, router]);
+    }, [isSuperAdmin, firebaseUser, loading, router]);
 
     // Loading state
     if (loading) {
@@ -47,7 +49,7 @@ export default function SuperAdminLayout({
     }
 
     // No renderizar si no es super_admin
-    if (!user || user.role !== 'super_admin') {
+    if (!isSuperAdmin) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-100">
                 <div className="text-center">

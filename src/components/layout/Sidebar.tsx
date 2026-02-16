@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { LanguageSelector } from '@/components/i18n/LanguageSelector';
+import { isSuperAdminEmail } from '@/lib/auth-utils';
 
 let mobileToggleFn: (() => void) | null = null;
 let mobileCloseFn: (() => void) | null = null;
@@ -203,8 +204,8 @@ export default function Sidebar() {
   const userEmail = user?.email || firebaseUser?.email || '';
   const userName = user?.displayName || firebaseUser?.displayName || userEmail.split('@')[0] || 'Usuario';
   const userInitial = userName.charAt(0).toUpperCase();
-
-  if (user?.role === 'super_admin') return null;
+  const isSuperAdmin = user?.role === 'super_admin' || isSuperAdminEmail(firebaseUser?.email);
+  if (isSuperAdmin) return null;
 
   return (
     <>

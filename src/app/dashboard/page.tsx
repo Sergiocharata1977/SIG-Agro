@@ -20,6 +20,7 @@ import { obtenerAlertas, obtenerConteoNoLeidas } from '@/services/alerts';
 import { CULTIVOS_CONFIG, ESTADOS_LOTE_CONFIG } from '@/types/sig-agro';
 import { TIPOS_ALERTA_CONFIG, SEVERIDAD_CONFIG } from '@/types/sig-agro-advanced';
 import { BaseButton } from '@/components/design-system';
+import { isSuperAdminEmail } from '@/lib/auth-utils';
 
 // Importar mapa dinámicamente
 const MapaGeneral = dynamic(
@@ -222,6 +223,7 @@ function DashboardHeader({
 export default function DashboardPage() {
     const { firebaseUser, user, loading: authLoading } = useAuth();
     const router = useRouter();
+    const isSuperAdmin = user?.role === 'super_admin' || isSuperAdminEmail(firebaseUser?.email);
 
     // Estados
     const [fields, setFields] = useState<Field[]>([]);
@@ -240,10 +242,10 @@ export default function DashboardPage() {
             router.push('/auth/login');
             return;
         }
-        if (user?.role === 'super_admin') {
-            router.push('/super-admin/productores');
+        if (isSuperAdmin) {
+            router.replace('/super-admin/productores');
         }
-    }, [firebaseUser, user, authLoading, router]);
+    }, [firebaseUser, isSuperAdmin, authLoading, router]);
 
     // Cargar datos
     useEffect(() => {
@@ -313,6 +315,7 @@ export default function DashboardPage() {
     }
 
     if (!firebaseUser) return null;
+    if (isSuperAdmin) return null;
 
     // Calcular KPIs
     const superficieTotal = fields.reduce((acc, f) => acc + (f.superficieTotal || 0), 0);
