@@ -25,6 +25,7 @@ import {
     obtenerOrganizacionesUsuario,
     obtenerUsuario,
 } from '@/services/organizations';
+import { resolveUserRole } from '@/lib/auth-utils';
 
 interface AuthContextType {
     firebaseUser: FirebaseUser | null;
@@ -58,17 +59,6 @@ interface SignUpData {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-function normalizeRole(value: unknown): UserRole | null {
-    if (typeof value !== 'string') return null;
-    const normalized = value.trim().toLowerCase().replace(/\s+/g, '_').replace(/-/g, '_');
-    if (normalized === 'superadmin') return 'super_admin';
-    if (normalized === 'super_admin') return 'super_admin';
-    if (normalized === 'owner') return 'owner';
-    if (normalized === 'admin') return 'admin';
-    if (normalized === 'operator') return 'operator';
-    if (normalized === 'viewer') return 'viewer';
-    return null;
-}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
@@ -101,7 +91,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const userId = fbUser.uid;
             const userData = await obtenerUsuario(userId);
             const tokenResult = await fbUser.getIdTokenResult();
-            const claimRole = normalizeRole(tokenResult.claims?.role);
 
             if (userData) {
                 const orgs = await obtenerOrganizacionesUsuario(userId, userData);
@@ -118,9 +107,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     ? orgs.find((org) => org.id === activeOrgId) || await obtenerOrganizacion(activeOrgId)
                     : null;
 
+                const resolvedRole = resolveUserRole(userData, tokenResult.claims);
+
                 setUser({
                     ...userData,
-                    role: claimRole || normalizeRole((userData as unknown as { rol?: string }).rol) || normalizeRole(userData.role) || 'owner',
+                    role: resolvedRole,
                     organizationId: activeOrgId || '',
                     organizationIds: Array.from(new Set([...(userData.organizationIds || []), ...orgs.map((o) => o.id)])),
                     accessAllOrganizations: userData.accessAllOrganizations !== false,
@@ -130,8 +121,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 return;
             }
 
+            const resolvedRole = resolveUserRole(null, tokenResult.claims);
+
             // Autobootstrap para super admin cuando la coleccion users fue eliminada.
-            if (claimRole === 'super_admin') {
+            if (resolvedRole === 'super_admin') {
                 await setDoc(doc(db, 'users', userId), {
                     email: fbUser.email || '',
                     displayName: fbUser.displayName || fbUser.email?.split('@')[0] || 'Super Admin',

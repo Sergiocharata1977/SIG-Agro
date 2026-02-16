@@ -204,6 +204,8 @@ export default function Sidebar() {
   const userName = user?.displayName || firebaseUser?.displayName || userEmail.split('@')[0] || 'Usuario';
   const userInitial = userName.charAt(0).toUpperCase();
 
+  if (user?.role === 'super_admin') return null;
+
   return (
     <>
       {mobileOpen && (
