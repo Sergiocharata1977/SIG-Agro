@@ -310,7 +310,7 @@ export default function Sidebar() {
 
   const filteredGroups = groups
     .filter((group) => {
-      if (group.module === 'admin' && !canPerformAction('admin')) return false;
+      if (group.module === 'admin') return canPerformAction('admin');
       if (group.feature && organization) {
         const enabled = organization.features[group.feature as keyof typeof organization.features];
         if (!enabled) return false;
@@ -320,7 +320,7 @@ export default function Sidebar() {
     .map((group) => ({
       ...group,
       items: group.items.filter((item) => {
-        if (item.module === 'admin' && !canPerformAction('admin')) return false;
+        if (item.module === 'admin') return canPerformAction('admin');
         if (item.feature && organization) {
           const enabled = organization.features[item.feature as keyof typeof organization.features];
           if (!enabled) return false;

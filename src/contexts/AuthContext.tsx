@@ -312,10 +312,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const enabledModules = user.modulosHabilitados;
         if (enabledModules === null || enabledModules === undefined) return true;
         if (!Array.isArray(enabledModules)) return false;
-        if (enabledModules.length === 0) {
-            // Compatibilidad: usuarios owner/admin antiguos con lista vacia deben conservar acceso.
-            return user.role === 'owner' || user.role === 'admin';
-        }
+        if (enabledModules.length === 0) return true;
 
         return (enabledModules as string[]).includes(module);
     };

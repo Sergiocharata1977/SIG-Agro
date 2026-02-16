@@ -30,8 +30,11 @@ export function normalizeRole(value: unknown): UserRole {
 
     if (normalized === 'superadmin' || normalized === 'super_admin') return 'super_admin';
     if (normalized === 'owner') return 'owner';
+    if (normalized === 'productor' || normalized === 'productor_principal' || normalized === 'producer') return 'owner';
     if (normalized === 'admin') return 'admin';
+    if (normalized === 'productor_admin' || normalized === 'producer_admin') return 'admin';
     if (normalized === 'operator') return 'operator';
+    if (normalized === 'copilot' || normalized === 'copiloto') return 'operator';
     if (normalized === 'viewer') return 'viewer';
 
     return 'viewer'; // Fallback seguro
