@@ -25,7 +25,7 @@ const EMPTY_FORM: OrgFormState = {
 };
 
 export default function OrganizacionesPage() {
-  const { user, organizationId, organizations, setActiveOrganization, canPerformAction, firebaseUser } = useAuth();
+  const { user, organizationId, organizations, setActiveOrganization, firebaseUser } = useAuth();
 
   const [form, setForm] = useState<OrgFormState>(EMPTY_FORM);
   const [editing, setEditing] = useState<Organization | null>(null);
@@ -35,7 +35,7 @@ export default function OrganizacionesPage() {
   const [query, setQuery] = useState('');
   const [showForm, setShowForm] = useState(false);
 
-  const canManage = canPerformAction('admin') || organizations.length === 0;
+  const canManage = user.role !== 'super_admin';
 
   const sortedOrganizations = useMemo(() => [...organizations].sort((a, b) => a.name.localeCompare(b.name)), [organizations]);
 

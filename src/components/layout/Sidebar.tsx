@@ -126,38 +126,6 @@ export default function Sidebar() {
         ],
       },
       {
-        key: 'organizacion',
-        title: 'Organizacion',
-        icon: Building2,
-        active: pathname?.startsWith('/organizaciones') || false,
-        module: 'admin',
-        items: [
-          {
-            icon: Building2,
-            label: 'ABM Organizaciones',
-            href: '/organizaciones',
-            active: pathname?.startsWith('/organizaciones') || false,
-            module: 'admin',
-          },
-          {
-            icon: Pin,
-            label: 'Usuarios y roles',
-            module: 'admin',
-            active: false,
-            disabled: true,
-            badge: 'proximamente',
-          },
-          {
-            icon: Settings,
-            label: 'Permisos',
-            module: 'admin',
-            active: false,
-            disabled: true,
-            badge: 'proximamente',
-          },
-        ],
-      },
-      {
         key: 'gis',
         title: 'Campos y GIS',
         icon: Map,
@@ -333,7 +301,7 @@ export default function Sidebar() {
         return hasModuleAccess(item.module);
       }),
     }))
-    .filter((group) => group.items.length > 0);
+    .filter((group) => group.items.length > 0 && group.key !== 'organizacion');
 
   if (hasActiveOrganization && pathname === '/dashboard' && contextualPlotId) {
     filteredGroups.unshift({
@@ -378,7 +346,6 @@ export default function Sidebar() {
   const opKeys = new Set([
     'contexto-lote',
     'panel',
-    'organizacion',
     'gis',
     'campanias',
     'insumos-stock',
@@ -452,6 +419,23 @@ export default function Sidebar() {
         )}
 
         <nav className="flex-1 p-3 overflow-y-auto space-y-4">
+          <div className="space-y-1.5">
+            {!collapsed && <p className="px-2 text-[10px] uppercase tracking-[0.18em] text-slate-500">Organizacion</p>}
+            <Link
+              href="/organizaciones"
+              onClick={() => setMobileOpen(false)}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-md border transition ${pathname?.startsWith('/organizaciones') ? 'bg-slate-800 border-slate-700 text-sky-300' : 'border-transparent text-slate-300 hover:bg-slate-900 hover:border-slate-800 hover:text-slate-100'}`}
+            >
+              <Building2 className="w-4 h-4" />
+              {!collapsed && (
+                <>
+                  <span className="text-sm font-medium flex-1">ABM Organizaciones</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-slate-700 text-slate-200">{organizations.length}</span>
+                </>
+              )}
+            </Link>
+          </div>
+
           {!hasActiveOrganization && (
             <div className="rounded-xl bg-slate-900/50 p-3 text-xs text-slate-400">
               Crea o selecciona una organizacion para habilitar campos, lotes y operaciones.
