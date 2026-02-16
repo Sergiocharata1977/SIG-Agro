@@ -108,6 +108,7 @@ export interface LineaAsientoAuto {
 
 export interface AsientoAutomatico {
     id: string;
+    productorId: string;
     organizationId: string;
 
     // Origen
@@ -138,6 +139,7 @@ export interface AsientoAutomatico {
 
 export interface MovimientoTercero {
     id: string;
+    productorId?: string;
     organizationId: string;
     terceroId: string;
 
@@ -166,6 +168,9 @@ export interface DatosCompraInsumo {
     cantidad: number;
     precioUnitario: number;
     depositoId?: string;
+    campaniaId?: string;
+    campoId?: string;
+    loteId?: string;
     fecha: Date;
     observaciones?: string;
 }
@@ -204,6 +209,9 @@ export interface DatosEntregaAcopiador {
     precioUnitario?: number; // Solo si esVenta = true
     fecha: Date;
     cartaPorte?: string;
+    campaniaId?: string;
+    campoId?: string;
+    loteId?: string;
     observaciones?: string;
 }
 
@@ -229,4 +237,29 @@ export interface DatosPago {
     medioPago: MedioPago;
     fecha: Date;
     observaciones?: string;
+}
+
+export interface OperationRecord {
+    id: string;
+    productorId: string;
+    organizationId: string;
+    type: TipoOperacion;
+    status: 'posted' | 'voided';
+    requestId: string;
+    operationId: string;
+    descripcion: string;
+    fecha: Date;
+    amount: number;
+    thirdPartyId?: string;
+    fieldId?: string;
+    plotId?: string;
+    campaignId?: string;
+    warehouseOriginId?: string;
+    warehouseDestinationId?: string;
+    journalEntryId?: string;
+    stockMovementIds?: string[];
+    metadata?: Record<string, unknown>;
+    createdBy: string;
+    createdAt: Date;
+    updatedAt: Date;
 }

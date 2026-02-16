@@ -158,7 +158,7 @@ export default function Sidebar() {
         module: 'contabilidad',
         subItems: [
           { icon: Users, label: 'Terceros', href: '/terceros' },
-          { icon: BookOpen, label: 'Operaciones', href: '/operaciones' },
+          { icon: BookOpen, label: 'Operaciones y Registros', href: '/operaciones' },
           { icon: BarChart3, label: 'Saldos', href: '/contabilidad' },
           { icon: ChartNoAxesCombined, label: 'Rentabilidad', href: '/rentabilidad' },
         ],
@@ -210,19 +210,19 @@ export default function Sidebar() {
   return (
     <>
       {mobileOpen && (
-        <div className="fixed inset-0 bg-slate-950/45 z-40 md:hidden" onClick={() => setMobileOpen(false)} />
+        <div className="fixed inset-0 bg-slate-950/60 z-40 md:hidden" onClick={() => setMobileOpen(false)} />
       )}
 
       <aside
-        className={`fixed md:relative z-50 h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900 text-slate-100 flex flex-col transition-all duration-300 border-r border-slate-700/50 ${collapsed ? 'md:w-20' : 'md:w-72'} w-72 ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
+        className={`fixed md:relative z-50 h-screen bg-slate-950 text-slate-100 flex flex-col transition-all duration-300 border-r border-slate-800 ${collapsed ? 'md:w-20' : 'md:w-72'} w-72 ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
       >
         <div className="p-4 border-b border-slate-800 relative">
           <div className="flex items-center gap-3">
             <Image src="/logo-sig-agro.png" alt="SIG Agro" width={42} height={42} className="rounded-lg" />
             {!collapsed && (
               <div>
-                <div className="font-semibold text-white">Don Candido IA</div>
-                <div className="text-xs text-slate-400">SIG Agro</div>
+                <div className="font-semibold text-slate-100">Don Candido IA</div>
+                <div className="text-xs text-slate-500">SIG Agro</div>
               </div>
             )}
           </div>
@@ -237,7 +237,7 @@ export default function Sidebar() {
 
           <button
             onClick={() => setCollapsed((prev) => !prev)}
-            className="hidden md:flex absolute top-1/2 -translate-y-1/2 -right-3 w-7 h-7 bg-slate-800 rounded-full items-center justify-center text-slate-300 hover:text-white border border-slate-700 z-10"
+            className="hidden md:flex absolute top-1/2 -translate-y-1/2 -right-3 w-7 h-7 bg-slate-900 rounded-full items-center justify-center text-slate-300 hover:text-slate-100 border border-slate-700 z-10"
             aria-label={collapsed ? 'Expandir' : 'Colapsar'}
           >
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -245,18 +245,18 @@ export default function Sidebar() {
         </div>
 
         {!collapsed && (
-          <div className="px-4 py-3 border-b border-slate-800 bg-slate-900/55 space-y-2">
+          <div className="px-4 py-3 border-b border-slate-800 bg-slate-900/40 space-y-2">
             <div className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Organizacion activa</div>
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-md bg-emerald-600/90 text-white grid place-items-center text-xs font-bold">
+              <div className="w-7 h-7 rounded-md bg-sky-700 text-white grid place-items-center text-xs font-bold">
                 {(organization?.name || 'O').charAt(0).toUpperCase()}
               </div>
-              <div className="text-sm font-medium text-slate-100 truncate">{organization?.name || 'Sin organizacion'}</div>
+              <div className="text-sm font-medium text-slate-200 truncate">{organization?.name || 'Sin organizacion'}</div>
             </div>
             <select
               value={organizationId || ''}
               onChange={(e) => void setActiveOrganization(e.target.value)}
-              className="w-full text-sm rounded-lg bg-slate-800 border border-slate-700 text-slate-100 px-2 py-1.5"
+              className="w-full text-sm rounded-md bg-slate-900 border border-slate-700 text-slate-100 px-2 py-1.5"
               disabled={organizations.length === 0}
             >
               {organizations.length === 0 && <option value="">Sin organizaciones</option>}
@@ -278,7 +278,11 @@ export default function Sidebar() {
                   key={item.href}
                   href={item.href}
                   onClick={() => setMobileOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition ${item.active ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-md border transition ${
+                    item.active
+                      ? 'bg-slate-800 border-slate-700 text-sky-300'
+                      : 'border-transparent text-slate-300 hover:bg-slate-900 hover:border-slate-800 hover:text-slate-100'
+                  }`}
                 >
                   <Icon className="w-4 h-4" />
                   {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
@@ -290,7 +294,11 @@ export default function Sidebar() {
               <div key={item.href}>
                 <button
                   onClick={() => setFinanceOpen((prev) => !prev)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition ${item.active ? 'bg-emerald-600/20 text-emerald-300' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md border transition ${
+                    item.active
+                      ? 'bg-slate-800 border-slate-700 text-sky-300'
+                      : 'border-transparent text-slate-300 hover:bg-slate-900 hover:border-slate-800 hover:text-slate-100'
+                  }`}
                 >
                   <Icon className="w-4 h-4" />
                   {!collapsed && (
@@ -311,7 +319,11 @@ export default function Sidebar() {
                           key={sub.href}
                           href={sub.href}
                           onClick={() => setMobileOpen(false)}
-                          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition ${active ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm border transition ${
+                            active
+                              ? 'bg-slate-800 border-slate-700 text-sky-300'
+                              : 'border-transparent text-slate-300 hover:bg-slate-900 hover:border-slate-800 hover:text-slate-100'
+                          }`}
                         >
                           <SubIcon className="w-3.5 h-3.5" />
                           <span>{sub.label}</span>
@@ -326,8 +338,8 @@ export default function Sidebar() {
         </nav>
 
         <div className="p-3 border-t border-slate-800">
-          <div className={`flex items-center gap-3 p-2 rounded-xl bg-slate-800/80 ${collapsed ? 'justify-center' : ''}`}>
-            <div className="w-9 h-9 bg-emerald-600 rounded-full flex items-center justify-center text-sm font-semibold text-white">
+          <div className={`flex items-center gap-3 p-2 rounded-md bg-slate-900 border border-slate-800 ${collapsed ? 'justify-center' : ''}`}>
+            <div className="w-9 h-9 bg-slate-700 rounded-full flex items-center justify-center text-sm font-semibold text-white">
               {userInitial}
             </div>
             {!collapsed && (
@@ -346,7 +358,7 @@ export default function Sidebar() {
 
           <button
             onClick={signOut}
-            className={`w-full mt-2 px-3 py-2.5 bg-rose-600/20 text-rose-300 hover:bg-rose-600/30 rounded-xl transition flex items-center justify-center gap-2 ${collapsed ? 'px-2' : ''}`}
+            className={`w-full mt-2 px-3 py-2.5 bg-rose-950/20 border border-rose-900/60 text-rose-300 hover:bg-rose-950/40 rounded-md transition flex items-center justify-center gap-2 ${collapsed ? 'px-2' : ''}`}
           >
             <LogOut className="w-4 h-4" />
             {!collapsed && <span className="text-sm font-medium">Cerrar sesion</span>}
