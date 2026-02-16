@@ -31,7 +31,6 @@ type Producer = {
   telefono?: string;
   provincia: string;
   localidad: string;
-  razonSocial?: string;
   cuit?: string;
   activo?: boolean;
   updatedAt?: string | null;
@@ -46,7 +45,6 @@ type ProducerForm = {
   telefono: string;
   provincia: string;
   localidad: string;
-  razonSocial: string;
   cuit: string;
 };
 
@@ -58,7 +56,6 @@ const EMPTY_FORM: ProducerForm = {
   telefono: '',
   provincia: '',
   localidad: '',
-  razonSocial: '',
   cuit: '',
 };
 
@@ -123,7 +120,6 @@ export default function SuperAdminProductoresPage() {
       telefono: producer.telefono || '',
       provincia: producer.provincia || '',
       localidad: producer.localidad || '',
-      razonSocial: producer.razonSocial || '',
       cuit: producer.cuit || '',
     });
     setDialogOpen(true);
@@ -184,7 +180,7 @@ export default function SuperAdminProductoresPage() {
     if (!q) return producers;
 
     return producers.filter(p =>
-      [p.nombre, p.apellido, p.email, p.localidad, p.provincia, p.razonSocial]
+      [p.nombre, p.apellido, p.email, p.localidad, p.provincia]
         .join(' ')
         .toLowerCase()
         .includes(q)
@@ -245,7 +241,7 @@ export default function SuperAdminProductoresPage() {
       <PageToolbar
         searchValue={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Buscar por nombre, email o razon social"
+        searchPlaceholder="Buscar por nombre, email o ubicacion"
         actions={<BaseButton variant="outline" onClick={loadProducers}>Recargar</BaseButton>}
       />
 
@@ -328,10 +324,6 @@ export default function SuperAdminProductoresPage() {
               <div className="space-y-2">
                 <Label htmlFor="localidad">Localidad *</Label>
                 <BaseInput id="localidad" value={form.localidad} onChange={e => setForm(prev => ({ ...prev, localidad: e.target.value }))} required />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="razonSocial">Razon social</Label>
-                <BaseInput id="razonSocial" value={form.razonSocial} onChange={e => setForm(prev => ({ ...prev, razonSocial: e.target.value }))} />
               </div>
             </div>
 
