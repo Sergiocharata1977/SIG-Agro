@@ -1,5 +1,8 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getAdminFirestore } from '@/lib/firebase/admin-server';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 type ProducerPayload = {
   id?: string;

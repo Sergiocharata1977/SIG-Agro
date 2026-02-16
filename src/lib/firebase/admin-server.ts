@@ -9,6 +9,10 @@ function cleanPrivateKey(value?: string): string {
     return (value || '').replace(/\\n/g, '\n').trim();
 }
 
+function cleanText(value?: string): string {
+    return (value || '').trim();
+}
+
 function parseServiceAccountJson(raw?: string): {
     projectId?: string;
     clientEmail?: string;
@@ -18,8 +22,8 @@ function parseServiceAccountJson(raw?: string): {
     try {
         const parsed = JSON.parse(raw);
         return {
-            projectId: parsed.project_id || parsed.projectId,
-            clientEmail: parsed.client_email || parsed.clientEmail,
+            projectId: cleanText(parsed.project_id || parsed.projectId),
+            clientEmail: cleanText(parsed.client_email || parsed.clientEmail),
             privateKey: cleanPrivateKey(parsed.private_key || parsed.privateKey),
         };
     } catch {
@@ -37,17 +41,19 @@ function initializeAdmin() {
         process.env.GOOGLE_SERVICE_ACCOUNT_JSON
     );
 
-    const projectId =
+    const projectId = cleanText(
         serviceAccount?.projectId ||
         process.env.FIREBASE_PROJECT_ID ||
         process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ||
-        'sig-agro-83adc';
+        'sig-agro-83adc'
+    );
 
-    const clientEmail =
+    const clientEmail = cleanText(
         serviceAccount?.clientEmail ||
         process.env.FIREBASE_CLIENT_EMAIL ||
         process.env.GOOGLE_CLIENT_EMAIL ||
-        '';
+        ''
+    );
 
     const privateKey =
         serviceAccount?.privateKey ||

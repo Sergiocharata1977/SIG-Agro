@@ -96,7 +96,7 @@ export default function SuperAdminProductoresPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/super-admin/producers');
+      const res = await fetch('/api/super-admin/producers', { cache: 'no-store' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || data.error || 'No se pudo cargar productores');
       setProducers(Array.isArray(data.producers) ? data.producers : []);

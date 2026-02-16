@@ -44,3 +44,5 @@ next-env.d.ts
 /screenshots
 
 service-account.json
+.vercel
+.env*.local
