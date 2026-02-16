@@ -1,9 +1,9 @@
 ﻿'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { AlertTriangle, Bell, CalendarDays, CheckCircle2, DollarSign, Layers3, MapPinned, Tractor } from 'lucide-react';
+import { AlertTriangle, Bell, CalendarDays, CheckCircle2, DollarSign, Layers3, LogOut, MapPinned, Tractor } from 'lucide-react';
 import Sidebar, { toggleMobileSidebar } from '@/components/layout/Sidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { isSuperAdminEmail } from '@/lib/auth-utils';
@@ -16,6 +16,7 @@ import { obtenerCrops, getCampaniaActual, obtenerCampaniasDisponibles } from '@/
 import { obtenerAlertas, obtenerConteoNoLeidas } from '@/services/alerts';
 import { listOperationsByOrg } from '@/services/operations-registry';
 import { BaseButton } from '@/components/design-system';
+import { LanguageSelector } from '@/components/i18n/LanguageSelector';
 import { CULTIVOS_CONFIG } from '@/types/sig-agro';
 import { TIPOS_ALERTA_CONFIG, SEVERIDAD_CONFIG } from '@/types/sig-agro-advanced';
 
@@ -70,7 +71,20 @@ function DashboardHeader({
   onCampaignChange: (campaign: string) => void;
   activeAlerts: number;
 }) {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (!menuRef.current) return;
+      if (!menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 px-3 md:px-4 flex items-center justify-between gap-3">
@@ -109,8 +123,43 @@ function DashboardHeader({
           ))}
         </select>
 
-        <div className="w-9 h-9 bg-slate-700 rounded-full text-white text-sm font-semibold grid place-items-center" title={user?.email || ''}>
-          {(user?.email || 'U').charAt(0).toUpperCase()}
+        <div ref={menuRef} className="relative">
+          <button
+            onClick={() => setMenuOpen((prev) => !prev)}
+            className="w-9 h-9 bg-emerald-600 hover:bg-emerald-700 rounded-full text-white text-sm font-semibold grid place-items-center"
+            title={user?.email || ''}
+          >
+            {(user?.email || 'U').charAt(0).toUpperCase()}
+          </button>
+
+          {menuOpen && (
+            <div className="absolute right-0 mt-2 w-72 rounded-xl border border-slate-200 bg-white shadow-xl p-3 z-50">
+              <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+                <div className="w-10 h-10 rounded-full bg-emerald-600 text-white grid place-items-center font-semibold">
+                  {(user?.displayName || user?.email || 'U').charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-slate-900 truncate">{user?.displayName || 'Usuario'}</p>
+                  <p className="text-xs text-slate-500 truncate">{user?.email || ''}</p>
+                </div>
+              </div>
+
+              <div className="py-3 flex justify-center border-b border-slate-100">
+                <LanguageSelector />
+              </div>
+
+              <button
+                onClick={async () => {
+                  setMenuOpen(false);
+                  await signOut();
+                }}
+                className="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-100"
+              >
+                <LogOut className="w-4 h-4" />
+                Cerrar sesion
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>
