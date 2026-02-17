@@ -14,7 +14,7 @@ import {
     updateProfile,
     User as FirebaseUser,
 } from 'firebase/auth';
-import { collection, doc, getDoc, getDocs, limit, query, setDoc, Timestamp, where } from 'firebase/firestore';
+import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
 import { auth, db } from '@/firebase/config';
 import { Organization, User, UserRole } from '@/types/organization';
 import {
@@ -173,61 +173,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 return;
             }
 
-            // Autobootstrap para productor legado cuando no existe users/<uid>.
+            // Autobootstrap generico para productores sin perfil en users/{uid}.
+            // Evita depender de lecturas legacy que pueden estar bloqueadas por reglas.
             const email = (fbUser.email || '').trim().toLowerCase();
-            if (email) {
-                const productorQuery = query(
-                    collection(db, 'agro_productores'),
-                    where('email', '==', email),
-                    limit(1)
-                );
-                const productorSnap = await getDocs(productorQuery);
+            const displayName = (fbUser.displayName || email.split('@')[0] || 'Productor').trim();
+            await setDoc(doc(db, 'users', userId), {
+                email,
+                displayName,
+                role: 'owner',
+                status: 'active',
+                organizationId: '',
+                organizationIds: [],
+                accessAllOrganizations: true,
+                modulosHabilitados: null,
+                createdAt: Timestamp.now(),
+                updatedAt: Timestamp.now(),
+                lastLogin: Timestamp.now(),
+            }, { merge: true });
 
-                if (!productorSnap.empty) {
-                    const productor = productorSnap.docs[0].data() as Record<string, unknown>;
-                    const displayName =
-                        (typeof productor.nombre === 'string' ? productor.nombre : '') +
-                        (typeof productor.apellido === 'string' ? ` ${productor.apellido}` : '') ||
-                        fbUser.displayName ||
-                        email.split('@')[0];
-
-                    await setDoc(doc(db, 'users', userId), {
-                        email,
-                        displayName: String(displayName).trim(),
-                        role: 'owner',
-                        status: 'active',
-                        organizationId: '',
-                        organizationIds: [],
-                        accessAllOrganizations: true,
-                        modulosHabilitados: null,
-                        createdAt: Timestamp.now(),
-                        updatedAt: Timestamp.now(),
-                        lastLogin: Timestamp.now(),
-                    }, { merge: true });
-
-                    setUser({
-                        id: userId,
-                        email,
-                        displayName: String(displayName).trim(),
-                        role: 'owner',
-                        status: 'active',
-                        organizationId: '',
-                        organizationIds: [],
-                        accessAllOrganizations: true,
-                        modulosHabilitados: null,
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                        lastLogin: new Date(),
-                    });
-                    setOrganization(null);
-                    setOrganizations([]);
-                    console.info('[AuthDebug] productor auto-bootstrapped from agro_productores', {
-                        uid: userId,
-                        email,
-                    });
-                    return;
-                }
-            }
+            setUser({
+                id: userId,
+                email,
+                displayName,
+                role: 'owner',
+                status: 'active',
+                organizationId: '',
+                organizationIds: [],
+                accessAllOrganizations: true,
+                modulosHabilitados: null,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                lastLogin: new Date(),
+            });
+            setOrganization(null);
+            setOrganizations([]);
+            console.info('[AuthDebug] productor auto-bootstrapped in users', {
+                uid: userId,
+                email,
+            });
+            return;
 
             setUser(null);
             setOrganization(null);
