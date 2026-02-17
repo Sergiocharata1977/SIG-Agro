@@ -248,6 +248,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 });
                 return;
             }
+
+            const fallbackEmail = (fbUser.email || '').trim().toLowerCase();
+            const fallbackDisplayName = (fbUser.displayName || fallbackEmail.split('@')[0] || 'Productor').trim();
+            const fallbackRole: UserRole = roleFromFallback === 'viewer' ? 'owner' : roleFromFallback;
+            setUser({
+                id: fbUser.uid,
+                email: fallbackEmail,
+                displayName: fallbackDisplayName,
+                role: fallbackRole,
+                status: 'active',
+                organizationId: '',
+                organizationIds: [],
+                accessAllOrganizations: true,
+                modulosHabilitados: null,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                lastLogin: new Date(),
+            });
+            setOrganization(null);
+            setOrganizations([]);
+            console.info('[AuthDebug] generic fallback enabled after error', {
+                uid: fbUser.uid,
+                email: fallbackEmail,
+                claimRole: tokenClaims.role || tokenClaims.rol || null,
+                fallbackRole,
+            });
         }
     };
 
