@@ -358,42 +358,42 @@ export default function Sidebar() {
     <>
       {mobileOpen && <div className="fixed inset-0 bg-slate-950/60 z-40 md:hidden" onClick={() => setMobileOpen(false)} />}
 
-      <aside className={`fixed md:relative z-50 h-screen bg-slate-950 text-slate-100 flex flex-col transition-all duration-300 border-r border-slate-800 ${collapsed ? 'md:w-20' : 'md:w-80'} w-80 ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
-        <div className="p-4 border-b border-slate-800 relative">
+      <aside className={`fixed md:relative z-50 h-screen bg-emerald-950 text-emerald-50 flex flex-col transition-all duration-300 border-r border-emerald-900 ${collapsed ? 'md:w-20' : 'md:w-80'} w-80 ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+        <div className="p-4 border-b border-emerald-900 relative">
           <div className="flex items-center gap-3">
             <Image src="/logo-sig-agro.png" alt="SIG Agro" width={40} height={40} className="rounded-lg" />
             {!collapsed && (
               <div>
-                <div className="font-semibold text-slate-100">Don Candido IA</div>
-                <div className="text-xs text-slate-500">SIG Agro</div>
+                <div className="font-semibold text-emerald-50">Don Candido IA</div>
+                <div className="text-xs text-emerald-300/70">SIG Agro</div>
               </div>
             )}
           </div>
 
-          <button onClick={() => setMobileOpen(false)} className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-100 md:hidden" aria-label="Cerrar menu">
+          <button onClick={() => setMobileOpen(false)} className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center text-emerald-300 hover:text-emerald-50 md:hidden" aria-label="Cerrar menu">
             <X className="w-4 h-4" />
           </button>
 
-          <button onClick={() => setCollapsed((prev) => !prev)} className="hidden md:flex absolute top-1/2 -translate-y-1/2 -right-3 w-7 h-7 bg-slate-900 rounded-full items-center justify-center text-slate-300 hover:text-slate-100 border border-slate-700 z-10" aria-label={collapsed ? 'Expandir' : 'Colapsar'}>
+          <button onClick={() => setCollapsed((prev) => !prev)} className="hidden md:flex absolute top-1/2 -translate-y-1/2 -right-3 w-7 h-7 bg-emerald-900 rounded-full items-center justify-center text-emerald-200 hover:text-emerald-50 border border-emerald-700 z-10" aria-label={collapsed ? 'Expandir' : 'Colapsar'}>
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
         </div>
 
         {!collapsed && (
-          <div className="px-4 py-3 bg-slate-900/30 space-y-2">
-            <div className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Organizacion activa</div>
+          <div className="px-4 py-3 bg-emerald-900/30 space-y-2">
+            <div className="text-[11px] uppercase tracking-[0.16em] text-emerald-300/70">Organizacion activa</div>
 
-            <div className="rounded-xl bg-slate-900/70 p-2.5 space-y-2">
+            <div className="rounded-xl bg-emerald-900/60 p-2.5 space-y-2">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-md bg-sky-700 text-white grid place-items-center text-xs font-bold">{(organization?.name || 'O').charAt(0).toUpperCase()}</div>
-                <div className="text-sm font-medium text-slate-100 truncate">{organization?.name || 'Sin organizacion'}</div>
+                <div className="text-sm font-medium text-emerald-50 truncate">{organization?.name || 'Sin organizacion'}</div>
               </div>
 
               {organizations.length > 1 && (
                 <select
                   value={organizationId || ''}
                   onChange={(e) => void setActiveOrganization(e.target.value)}
-                  className="w-full text-sm rounded-lg bg-slate-950/70 text-slate-100 px-2.5 py-2 outline-none focus:ring-2 focus:ring-sky-600/40"
+                  className="w-full text-sm rounded-lg bg-emerald-950/70 text-emerald-50 px-2.5 py-2 outline-none focus:ring-2 focus:ring-emerald-500/40 border border-emerald-800"
                 >
                   {organizations.map((org) => (
                     <option key={org.id} value={org.id}>{org.name}</option>
@@ -402,7 +402,7 @@ export default function Sidebar() {
               )}
 
               {organizations.length <= 1 && (
-                <div className="text-xs text-slate-400 px-1">
+                <div className="text-xs text-emerald-200/70 px-1">
                   {organizations.length === 0 ? 'Todavia no tenes organizaciones creadas.' : 'Tenes 1 organizacion vinculada.'}
                 </div>
               )}
@@ -410,7 +410,7 @@ export default function Sidebar() {
               <Link
                 href="/organizaciones"
                 onClick={() => setMobileOpen(false)}
-                className="inline-flex items-center justify-center w-full rounded-lg bg-emerald-600/20 px-2.5 py-2 text-xs font-medium text-emerald-300 hover:bg-emerald-600/30"
+                className="inline-flex items-center justify-center w-full rounded-lg bg-emerald-600/30 px-2.5 py-2 text-xs font-medium text-emerald-100 hover:bg-emerald-600/40"
               >
                 ABM Organizaciones
               </Link>
@@ -419,32 +419,15 @@ export default function Sidebar() {
         )}
 
         <nav className="flex-1 p-3 overflow-y-auto space-y-4">
-          <div className="space-y-1.5">
-            {!collapsed && <p className="px-2 text-[10px] uppercase tracking-[0.18em] text-slate-500">Organizacion</p>}
-            <Link
-              href="/organizaciones"
-              onClick={() => setMobileOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-md border transition ${pathname?.startsWith('/organizaciones') ? 'bg-slate-800 border-slate-700 text-sky-300' : 'border-transparent text-slate-300 hover:bg-slate-900 hover:border-slate-800 hover:text-slate-100'}`}
-            >
-              <Building2 className="w-4 h-4" />
-              {!collapsed && (
-                <>
-                  <span className="text-sm font-medium flex-1">ABM Organizaciones</span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-slate-700 text-slate-200">{organizations.length}</span>
-                </>
-              )}
-            </Link>
-          </div>
-
-          {!hasActiveOrganization && (
-            <div className="rounded-xl bg-slate-900/50 p-3 text-xs text-slate-400">
+          {!hasActiveOrganization && !collapsed && (
+            <div className="rounded-xl bg-emerald-900/40 p-3 text-xs text-emerald-100/80 border border-emerald-800">
               Crea o selecciona una organizacion para habilitar campos, lotes y operaciones.
             </div>
           )}
           {hasActiveOrganization && (
             <>
               <div className="space-y-1.5">
-                {!collapsed && <p className="px-2 text-[10px] uppercase tracking-[0.18em] text-slate-500">Operacion</p>}
+                {!collapsed && <p className="px-2 text-[10px] uppercase tracking-[0.18em] text-emerald-300/70">Operacion</p>}
                 {filteredGroups.filter((g) => opKeys.has(g.key)).map((group) => {
                   const GroupIcon = group.icon;
                   const open = !!expandedGroups[group.key];
@@ -452,7 +435,7 @@ export default function Sidebar() {
                     <div key={group.key} className="space-y-1">
                       <button
                         onClick={() => setExpandedGroups((prev) => ({ ...prev, [group.key]: !prev[group.key] }))}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md border transition ${group.active ? 'bg-slate-800 border-slate-700 text-sky-300' : 'border-transparent text-slate-300 hover:bg-slate-900 hover:border-slate-800 hover:text-slate-100'}`}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md border transition ${group.active ? 'bg-emerald-800/70 border-emerald-600 text-emerald-100' : 'border-transparent text-emerald-100/80 hover:bg-emerald-900/50 hover:border-emerald-800 hover:text-emerald-50'}`}
                       >
                         <GroupIcon className="w-4 h-4" />
                         {!collapsed && (
@@ -464,16 +447,16 @@ export default function Sidebar() {
                       </button>
 
                       {open && !collapsed && (
-                        <div className="ml-4 pl-3 border-l border-slate-800 space-y-1">
+                        <div className="ml-4 pl-3 border-l border-emerald-800 space-y-1">
                           {group.items.map((item) => {
                             const Icon = item.icon;
-                            const cls = `flex items-center gap-2 px-3 py-2 rounded-md text-sm border transition ${item.active ? 'bg-slate-800 border-slate-700 text-sky-300' : 'border-transparent text-slate-300 hover:bg-slate-900 hover:border-slate-800 hover:text-slate-100'}`;
+                            const cls = `flex items-center gap-2 px-3 py-2 rounded-md text-sm border transition ${item.active ? 'bg-emerald-800/70 border-emerald-600 text-emerald-100' : 'border-transparent text-emerald-100/80 hover:bg-emerald-900/50 hover:border-emerald-800 hover:text-emerald-50'}`;
                             if (item.disabled || !item.href) {
                               return (
                                 <div key={`${group.key}-${item.label}`} className={`${cls} opacity-70 cursor-not-allowed`}>
                                   <Icon className="w-3.5 h-3.5" />
                                   <span className="flex-1">{item.label}</span>
-                                  {item.badge && <span className="text-[10px] uppercase tracking-wide text-slate-400">{item.badge}</span>}
+                                  {item.badge && <span className="text-[10px] uppercase tracking-wide text-emerald-300/70">{item.badge}</span>}
                                 </div>
                               );
                             }
@@ -481,7 +464,7 @@ export default function Sidebar() {
                               <Link key={`${group.key}-${item.href}-${item.label}`} href={item.href} onClick={() => setMobileOpen(false)} className={cls}>
                                 <Icon className="w-3.5 h-3.5" />
                                 <span className="flex-1">{item.label}</span>
-                                {item.badge && <span className="text-[10px] uppercase tracking-wide text-slate-400">{item.badge}</span>}
+                                {item.badge && <span className="text-[10px] uppercase tracking-wide text-emerald-300/70">{item.badge}</span>}
                               </Link>
                             );
                           })}
@@ -493,7 +476,7 @@ export default function Sidebar() {
               </div>
 
               <div className="space-y-1.5">
-                {!collapsed && <p className="px-2 text-[10px] uppercase tracking-[0.18em] text-slate-500">Control</p>}
+                {!collapsed && <p className="px-2 text-[10px] uppercase tracking-[0.18em] text-emerald-300/70">Control</p>}
                 {filteredGroups.filter((g) => !opKeys.has(g.key)).map((group) => {
                   const GroupIcon = group.icon;
                   const open = !!expandedGroups[group.key];
@@ -501,7 +484,7 @@ export default function Sidebar() {
                     <div key={group.key} className="space-y-1">
                       <button
                         onClick={() => setExpandedGroups((prev) => ({ ...prev, [group.key]: !prev[group.key] }))}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md border transition ${group.active ? 'bg-slate-800 border-slate-700 text-sky-300' : 'border-transparent text-slate-300 hover:bg-slate-900 hover:border-slate-800 hover:text-slate-100'}`}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md border transition ${group.active ? 'bg-emerald-800/70 border-emerald-600 text-emerald-100' : 'border-transparent text-emerald-100/80 hover:bg-emerald-900/50 hover:border-emerald-800 hover:text-emerald-50'}`}
                       >
                         <GroupIcon className="w-4 h-4" />
                         {!collapsed && (
@@ -513,16 +496,16 @@ export default function Sidebar() {
                       </button>
 
                       {open && !collapsed && (
-                        <div className="ml-4 pl-3 border-l border-slate-800 space-y-1">
+                        <div className="ml-4 pl-3 border-l border-emerald-800 space-y-1">
                           {group.items.map((item) => {
                             const Icon = item.icon;
-                            const cls = `flex items-center gap-2 px-3 py-2 rounded-md text-sm border transition ${item.active ? 'bg-slate-800 border-slate-700 text-sky-300' : 'border-transparent text-slate-300 hover:bg-slate-900 hover:border-slate-800 hover:text-slate-100'}`;
+                            const cls = `flex items-center gap-2 px-3 py-2 rounded-md text-sm border transition ${item.active ? 'bg-emerald-800/70 border-emerald-600 text-emerald-100' : 'border-transparent text-emerald-100/80 hover:bg-emerald-900/50 hover:border-emerald-800 hover:text-emerald-50'}`;
                             if (item.disabled || !item.href) {
                               return (
                                 <div key={`${group.key}-${item.label}`} className={`${cls} opacity-70 cursor-not-allowed`}>
                                   <Icon className="w-3.5 h-3.5" />
                                   <span className="flex-1">{item.label}</span>
-                                  {item.badge && <span className="text-[10px] uppercase tracking-wide text-slate-400">{item.badge}</span>}
+                                  {item.badge && <span className="text-[10px] uppercase tracking-wide text-emerald-300/70">{item.badge}</span>}
                                 </div>
                               );
                             }
@@ -530,7 +513,7 @@ export default function Sidebar() {
                               <Link key={`${group.key}-${item.href}-${item.label}`} href={item.href} onClick={() => setMobileOpen(false)} className={cls}>
                                 <Icon className="w-3.5 h-3.5" />
                                 <span className="flex-1">{item.label}</span>
-                                {item.badge && <span className="text-[10px] uppercase tracking-wide text-slate-400">{item.badge}</span>}
+                                {item.badge && <span className="text-[10px] uppercase tracking-wide text-emerald-300/70">{item.badge}</span>}
                               </Link>
                             );
                           })}

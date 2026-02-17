@@ -4,7 +4,8 @@ import { FormEvent, useMemo, useState } from 'react';
 import { Building2, Pencil, Plus, Power, RotateCcw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Organization } from '@/types/organization';
-import { actualizarOrganizacion, crearOrganizacionParaUsuario } from '@/services/organizations';
+import { actualizarOrganizacion } from '@/services/organizations';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 type OrgFormState = {
   name: string;
@@ -33,7 +34,7 @@ export default function OrganizacionesPage() {
   const [error, setError] = useState<string | null>(null);
   const [okMessage, setOkMessage] = useState<string | null>(null);
   const [query, setQuery] = useState('');
-  const [showForm, setShowForm] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const canManage = user?.role !== 'super_admin';
 
@@ -72,7 +73,7 @@ export default function OrganizacionesPage() {
   const resetForm = () => {
     setForm(EMPTY_FORM);
     setEditing(null);
-    setShowForm(false);
+    setDialogOpen(false);
   };
 
   const handleCreateOrUpdate = async (e: FormEvent) => {
@@ -104,19 +105,26 @@ export default function OrganizacionesPage() {
         });
         setOkMessage('Organizacion actualizada');
       } else {
-        await crearOrganizacionParaUsuario(
-          {
+        const token = await firebaseUser.getIdToken();
+        const response = await fetch('/api/producer/organizations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
             name: form.name.trim(),
             cuit: form.cuit.trim() || undefined,
             province: form.province.trim(),
             city: form.city.trim() || undefined,
             email: form.email.trim(),
             phone: form.phone.trim() || undefined,
-          },
-          firebaseUser.uid,
-          user.email,
-          user.displayName
-        );
+          }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(data.error || data.detail || 'No se pudo crear la organizacion');
+        }
         setOkMessage('Organizacion creada');
       }
 
@@ -132,7 +140,7 @@ export default function OrganizacionesPage() {
 
   const handleEdit = (org: Organization) => {
     setEditing(org);
-    setShowForm(true);
+    setDialogOpen(true);
     setForm({
       name: org.name || '',
       email: org.email || '',
@@ -174,12 +182,12 @@ export default function OrganizacionesPage() {
           onClick={() => {
             setEditing(null);
             setForm(EMPTY_FORM);
-            setShowForm((prev) => !prev);
+            setDialogOpen(true);
           }}
           className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 hover:bg-slate-50"
         >
           <Plus className="w-4 h-4" />
-          {showForm ? 'Cerrar formulario' : 'Nueva organizacion'}
+          Nueva organizacion
         </button>
       </header>
 
@@ -189,41 +197,8 @@ export default function OrganizacionesPage() {
         <CardStat label="Suspendidas" value={stats.suspended} tone="danger" />
       </section>
 
-      {showForm && (
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">{editing ? 'Editar organizacion' : 'Nueva organizacion'}</h2>
-          <form onSubmit={handleCreateOrUpdate} className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Input label="Nombre" value={form.name} onChange={(v) => setForm((f) => ({ ...f, name: v }))} required />
-            <Input label="Email" type="email" value={form.email} onChange={(v) => setForm((f) => ({ ...f, email: v }))} required />
-            <Input label="Provincia" value={form.province} onChange={(v) => setForm((f) => ({ ...f, province: v }))} required />
-            <Input label="Ciudad" value={form.city} onChange={(v) => setForm((f) => ({ ...f, city: v }))} />
-            <Input label="CUIT" value={form.cuit} onChange={(v) => setForm((f) => ({ ...f, cuit: v }))} />
-            <Input label="Telefono" value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} />
-
-            <div className="md:col-span-2 space-y-2">
-              {error && <div className="rounded-lg bg-rose-50 border border-rose-200 px-3 py-2 text-sm text-rose-700">{error}</div>}
-              {okMessage && <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 text-sm text-emerald-700">{okMessage}</div>}
-            </div>
-
-            <div className="md:col-span-2 flex gap-2 pt-2">
-              <button
-                type="submit"
-                disabled={loading}
-                className="rounded-xl bg-slate-900 text-white py-2.5 px-4 text-sm font-medium hover:bg-slate-800 disabled:opacity-50"
-              >
-                {loading ? 'Guardando...' : editing ? 'Guardar cambios' : 'Crear organizacion'}
-              </button>
-              <button
-                type="button"
-                onClick={resetForm}
-                className="rounded-xl border border-slate-300 py-2.5 px-4 text-sm text-slate-700 hover:bg-slate-50"
-              >
-                Cancelar
-              </button>
-            </div>
-          </form>
-        </section>
-      )}
+      {okMessage && <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 text-sm text-emerald-700">{okMessage}</div>}
+      {error && <div className="rounded-lg bg-rose-50 border border-rose-200 px-3 py-2 text-sm text-rose-700">{error}</div>}
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
         <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
@@ -308,6 +283,39 @@ export default function OrganizacionesPage() {
           </table>
         </div>
       </section>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{editing ? 'Editar organizacion' : 'Nueva organizacion'}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCreateOrUpdate} className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Input label="Nombre" value={form.name} onChange={(v) => setForm((f) => ({ ...f, name: v }))} required />
+            <Input label="Email" type="email" value={form.email} onChange={(v) => setForm((f) => ({ ...f, email: v }))} required />
+            <Input label="Provincia" value={form.province} onChange={(v) => setForm((f) => ({ ...f, province: v }))} required />
+            <Input label="Ciudad" value={form.city} onChange={(v) => setForm((f) => ({ ...f, city: v }))} />
+            <Input label="CUIT" value={form.cuit} onChange={(v) => setForm((f) => ({ ...f, cuit: v }))} />
+            <Input label="Telefono" value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} />
+
+            <div className="md:col-span-2 flex gap-2 pt-2">
+              <button
+                type="submit"
+                disabled={loading}
+                className="rounded-xl bg-slate-900 text-white py-2.5 px-4 text-sm font-medium hover:bg-slate-800 disabled:opacity-50"
+              >
+                {loading ? 'Guardando...' : editing ? 'Guardar cambios' : 'Crear organizacion'}
+              </button>
+              <button
+                type="button"
+                onClick={resetForm}
+                className="rounded-xl border border-slate-300 py-2.5 px-4 text-sm text-slate-700 hover:bg-slate-50"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -190,18 +190,26 @@ export async function obtenerOrganizacionesUsuario(
     const shouldReadAll = user.accessAllOrganizations !== false;
 
     if (shouldReadAll) {
-        const createdBySnap = await getDocs(
-            query(collection(db, ORGANIZATIONS), where('createdBy', '==', userId))
-        );
-        createdBySnap.docs.forEach((d) => ids.add(d.id));
+        try {
+            const createdBySnap = await getDocs(
+                query(collection(db, ORGANIZATIONS), where('createdBy', '==', userId))
+            );
+            createdBySnap.docs.forEach((d) => ids.add(d.id));
+        } catch (error) {
+            console.warn('No se pudo consultar organizations por createdBy. Se continua con fallback de IDs.', error);
+        }
 
-        const memberships = await getDocs(
-            query(collectionGroup(db, 'members'), where('userId', '==', userId))
-        );
-        memberships.docs.forEach((memberDoc) => {
-            const orgRef = memberDoc.ref.parent.parent;
-            if (orgRef?.id) ids.add(orgRef.id);
-        });
+        try {
+            const memberships = await getDocs(
+                query(collectionGroup(db, 'members'), where('userId', '==', userId))
+            );
+            memberships.docs.forEach((memberDoc) => {
+                const orgRef = memberDoc.ref.parent.parent;
+                if (orgRef?.id) ids.add(orgRef.id);
+            });
+        } catch (error) {
+            console.warn('No se pudo consultar memberships por collectionGroup. Se continua con fallback de IDs.', error);
+        }
     }
 
     const organizations = await Promise.all(Array.from(ids).map((id) => obtenerOrganizacion(id)));
