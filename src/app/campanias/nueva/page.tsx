@@ -110,11 +110,27 @@ export default function NuevaCampaniaPage() {
   if (loadingData) return <div className="min-h-screen flex items-center justify-center text-slate-500">Cargando...</div>;
 
   return (
-    <PageShell title="Nueva Campana" subtitle="Alta operativa de campana agricola">
+    <PageShell title="Nueva campana" subtitle="Wizard operativo para campo, lote, cultivo, fechas y rendimiento esperado.">
       {error && <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
 
       <Section>
-        <form onSubmit={handleSubmit} className="rounded-xl border border-slate-200 bg-white p-5 space-y-4 max-w-2xl">
+        <div className="grid gap-5 xl:grid-cols-[0.8fr_1.2fr]">
+          <aside className="rounded-[32px] border border-slate-200 bg-[linear-gradient(135deg,#102d20,#1b4332)] p-6 text-white shadow-sm">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-lime-200">Paso 1 a 5</p>
+            <h2 className="mt-3 text-3xl font-semibold">Nueva campana agricola</h2>
+            <p className="mt-3 text-sm leading-6 text-white/72">
+              El flujo replica el wizard de Stitch: campo, lote, cultivo, fechas y definicion de rendimiento esperado.
+            </p>
+            <div className="mt-6 space-y-3 text-sm">
+              {['Seleccionar campo', 'Elegir lote', 'Definir cultivo', 'Fechas clave', 'Confirmacion'].map((step, index) => (
+                <div key={step} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                  <span className="text-lime-200">0{index + 1}</span> {step}
+                </div>
+              ))}
+            </div>
+          </aside>
+
+          <form onSubmit={handleSubmit} className="rounded-[32px] border border-slate-200 bg-white p-6 space-y-4 shadow-sm">
           <Field label="Campo" required>
             <BaseSelect value={formData.campoId} onValueChange={v => setFormData(prev => ({ ...prev, campoId: v, loteId: '' }))}>
               <BaseSelectTrigger><BaseSelectValue placeholder="Seleccionar campo" /></BaseSelectTrigger>
@@ -154,7 +170,8 @@ export default function NuevaCampaniaPage() {
             <BaseButton type="button" variant="outline" onClick={() => router.push('/campanias')}>Cancelar</BaseButton>
             <BaseButton type="submit" disabled={loading}>{loading ? 'Guardando...' : 'Crear campana'}</BaseButton>
           </div>
-        </form>
+          </form>
+        </div>
       </Section>
     </PageShell>
   );
@@ -163,7 +180,7 @@ export default function NuevaCampaniaPage() {
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium text-slate-700">{label}{required ? ' *' : ''}</label>
+      <label className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">{label}{required ? ' *' : ''}</label>
       {children}
     </div>
   );

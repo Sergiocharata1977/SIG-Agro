@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Organization } from '@/types/organization';
 import { actualizarOrganizacion } from '@/services/organizations';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { PageShell } from '@/components/layout/PageShell';
 
 type OrgFormState = {
   name: string;
@@ -172,7 +173,8 @@ export default function OrganizacionesPage() {
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <PageShell title="ABM Organizaciones" subtitle="Vista del productor con switch de organizacion activa, estado y administracion basica.">
+      <div className="space-y-6">
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">ABM Organizaciones</h1>
@@ -316,7 +318,8 @@ export default function OrganizacionesPage() {
           </form>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </PageShell>
   );
 }
 

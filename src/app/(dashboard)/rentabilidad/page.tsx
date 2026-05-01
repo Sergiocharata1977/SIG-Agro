@@ -46,17 +46,17 @@ export default function RentabilidadPage() {
   return (
     <PageShell
       title="Rentabilidad Productiva"
-      subtitle="Margen, costos y ROI por campana/lote/cultivo"
+      subtitle="Margen bruto por campana, costos, ingresos y comparativa interanual."
       rightSlot={(
         <input
           value={campaignId}
           onChange={(e) => setCampaignId(e.target.value)}
-          className="border rounded-lg px-3 py-2 text-sm"
+          className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm"
         />
       )}
     >
       {loading || !resumen ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-500">Cargando rentabilidad...</div>
+        <div className="app-panel p-5 text-sm text-slate-500">Cargando rentabilidad...</div>
       ) : (
         <div className="space-y-4">
           <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -71,17 +71,17 @@ export default function RentabilidadPage() {
           </section>
 
           {comparativa && (
-            <section className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-700 flex flex-col md:flex-row gap-2 md:gap-6">
+            <section className="rounded-[28px] border border-slate-200 bg-white p-5 text-sm text-slate-700 flex flex-col md:flex-row gap-2 md:gap-6 shadow-sm">
               <span>Delta margen vs campana anterior: <b>{comparativa.deltaMarginPercent}%</b></span>
               <span>Delta ROI vs campana anterior: <b>{comparativa.deltaRoiPercent}%</b></span>
             </section>
           )}
 
-          <section className="rounded-xl border border-slate-200 bg-white p-4">
+          <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="font-medium mb-3">Por cultivo</h2>
             <div className="space-y-2">
               {resumen.byCrop.map((row) => (
-                <div key={row.cultivo} className="border border-slate-200 rounded-lg p-3 text-sm">
+                <div key={row.cultivo} className="rounded-2xl border border-slate-200 bg-[#fbfcff] p-4 text-sm">
                   <div className="flex items-center justify-between">
                     <b className="capitalize">{row.cultivo}</b>
                     <span>ROI: {row.roiPercent}%</span>
@@ -102,9 +102,9 @@ export default function RentabilidadPage() {
 
 function Kpi({ title, value, highlight = false }: { title: string; value: string; highlight?: boolean }) {
   return (
-    <div className={`rounded-lg border p-3 ${highlight ? 'border-emerald-300 bg-emerald-50' : 'border-slate-200 bg-white'}`}>
-      <p className="text-xs text-slate-600">{title}</p>
-      <p className="text-lg font-semibold text-slate-900">{value}</p>
+    <div className={`rounded-[28px] border p-4 shadow-sm ${highlight ? 'border-emerald-300 bg-emerald-50' : 'border-slate-200 bg-white'}`}>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">{title}</p>
+      <p className="mt-3 text-xl font-semibold text-slate-900">{value}</p>
     </div>
   );
 }

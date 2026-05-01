@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import type { ComponentType } from 'react';
+import { ArrowUpRight, Download, Landmark, NotebookPen } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   inicializarPlanCuentas,
@@ -96,46 +98,97 @@ export default function ContabilidadPage() {
   return (
     <PageShell
       title="Contabilidad"
-      subtitle={`${cuentas.length} cuentas · ${asientos.length} asientos`}
-      rightSlot={<Link href="/contabilidad/asiento"><BaseButton>Nuevo asiento</BaseButton></Link>}
+      subtitle="Libro diario agricola con resumen ejecutivo, balance y movimientos recientes."
+      rightSlot={(
+        <>
+          <button className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
+            <Download className="h-4 w-4" />
+            Exportar
+          </button>
+          <Link href="/contabilidad/asiento"><BaseButton>Nuevo asiento</BaseButton></Link>
+        </>
+      )}
     >
       <Section>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <BaseCard><p className="text-sm text-slate-500">Cuentas</p><p className="text-2xl font-semibold">{cuentas.length}</p></BaseCard>
-          <BaseCard><p className="text-sm text-slate-500">Asientos</p><p className="text-2xl font-semibold">{asientos.length}</p></BaseCard>
-          <BaseCard><p className="text-sm text-slate-500">Balance lineas</p><p className="text-2xl font-semibold">{balance.length}</p></BaseCard>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <MetricCard label="Cuentas activas" value={String(cuentas.length)} tone="emerald" icon={Landmark} />
+          <MetricCard label="Asientos cargados" value={String(asientos.length)} tone="slate" icon={NotebookPen} />
+          <MetricCard label="Lineas de balance" value={String(balance.length)} tone="sky" icon={ArrowUpRight} />
+          <MetricCard
+            label="Balance neto"
+            value={`$ ${balance.reduce((acc, item) => acc + item.saldo, 0).toLocaleString('es-AR')}`}
+            tone="lime"
+            icon={ArrowUpRight}
+          />
         </div>
       </Section>
 
       <Section title="Ultimos asientos">
-        <ListTable
-          data={asientos.slice(0, 10)}
-          keyExtractor={item => item.id}
-          emptyState={<div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-slate-500">Sin asientos cargados.</div>}
-          columns={[
-            { header: 'Numero', cell: item => item.numero },
-            { header: 'Fecha', cell: item => new Date(item.fecha).toLocaleDateString('es-AR') },
-            { header: 'Concepto', accessorKey: 'concepto' },
-            { header: 'Debe', className: 'text-right', cell: item => `$ ${item.totalDebe.toLocaleString('es-AR')}` },
-            { header: 'Haber', className: 'text-right', cell: item => `$ ${item.totalHaber.toLocaleString('es-AR')}` },
-          ]}
-        />
+        <div className="app-panel overflow-hidden">
+          <ListTable
+            data={asientos.slice(0, 10)}
+            keyExtractor={item => item.id}
+            emptyState={<div className="p-8 text-center text-slate-500">Sin asientos cargados.</div>}
+            columns={[
+              { header: 'Numero', cell: item => item.numero },
+              { header: 'Fecha', cell: item => new Date(item.fecha).toLocaleDateString('es-AR') },
+              { header: 'Concepto', accessorKey: 'concepto' },
+              { header: 'Debe', className: 'text-right', cell: item => `$ ${item.totalDebe.toLocaleString('es-AR')}` },
+              { header: 'Haber', className: 'text-right', cell: item => `$ ${item.totalHaber.toLocaleString('es-AR')}` },
+            ]}
+          />
+        </div>
       </Section>
 
       <Section title="Balance de comprobacion">
-        <ListTable
-          data={balance}
-          keyExtractor={item => item.cuentaCodigo}
-          emptyState={<div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-slate-500">Sin movimientos.</div>}
-          columns={[
-            { header: 'Codigo', accessorKey: 'cuentaCodigo' },
-            { header: 'Cuenta', accessorKey: 'cuentaNombre' },
-            { header: 'Debe', className: 'text-right', cell: item => `$ ${item.debe.toLocaleString('es-AR')}` },
-            { header: 'Haber', className: 'text-right', cell: item => `$ ${item.haber.toLocaleString('es-AR')}` },
-            { header: 'Saldo', className: 'text-right', cell: item => `$ ${item.saldo.toLocaleString('es-AR')}` },
-          ]}
-        />
+        <div className="app-panel overflow-hidden">
+          <ListTable
+            data={balance}
+            keyExtractor={item => item.cuentaCodigo}
+            emptyState={<div className="p-8 text-center text-slate-500">Sin movimientos.</div>}
+            columns={[
+              { header: 'Codigo', accessorKey: 'cuentaCodigo' },
+              { header: 'Cuenta', accessorKey: 'cuentaNombre' },
+              { header: 'Debe', className: 'text-right', cell: item => `$ ${item.debe.toLocaleString('es-AR')}` },
+              { header: 'Haber', className: 'text-right', cell: item => `$ ${item.haber.toLocaleString('es-AR')}` },
+              { header: 'Saldo', className: 'text-right', cell: item => `$ ${item.saldo.toLocaleString('es-AR')}` },
+            ]}
+          />
+        </div>
       </Section>
     </PageShell>
+  );
+}
+
+function MetricCard({
+  label,
+  value,
+  tone,
+  icon: Icon,
+}: {
+  label: string;
+  value: string;
+  tone: 'emerald' | 'slate' | 'sky' | 'lime';
+  icon: ComponentType<{ className?: string }>;
+}) {
+  const tones = {
+    emerald: 'border-emerald-200 bg-emerald-50/80 text-emerald-900',
+    slate: 'border-slate-200 bg-white text-slate-900',
+    sky: 'border-sky-200 bg-sky-50 text-sky-900',
+    lime: 'border-lime-200 bg-lime-50 text-lime-900',
+  };
+
+  return (
+    <article className={`rounded-[28px] border p-5 shadow-sm ${tones[tone]}`}>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">{label}</p>
+          <p className="mt-3 text-3xl font-semibold tracking-tight">{value}</p>
+        </div>
+        <div className="grid h-11 w-11 place-items-center rounded-2xl bg-white/80">
+          <Icon className="h-5 w-5" />
+        </div>
+      </div>
+    </article>
   );
 }

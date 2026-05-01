@@ -22,7 +22,7 @@ export default function MetricasPage() {
   if (!firebaseUser) return null;
 
   return (
-    <PageShell title="Metricas" subtitle="Resumen operativo rapido">
+    <PageShell title="Metricas productivas" subtitle="KPIs de produccion, comparativas y accesos rapidos para la operacion agro.">
       <Section>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           <Kpi title="Campos" value="1" />
@@ -48,16 +48,16 @@ export default function MetricasPage() {
 
 function Kpi({ title, value }: { title: string; value: string }) {
   return (
-    <BaseCard>
-      <p className="text-sm text-slate-500">{title}</p>
-      <p className="text-3xl font-semibold text-slate-900">{value}</p>
+    <BaseCard className="rounded-[28px] border border-slate-200 bg-white shadow-sm">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">{title}</p>
+      <p className="mt-3 text-3xl font-semibold text-slate-900">{value}</p>
     </BaseCard>
   );
 }
 
 function Quick({ title, href, desc }: { title: string; href: string; desc: string }) {
   return (
-    <BaseCard>
+    <BaseCard className="rounded-[28px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff,#fbfcff)] shadow-sm">
       <div className="space-y-3">
         <div>
           <h3 className="font-semibold text-slate-900">{title}</h3>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { ArrowLeft, PlusCircle, Scale } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { crearAsiento, obtenerCuentas } from '@/services/contabilidad';
 import type { CuentaContable, LineaAsiento } from '@/types';
@@ -127,11 +128,32 @@ export default function NuevoAsientoPage() {
   if (loadingCuentas) return <div className="min-h-screen flex items-center justify-center text-slate-500">Cargando cuentas...</div>;
 
   return (
-    <PageShell title="Nuevo asiento" subtitle="Registro contable manual">
-      {error && <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
-
+    <PageShell title="Nuevo asiento contable" subtitle="Formulario modal de carga con validacion de balance, cuentas agro y multiples lineas.">
       <Section>
-        <form onSubmit={handleSubmit} className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
+        <form onSubmit={handleSubmit} className="mx-auto max-w-5xl rounded-[32px] border border-[rgba(193,200,194,0.9)] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,249,255,0.98))] p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] md:p-8 space-y-6">
+          <div className="flex flex-col gap-4 rounded-[28px] bg-[#eff7f1] p-5 md:flex-row md:items-start md:justify-between">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#c1ecd4] bg-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#446900]">
+                <Scale className="h-4 w-4" />
+                Popup contable
+              </div>
+              <h2 className="mt-4 text-2xl font-semibold text-[#0b1c30]">Carga manual de asiento agro</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+                Registrá fecha, concepto y lineas del asiento. El sistema controla que debe y haber queden balanceados antes de guardar.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => router.push('/contabilidad')}
+              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Cerrar
+            </button>
+          </div>
+
+          {error && <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field label="Fecha"><BaseInput type="date" value={formData.fecha} onChange={e => setFormData(prev => ({ ...prev, fecha: e.target.value }))} required /></Field>
             <Field label="Concepto"><BaseInput value={formData.concepto} onChange={e => setFormData(prev => ({ ...prev, concepto: e.target.value }))} required /></Field>
@@ -139,7 +161,9 @@ export default function NuevoAsientoPage() {
 
           <div className="space-y-3">
             {lineas.map((linea, index) => (
-              <div key={index} className="grid grid-cols-1 md:grid-cols-[1fr_180px_180px_auto] gap-2 items-end">
+              <div key={index} className="rounded-[28px] border border-slate-200 bg-white p-4">
+                <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">Linea {index + 1}</div>
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_180px_180px_auto] gap-2 items-end">
                 <Field label={`Cuenta ${index + 1}`}>
                   <BaseSelect value={linea.cuentaId} onValueChange={v => actualizarLinea(index, 'cuentaId', v)}>
                     <BaseSelectTrigger><BaseSelectValue placeholder="Seleccionar cuenta" /></BaseSelectTrigger>
@@ -151,12 +175,16 @@ export default function NuevoAsientoPage() {
                 <Field label="Debe"><BaseInput type="number" min={0} step="0.01" value={linea.debe} onChange={e => actualizarLinea(index, 'debe', e.target.value)} /></Field>
                 <Field label="Haber"><BaseInput type="number" min={0} step="0.01" value={linea.haber} onChange={e => actualizarLinea(index, 'haber', e.target.value)} /></Field>
                 <BaseButton type="button" variant="outline" onClick={() => eliminarLinea(index)}>Quitar</BaseButton>
+                </div>
               </div>
             ))}
           </div>
 
-          <div className="flex justify-between items-center pt-2">
-            <BaseButton type="button" variant="outline" onClick={agregarLinea}>Agregar linea</BaseButton>
+          <div className="flex flex-col justify-between gap-4 rounded-[28px] border border-slate-200 bg-[#fbfcff] p-5 md:flex-row md:items-center">
+            <BaseButton type="button" variant="outline" onClick={agregarLinea}>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Agregar linea
+            </BaseButton>
             <div className="text-right text-sm">
               <p>Debe: <b>$ {totalDebe.toLocaleString('es-AR')}</b></p>
               <p>Haber: <b>$ {totalHaber.toLocaleString('es-AR')}</b></p>
@@ -177,7 +205,7 @@ export default function NuevoAsientoPage() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium text-slate-700">{label}</label>
+      <label className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">{label}</label>
       {children}
     </div>
   );

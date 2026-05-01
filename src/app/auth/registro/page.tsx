@@ -70,7 +70,7 @@ export default function RegistroPage() {
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#f4f7fc]">
-      <div className="absolute inset-x-0 top-0 h-[34rem] bg-[radial-gradient(circle_at_top_right,rgba(163,230,53,0.2),transparent_28%),linear-gradient(135deg,#0b2418,#174531)]" />
+      <div className="absolute inset-x-0 top-0 h-[34rem] bg-[radial-gradient(circle_at_top_right,rgba(178,247,70,0.18),transparent_28%),linear-gradient(135deg,#012d1d,#174531)]" />
       <div className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
         <Link href="/" className="inline-flex items-center gap-3 text-white">
           <img src="/logo-sig-agro.png" alt="SIG Agro" className="h-11 w-11 rounded-xl object-cover" />
@@ -81,15 +81,15 @@ export default function RegistroPage() {
         </Link>
 
         <div className="mt-10 grid gap-8 lg:grid-cols-[0.95fr_1.05fr]">
-          <section className="rounded-[32px] border border-white/10 bg-[#102d20] p-8 text-white shadow-2xl shadow-black/15">
+          <section className="rounded-[36px] border border-white/10 bg-[#102d20] p-8 text-white shadow-2xl shadow-black/15">
             <div className="inline-flex rounded-full border border-lime-300/20 bg-lime-300/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-lime-200">
               Paso {step} de 2
             </div>
             <h1 className="mt-6 text-4xl font-semibold leading-tight">
-              Crea tu espacio de trabajo y empieza a ordenar el campo.
+              Configura tu espacio productivo con la misma linea visual de SIG Agro.
             </h1>
             <p className="mt-5 text-base leading-7 text-white/72">
-              Primero registramos tu usuario y despues la organizacion para dejar lista la operacion.
+              Registramos usuario y organizacion para dejar lista la operacion desde el primer ingreso.
             </p>
 
             <div className="mt-10 space-y-4">
@@ -114,12 +114,12 @@ export default function RegistroPage() {
             </div>
           </section>
 
-          <section className="rounded-[32px] border border-slate-200 bg-white p-8 shadow-xl sm:p-10">
+          <section className="rounded-[36px] border border-slate-200 bg-white p-8 shadow-xl sm:p-10">
             <h2 className="text-3xl font-semibold text-slate-950">
-              {step === 1 ? 'Datos del usuario' : 'Datos de la organizacion'}
+              {step === 1 ? 'Create account' : 'Workspace setup'}
             </h2>
             <p className="mt-2 text-sm text-slate-500">
-              {step === 1 ? 'Necesitamos una cuenta para entrar al sistema.' : 'Con esto dejamos creada tu base operativa.'}
+              {step === 1 ? 'Defini tus credenciales de acceso.' : 'Completá la identidad operativa de la organizacion.'}
             </p>
 
             {displayError ? (
@@ -155,7 +155,7 @@ export default function RegistroPage() {
                 </Field>
                 <div className="flex justify-end">
                   <button type="submit" className="inline-flex items-center gap-2 rounded-2xl bg-[#0f2e21] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#174531]">
-                    Continuar
+                    Continuar setup
                     <ArrowRight className="h-4 w-4" />
                   </button>
                 </div>
@@ -189,7 +189,7 @@ export default function RegistroPage() {
                     Atras
                   </button>
                   <button type="submit" disabled={loading} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-lime-300 px-5 py-3 text-sm font-semibold text-[#0c2418] transition hover:bg-lime-200 disabled:cursor-not-allowed disabled:opacity-60">
-                    {loading ? 'Creando...' : 'Crear cuenta'}
+                    {loading ? 'Creando...' : 'Crear cuenta y espacio'}
                     <ArrowRight className="h-4 w-4" />
                   </button>
                 </div>
@@ -197,7 +197,7 @@ export default function RegistroPage() {
             )}
 
             <p className="mt-6 text-sm text-slate-600">
-              Ya tienes cuenta?{' '}
+              Ya tenes cuenta?{' '}
               <Link href="/auth/login" className="font-semibold text-emerald-700 hover:text-emerald-600">
                 Iniciar sesion
               </Link>
@@ -215,7 +215,7 @@ const fieldClassName =
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block space-y-2">
-      <span className="text-sm font-medium text-slate-700">{label}</span>
+      <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">{label}</span>
       {children}
     </label>
   );

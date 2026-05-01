@@ -3,7 +3,6 @@
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import Sidebar from '@/components/layout/Sidebar';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { isSuperAdminEmail } from '@/lib/auth-utils';
 
@@ -56,14 +55,11 @@ export default function DashboardLayout({
     }
 
     return (
-        <div className="flex h-screen bg-gray-100">
-            <Sidebar />
-            <div className="flex-1 flex flex-col overflow-hidden">
-                <DashboardHeader />
-                <main className="flex-1 overflow-y-auto p-6">
-                    {children}
-                </main>
-            </div>
+        <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(178,247,70,0.16),transparent_18%),linear-gradient(180deg,#f8f9ff_0%,#eef4ff_44%,#f8f9ff_100%)]">
+            <DashboardHeader />
+            <main className="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">
+                {children}
+            </main>
         </div>
     );
 }
