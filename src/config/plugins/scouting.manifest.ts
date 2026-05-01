@@ -1,46 +1,72 @@
 import type { AgroPluginManifest } from '@/lib/plugins/manifestSchema';
 
-export const SCOUTING_MANIFEST: AgroPluginManifest = {
+export const SCOUTING_MANIFEST = {
   identity: {
     plugin_id: 'sig-agro-scouting',
     slug: 'scouting',
-    display_name: 'Scouting de Cultivos',
-    summary: 'Relevamiento a campo: registro de alertas fitosanitarias, imágenes y observaciones por lote.',
+    display_name: 'Scouting',
+    summary: 'Seguimiento a campo con observaciones, alertas e inspecciones operativas.',
     category: 'produccion',
     tier: 'optional',
-    visibility: 'internal',
+    visibility: 'marketplace',
     maturity: 'beta',
   },
-  versioning: { plugin_version: '0.8.0', runtime_api_version: '1.0.0' },
+  versioning: {
+    plugin_version: '1.0.0',
+    runtime_api_version: '1.0.0',
+  },
   compatibility: {
     core_version_range: '>=1.0.0',
     required_capabilities: ['sig-agro-campos'],
-    optional_capabilities: ['sig-agro-campanias', 'sig-agro-ia'],
+    optional_capabilities: [],
     incompatible_plugins: [],
   },
   permissions: {
     scopes: ['scouting:read', 'scouting:write'],
-    data_access: { field_data: true, financial: false, personal_info: false },
+    data_access: {
+      field_data: true,
+      financial: false,
+      personal_info: false,
+    },
   },
   tenant_settings: {
     schema_version: '1.0.0',
     required: false,
-    defaults: { alertas_push: true, frecuencia_sugerida_dias: 7 },
+    defaults: {},
     schema: {},
   },
   routes: {
     navigation: [
-      { path: '/scouting', label: 'Scouting', icon: 'FlaskConical', requiredPermissions: ['scouting:read'] },
+      {
+        path: '/scouting',
+        label: 'Scouting',
+        icon: 'ClipboardList',
+        requiredPermissions: ['scouting:read'],
+      },
     ],
-    pages: [],
+    pages: [
+      {
+        path: '/scouting',
+        label: 'Scouting',
+        requiredPermissions: ['scouting:read'],
+      },
+    ],
   },
   events: {
-    emits: [
-      { event_id: 'scouting.alerta', description: 'Alerta fitosanitaria registrada', payload_schema: { loteId: 'string', tipo: 'string', severidad: 'string' } },
-    ],
+    emits: [],
     consumes: [],
   },
-  billing: { model: 'add_on', feature_flag: 'scouting' },
-  multi_tenant: { isolation_model: 'logical_per_organization', per_tenant_overrides_allowed: false },
-  uninstall_strategy: { mode: 'soft_remove', data_retention_days: 90, reversible_within_days: 30 },
-};
+  billing: {
+    model: 'add_on',
+    feature_flag: 'scouting',
+  },
+  multi_tenant: {
+    isolation_model: 'logical_per_organization',
+    per_tenant_overrides_allowed: false,
+  },
+  uninstall_strategy: {
+    mode: 'soft_remove',
+    data_retention_days: 90,
+    reversible_within_days: 30,
+  },
+} satisfies AgroPluginManifest;

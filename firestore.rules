@@ -31,6 +31,17 @@ service cloud.firestore {
     function isAdminOrOwner(orgId) {
       return hasRole(orgId, ['owner', 'admin']);
     }
+
+    // Verifica si el usuario tiene rol admin o owner en la org
+    function isOrgAdminOrOwner(orgId) {
+      return isMember(orgId) && getMemberRole(orgId) in ['owner', 'admin'];
+    }
+
+    // Verifica si un plugin está instalado y habilitado
+    function isPluginEnabled(orgId, pluginId) {
+      return exists(/databases/$(database)/documents/organizations/$(orgId)/installed_plugins/$(pluginId))
+        && get(/databases/$(database)/documents/organizations/$(orgId)/installed_plugins/$(pluginId)).data.enabled == true;
+    }
     
     // Verificar si puede escribir (owner, admin, operator)
     function canWrite(orgId) {

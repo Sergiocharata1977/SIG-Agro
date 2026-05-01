@@ -1,10 +1,10 @@
 import type { AgroPluginManifest } from '@/lib/plugins/manifestSchema';
-import { CAMPOS_MANIFEST } from './campos.manifest';
-import { CAMPANIAS_MANIFEST } from './campanias.manifest';
-import { CONTABILIDAD_AGRO_MANIFEST } from './contabilidad_agro.manifest';
 import { ANALISIS_IA_MANIFEST } from './analisis_ia.manifest';
-import { MAPA_GIS_MANIFEST } from './mapa_gis.manifest';
+import { CAMPANIAS_MANIFEST } from './campanias.manifest';
+import { CAMPOS_MANIFEST } from './campos.manifest';
+import { CONTABILIDAD_AGRO_MANIFEST } from './contabilidad_agro.manifest';
 import { DOCUMENTOS_MANIFEST } from './documentos.manifest';
+import { MAPA_GIS_MANIFEST } from './mapa_gis.manifest';
 import { METRICAS_MANIFEST } from './metricas.manifest';
 import { SCOUTING_MANIFEST } from './scouting.manifest';
 
@@ -20,13 +20,13 @@ export const AGRO_PLUGINS: AgroPluginManifest[] = [
 ];
 
 export const AGRO_PLUGIN_BY_ID: Record<string, AgroPluginManifest> = Object.fromEntries(
-  AGRO_PLUGINS.map(p => [p.identity.plugin_id, p])
+  AGRO_PLUGINS.map(plugin => [plugin.identity.plugin_id, plugin])
 );
 
 export const AGRO_PLUGIN_BY_SLUG: Record<string, AgroPluginManifest> = Object.fromEntries(
-  AGRO_PLUGINS.map(p => [p.identity.slug, p])
+  AGRO_PLUGINS.map(plugin => [plugin.identity.slug, plugin])
 );
 
-export const BASE_PLUGINS = AGRO_PLUGINS.filter(p => p.identity.tier === 'base');
-export const OPTIONAL_PLUGINS = AGRO_PLUGINS.filter(p => p.identity.tier === 'optional');
-export const PREMIUM_PLUGINS = AGRO_PLUGINS.filter(p => p.identity.tier === 'premium');
+export const BASE_PLUGINS: AgroPluginManifest[] = AGRO_PLUGINS.filter(
+  plugin => plugin.identity.tier === 'base'
+);

@@ -34,6 +34,7 @@ import {
   Wheat,
   X,
 } from 'lucide-react';
+import { AGRO_PLUGINS } from '@/config/plugins';
 import { useAuth } from '@/contexts/AuthContext';
 import { isSuperAdminEmail } from '@/lib/auth-utils';
 
@@ -78,6 +79,7 @@ export default function Sidebar() {
     organization,
     organizations,
     organizationId,
+    enabledPlugins,
     setActiveOrganization,
     hasModuleAccess,
     canPerformAction,
@@ -99,6 +101,56 @@ export default function Sidebar() {
       mobileCloseFn = null;
     };
   }, []);
+
+  const pluginSlugs = useMemo(
+    () => new Set(AGRO_PLUGINS.map((plugin) => plugin.identity.slug)),
+    []
+  );
+
+  const visibleRoutes = useMemo(
+    () =>
+      AGRO_PLUGINS
+        .filter((plugin) => enabledPlugins.includes(plugin.identity.slug))
+        .flatMap((plugin) => plugin.routes.navigation),
+    [enabledPlugins]
+  );
+
+  const allPluginRoutePaths = useMemo(
+    () => new Set(AGRO_PLUGINS.flatMap((plugin) => plugin.routes.navigation.map((route) => route.path))),
+    []
+  );
+
+  const enabledPluginSlugs = useMemo(
+    () => new Set(enabledPlugins),
+    [enabledPlugins]
+  );
+
+  const enabledPluginRoutePaths = useMemo(
+    () => new Set(visibleRoutes.map((route) => route.path)),
+    [visibleRoutes]
+  );
+
+  const isPluginEnabled = (module: string, feature?: string, href?: string) => {
+    const pluginSlug = feature && pluginSlugs.has(feature)
+      ? feature
+      : pluginSlugs.has(module)
+        ? module
+        : null;
+
+    if (pluginSlug) {
+      return enabledPluginSlugs.has(pluginSlug);
+    }
+
+    if (!href) {
+      return true;
+    }
+
+    if (allPluginRoutePaths.has(href)) {
+      return enabledPluginRoutePaths.has(href);
+    }
+
+    return true;
+  };
 
   const groups = useMemo<MenuGroup[]>(() => {
     const ops: MenuGroup[] = [
@@ -281,10 +333,7 @@ export default function Sidebar() {
         if (group.key === 'organizacion') return true;
         return canPerformAction('admin');
       }
-      if (group.feature && organization) {
-        const enabled = organization.features[group.feature as keyof typeof organization.features];
-        if (!enabled) return false;
-      }
+      if (!isPluginEnabled(group.module, group.feature)) return false;
       return hasModuleAccess(group.module);
     })
     .map((group) => ({
@@ -294,10 +343,7 @@ export default function Sidebar() {
           if (item.href === '/organizaciones') return true;
           return canPerformAction('admin');
         }
-        if (item.feature && organization) {
-          const enabled = organization.features[item.feature as keyof typeof organization.features];
-          if (!enabled) return false;
-        }
+        if (!isPluginEnabled(item.module, item.feature, item.href)) return false;
         return hasModuleAccess(item.module);
       }),
     }))
