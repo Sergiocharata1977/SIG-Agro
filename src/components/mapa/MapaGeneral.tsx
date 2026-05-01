@@ -146,7 +146,7 @@ export default function MapaGeneral({
     }
 
     return (
-        <div className="relative rounded-lg overflow-hidden shadow-lg h-full">
+        <div className="relative isolate rounded-lg overflow-hidden shadow-lg h-full">
             {/* Selector de capa */}
             <div className="absolute top-4 right-4 z-[1000] bg-white rounded-lg shadow-md p-2">
                 <select

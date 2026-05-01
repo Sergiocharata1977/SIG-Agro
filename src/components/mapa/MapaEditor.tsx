@@ -230,7 +230,7 @@ export default function MapaEditor({
     }
 
     return (
-        <div className="relative">
+        <div className="relative isolate">
             {/* Selector de capa */}
             <div className="absolute top-2 right-2 z-[1000] bg-white rounded-lg shadow-md p-1">
                 <select

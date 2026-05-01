@@ -111,6 +111,12 @@ html {
   background-size: 72px 72px;
 }
 
+/* Contiene todos los z-indexes internos de Leaflet dentro del mapa,
+   evitando que compitan con overlays de la UI (sidebars, modales, popups) */
+.leaflet-container {
+  isolation: isolate;
+}
+
 .app-panel {
   border: 1px solid rgba(193, 200, 194, 0.9);
   background: rgba(255, 255, 255, 0.96);
