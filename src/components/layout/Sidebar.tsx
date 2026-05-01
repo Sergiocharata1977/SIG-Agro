@@ -87,6 +87,7 @@ export default function Sidebar() {
 
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [megaMenuOpen, setMegaMenuOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const contextualPlotId = searchParams.get('plotId');
   const hasActiveOrganization = Boolean(
@@ -101,6 +102,10 @@ export default function Sidebar() {
       mobileCloseFn = null;
     };
   }, []);
+
+  useEffect(() => {
+    setMegaMenuOpen(false);
+  }, [pathname]);
 
   const pluginSlugs = useMemo(
     () => new Set(AGRO_PLUGINS.map((plugin) => plugin.identity.slug)),
@@ -389,14 +394,16 @@ export default function Sidebar() {
 
   const opKeys = new Set([
     'contexto-lote',
-    'panel',
-    'gis',
-    'campanias',
     'insumos-stock',
     'operaciones-agro',
     'granos-silos',
     'finanzas',
   ]);
+
+  const megaMenuKeys = new Set(['panel', 'gis', 'campanias']);
+  const megaMenuGroups = filteredGroups.filter((g) => megaMenuKeys.has(g.key));
+  const operationalGroups = filteredGroups.filter((g) => opKeys.has(g.key));
+  const controlGroups = filteredGroups.filter((g) => !opKeys.has(g.key) && !megaMenuKeys.has(g.key));
 
   return (
     <>
@@ -472,7 +479,137 @@ export default function Sidebar() {
             <>
               <div className="space-y-1.5">
                 {!collapsed && <p className="px-2 text-[10px] uppercase tracking-[0.18em] text-emerald-300/70">Operacion</p>}
-                {filteredGroups.filter((g) => opKeys.has(g.key)).map((group) => {
+                {!collapsed && megaMenuGroups.length > 0 && (
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setMegaMenuOpen((prev) => !prev)}
+                      className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
+                        megaMenuOpen || megaMenuGroups.some((group) => group.active)
+                          ? 'border-emerald-500/70 bg-gradient-to-r from-emerald-800 to-emerald-700 text-white shadow-lg shadow-emerald-950/20'
+                          : 'border-emerald-800 bg-emerald-900/45 text-emerald-50 hover:border-emerald-700 hover:bg-emerald-900/70'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white/10 ring-1 ring-white/10">
+                          <LayoutDashboard className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-semibold">Explorar sistema</div>
+                          <div className="mt-0.5 text-xs text-emerald-100/75">
+                            Inicio, campos y campanias en un solo panel
+                          </div>
+                        </div>
+                        <ChevronRight className={`h-5 w-5 transition-transform ${megaMenuOpen ? 'rotate-90' : ''}`} />
+                      </div>
+                    </button>
+
+                    {megaMenuOpen && (
+                      <>
+                        <div className="fixed inset-0 z-40 hidden md:block" onClick={() => setMegaMenuOpen(false)} />
+                        <div className="absolute left-0 right-0 top-[calc(100%+12px)] z-50 md:left-[calc(100%+16px)] md:right-auto md:top-0 md:w-[780px]">
+                          <div className="overflow-hidden rounded-[28px] border border-emerald-700/60 bg-[linear-gradient(160deg,rgba(1,53,39,0.98),rgba(4,79,57,0.96))] shadow-[0_28px_80px_rgba(2,12,9,0.45)] backdrop-blur-xl">
+                            <div className="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-5">
+                              <div>
+                                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-300/80">Mega menu</p>
+                                <h3 className="mt-1 text-2xl font-semibold text-white">Exploracion central</h3>
+                                <p className="mt-2 max-w-2xl text-sm leading-6 text-emerald-100/75">
+                                  Accesos principales para tablero, territorio operativo y seguimiento productivo.
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setMegaMenuOpen(false)}
+                                className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-emerald-50 transition hover:bg-white/10"
+                                aria-label="Cerrar panel de exploracion"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+
+                            <div className="grid gap-4 p-5 md:grid-cols-3">
+                              {megaMenuGroups.map((group) => {
+                                const GroupIcon = group.icon;
+                                return (
+                                  <section
+                                    key={group.key}
+                                    className={`rounded-[24px] border p-4 ${
+                                      group.active
+                                        ? 'border-emerald-400/60 bg-white/10'
+                                        : 'border-white/10 bg-white/[0.04]'
+                                    }`}
+                                  >
+                                    <div className="flex items-start gap-3">
+                                      <div className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-400/10 text-emerald-200 ring-1 ring-emerald-300/15">
+                                        <GroupIcon className="h-5 w-5" />
+                                      </div>
+                                      <div className="min-w-0">
+                                        <h4 className="text-base font-semibold text-white">{group.title}</h4>
+                                        <p className="mt-1 text-xs leading-5 text-emerald-100/70">
+                                          {describeGroup(group.key)}
+                                        </p>
+                                      </div>
+                                    </div>
+
+                                    <div className="mt-4 space-y-2">
+                                      {group.items.map((item) => {
+                                        const Icon = item.icon;
+                                        const cls = `flex items-center gap-3 rounded-2xl border px-3 py-3 text-sm transition ${
+                                          item.active
+                                            ? 'border-emerald-300/40 bg-emerald-300/12 text-white'
+                                            : 'border-white/8 bg-black/10 text-emerald-50/88 hover:border-emerald-300/25 hover:bg-white/8'
+                                        }`;
+
+                                        if (item.disabled || !item.href) {
+                                          return (
+                                            <div key={`${group.key}-${item.label}`} className={`${cls} cursor-not-allowed opacity-70`}>
+                                              <Icon className="h-4 w-4" />
+                                              <span className="flex-1">{item.label}</span>
+                                              {item.badge && <span className="text-[10px] uppercase tracking-[0.18em] text-emerald-300/75">{item.badge}</span>}
+                                            </div>
+                                          );
+                                        }
+
+                                        return (
+                                          <Link
+                                            key={`${group.key}-${item.href}-${item.label}`}
+                                            href={item.href}
+                                            onClick={() => {
+                                              setMegaMenuOpen(false);
+                                              setMobileOpen(false);
+                                            }}
+                                            className={cls}
+                                          >
+                                            <Icon className="h-4 w-4" />
+                                            <span className="flex-1">{item.label}</span>
+                                            {item.badge && <span className="text-[10px] uppercase tracking-[0.18em] text-emerald-300/75">{item.badge}</span>}
+                                          </Link>
+                                        );
+                                      })}
+                                    </div>
+                                  </section>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {collapsed && megaMenuGroups.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setCollapsed(false)}
+                    className="flex w-full items-center justify-center rounded-md border border-transparent px-3 py-2.5 text-emerald-100/80 transition hover:border-emerald-800 hover:bg-emerald-900/50 hover:text-emerald-50"
+                    aria-label="Expandir exploracion"
+                  >
+                    <LayoutDashboard className="h-4 w-4" />
+                  </button>
+                )}
+
+                {operationalGroups.map((group) => {
                   const GroupIcon = group.icon;
                   const open = !!expandedGroups[group.key];
                   return (
@@ -521,7 +658,7 @@ export default function Sidebar() {
 
               <div className="space-y-1.5">
                 {!collapsed && <p className="px-2 text-[10px] uppercase tracking-[0.18em] text-emerald-300/70">Control</p>}
-                {filteredGroups.filter((g) => !opKeys.has(g.key)).map((group) => {
+                {controlGroups.map((group) => {
                   const GroupIcon = group.icon;
                   const open = !!expandedGroups[group.key];
                   return (
@@ -573,4 +710,17 @@ export default function Sidebar() {
       </aside>
     </>
   );
+}
+
+function describeGroup(groupKey: string) {
+  switch (groupKey) {
+    case 'panel':
+      return 'Lectura ejecutiva del establecimiento, indicadores y foco inmediato.';
+    case 'gis':
+      return 'Territorio, cartografia, lotes y capas satelitales operativas.';
+    case 'campanias':
+      return 'Planificacion productiva, cuaderno y seguimiento de rendimientos.';
+    default:
+      return 'Accesos principales del sistema.';
+  }
 }
