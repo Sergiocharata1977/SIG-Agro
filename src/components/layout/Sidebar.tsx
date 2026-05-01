@@ -89,6 +89,7 @@ export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [megaMenuOpen, setMegaMenuOpen] = useState(false);
+  const [suppliesHubOpen, setSuppliesHubOpen] = useState(false);
   const [operationsHubOpen, setOperationsHubOpen] = useState(false);
   const [grainsHubOpen, setGrainsHubOpen] = useState(false);
   const [financeHubOpen, setFinanceHubOpen] = useState(false);
@@ -109,6 +110,7 @@ export default function Sidebar() {
 
   useEffect(() => {
     setMegaMenuOpen(false);
+    setSuppliesHubOpen(false);
     setOperationsHubOpen(false);
     setGrainsHubOpen(false);
     setFinanceHubOpen(false);
@@ -406,12 +408,13 @@ export default function Sidebar() {
 
   const opKeys = new Set([
     'contexto-lote',
-    'insumos-stock',
   ]);
 
   const megaMenuKeys = new Set(['panel', 'gis', 'campanias']);
-  const popupMenuKeys = new Set(['operaciones-agro', 'granos-silos', 'finanzas']);
+  const popupMenuKeys = new Set(['insumos-stock', 'operaciones-agro', 'granos-silos', 'finanzas']);
   const megaMenuGroups = filteredGroups.filter((g) => megaMenuKeys.has(g.key));
+  const suppliesHubGroup = filteredGroups.find((g) => g.key === 'insumos-stock');
+  const SuppliesHubIcon = suppliesHubGroup?.icon ?? Package;
   const operationsHubGroup = filteredGroups.find((g) => g.key === 'operaciones-agro');
   const OperationsHubIcon = operationsHubGroup?.icon ?? Tractor;
   const grainsHubGroup = filteredGroups.find((g) => g.key === 'granos-silos');
@@ -425,7 +428,7 @@ export default function Sidebar() {
     <>
       {mobileOpen && <div className="fixed inset-0 bg-slate-950/60 z-40 md:hidden" onClick={() => setMobileOpen(false)} />}
 
-      <aside className={`fixed md:relative z-[200] h-screen bg-emerald-950 text-emerald-50 flex flex-col transition-all duration-300 border-r border-emerald-900 ${collapsed ? 'md:w-20' : 'md:w-80'} w-80 ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+      <aside className={`fixed md:relative z-[360] h-screen bg-emerald-950 text-emerald-50 flex flex-col transition-all duration-300 border-r border-emerald-900 ${collapsed ? 'md:w-20' : 'md:w-80'} w-80 ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         <div className="p-4 border-b border-emerald-900 relative">
           <div className="flex items-center gap-3">
             <Image src="/logo-sig-agro.png" alt="SIG Agro" width={40} height={40} className="rounded-lg" />
@@ -514,8 +517,8 @@ export default function Sidebar() {
 
                 {megaMenuOpen && (
                   <>
-                    <div className="fixed inset-0 z-[220] hidden md:block" onClick={() => setMegaMenuOpen(false)} />
-                    <div className="absolute left-0 right-0 top-[calc(100%+12px)] z-[230] md:left-[calc(100%+16px)] md:right-auto md:top-0 md:w-[780px]">
+                    <div className="fixed inset-0 z-[540] hidden md:block" onClick={() => setMegaMenuOpen(false)} />
+                    <div className="absolute left-0 right-0 top-[calc(100%+12px)] z-[550] md:fixed md:left-[calc(20rem+16px)] md:right-auto md:top-24 md:max-h-[calc(100vh-7rem)] md:w-[780px] md:overflow-y-auto">
                       <div className="overflow-hidden rounded-[28px] border border-emerald-700/60 bg-[linear-gradient(160deg,rgba(1,53,39,0.98),rgba(4,79,57,0.96))] shadow-[0_28px_80px_rgba(2,12,9,0.45)] backdrop-blur-xl">
                         <div className="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-5">
                           <div>
@@ -646,8 +649,8 @@ export default function Sidebar() {
 
                 {operationsHubOpen && (
                   <>
-                    <div className="fixed inset-0 z-[220] hidden md:block" onClick={() => setOperationsHubOpen(false)} />
-                    <div className="absolute left-0 right-0 top-[calc(100%+12px)] z-[230] md:left-[calc(100%+16px)] md:right-auto md:top-0 md:w-[860px]">
+                    <div className="fixed inset-0 z-[540] hidden md:block" onClick={() => setOperationsHubOpen(false)} />
+                    <div className="absolute left-0 right-0 top-[calc(100%+12px)] z-[550] md:fixed md:left-[calc(20rem+16px)] md:right-auto md:top-24 md:max-h-[calc(100vh-7rem)] md:w-[860px] md:overflow-y-auto">
                       <div className="overflow-hidden rounded-[28px] border border-emerald-700/60 bg-[linear-gradient(160deg,rgba(1,53,39,0.98),rgba(4,79,57,0.96))] shadow-[0_28px_80px_rgba(2,12,9,0.45)] backdrop-blur-xl">
                         <div className="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-5">
                           <div>
@@ -761,6 +764,146 @@ export default function Sidebar() {
           </div>
         )}
 
+        {hasActiveOrganization && suppliesHubGroup && (
+          <div className="relative px-3 pt-3">
+            {!collapsed ? (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setSuppliesHubOpen((prev) => !prev)}
+                  className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
+                    suppliesHubOpen || suppliesHubGroup.active
+                      ? 'border-emerald-500/70 bg-gradient-to-r from-emerald-800 to-emerald-700 text-white shadow-lg shadow-emerald-950/20'
+                      : 'border-emerald-800 bg-emerald-900/45 text-emerald-50 hover:border-emerald-700 hover:bg-emerald-900/70'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white/10 ring-1 ring-white/10">
+                      <Package className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-semibold">{suppliesHubGroup.title}</div>
+                      <div className="mt-0.5 text-xs text-emerald-100/75">
+                        Insumos, depositos, compras y stock en un solo panel
+                      </div>
+                    </div>
+                    <ChevronRight className={`h-5 w-5 transition-transform ${suppliesHubOpen ? 'rotate-90' : ''}`} />
+                  </div>
+                </button>
+
+                {suppliesHubOpen && (
+                  <>
+                    <div className="fixed inset-0 z-[540] hidden md:block" onClick={() => setSuppliesHubOpen(false)} />
+                    <div className="absolute left-0 right-0 top-[calc(100%+12px)] z-[550] md:fixed md:left-[calc(20rem+16px)] md:right-auto md:top-24 md:max-h-[calc(100vh-7rem)] md:w-[860px] md:overflow-y-auto">
+                      <div className="overflow-hidden rounded-[28px] border border-emerald-700/60 bg-[linear-gradient(160deg,rgba(1,53,39,0.98),rgba(4,79,57,0.96))] shadow-[0_28px_80px_rgba(2,12,9,0.45)] backdrop-blur-xl">
+                        <div className="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-5">
+                          <div>
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-300/80">Modulo de abastecimiento</p>
+                            <h3 className="mt-1 text-2xl font-semibold text-white">Insumos y stock</h3>
+                            <p className="mt-2 max-w-2xl text-sm leading-6 text-emerald-100/75">
+                              Gestion de abastecimiento, almacenamiento, compras y movimientos de stock del establecimiento.
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setSuppliesHubOpen(false)}
+                            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-emerald-50 transition hover:bg-white/10"
+                            aria-label="Cerrar panel de insumos y stock"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+
+                        <div className="grid gap-5 p-5 md:grid-cols-[1.15fr_0.85fr]">
+                          <section className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
+                            <div className="mb-4 flex items-start gap-3">
+                              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-400/10 text-emerald-200 ring-1 ring-emerald-300/15">
+                                <SuppliesHubIcon className="h-5 w-5" />
+                              </div>
+                              <div>
+                                <h4 className="text-base font-semibold text-white">Control de abastecimiento</h4>
+                                <p className="mt-1 text-xs leading-5 text-emerald-100/70">
+                                  Accesos directos a insumos, depositos, compras y movimientos de stock.
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="grid gap-3 md:grid-cols-2">
+                              {suppliesHubGroup.items.map((item) => {
+                                const Icon = item.icon;
+                                const cls = `flex items-center gap-3 rounded-2xl border px-3 py-3 text-sm transition ${
+                                  item.active
+                                    ? 'border-emerald-300/40 bg-emerald-300/12 text-white'
+                                    : 'border-white/8 bg-black/10 text-emerald-50/88 hover:border-emerald-300/25 hover:bg-white/8'
+                                }`;
+
+                                if (item.disabled || !item.href) {
+                                  return (
+                                    <div key={`${suppliesHubGroup.key}-${item.label}`} className={`${cls} cursor-not-allowed opacity-70`}>
+                                      <Icon className="h-4 w-4" />
+                                      <span className="flex-1">{item.label}</span>
+                                      {item.badge && <span className="text-[10px] uppercase tracking-[0.18em] text-emerald-300/75">{item.badge}</span>}
+                                    </div>
+                                  );
+                                }
+
+                                return (
+                                  <Link
+                                    key={`${suppliesHubGroup.key}-${item.href}-${item.label}`}
+                                    href={item.href}
+                                    onClick={() => {
+                                      setSuppliesHubOpen(false);
+                                      setMobileOpen(false);
+                                    }}
+                                    className={cls}
+                                  >
+                                    <Icon className="h-4 w-4" />
+                                    <span className="flex-1">{item.label}</span>
+                                    {item.badge && <span className="text-[10px] uppercase tracking-[0.18em] text-emerald-300/75">{item.badge}</span>}
+                                  </Link>
+                                );
+                              })}
+                            </div>
+                          </section>
+
+                          <aside className="rounded-[24px] border border-emerald-400/20 bg-white/[0.06] p-4">
+                            <div className="mb-4">
+                              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-300/80">Indicadores</p>
+                              <h4 className="mt-1 text-lg font-semibold text-white">Pulso del modulo</h4>
+                              <p className="mt-1 text-xs leading-5 text-emerald-100/70">
+                                Lectura rapida del estado de inventario y del frente de compras.
+                              </p>
+                            </div>
+
+                            <div className="space-y-3">
+                              {getSuppliesIndicators().map((indicator) => (
+                                <div key={indicator.label} className="rounded-2xl border border-white/10 bg-black/10 p-4">
+                                  <div className="text-[11px] uppercase tracking-[0.18em] text-emerald-300/75">{indicator.label}</div>
+                                  <div className="mt-2 text-3xl font-semibold text-white">{indicator.value}</div>
+                                  <div className="mt-1 text-sm text-emerald-100/75">{indicator.detail}</div>
+                                </div>
+                              ))}
+                            </div>
+                          </aside>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setCollapsed(false)}
+                className="flex w-full items-center justify-center rounded-md border border-transparent px-3 py-2.5 text-emerald-100/80 transition hover:border-emerald-800 hover:bg-emerald-900/50 hover:text-emerald-50"
+                aria-label="Expandir insumos y stock"
+              >
+                <Package className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        )}
+
         {hasActiveOrganization && grainsHubGroup && (
           <div className="relative px-3 pt-3">
             {!collapsed ? (
@@ -790,8 +933,8 @@ export default function Sidebar() {
 
                 {grainsHubOpen && (
                   <>
-                    <div className="fixed inset-0 z-[220] hidden md:block" onClick={() => setGrainsHubOpen(false)} />
-                    <div className="absolute left-0 right-0 top-[calc(100%+12px)] z-[230] md:left-[calc(100%+16px)] md:right-auto md:top-0 md:w-[860px]">
+                    <div className="fixed inset-0 z-[540] hidden md:block" onClick={() => setGrainsHubOpen(false)} />
+                    <div className="absolute left-0 right-0 top-[calc(100%+12px)] z-[550] md:fixed md:left-[calc(20rem+16px)] md:right-auto md:top-24 md:max-h-[calc(100vh-7rem)] md:w-[860px] md:overflow-y-auto">
                       <div className="overflow-hidden rounded-[28px] border border-emerald-700/60 bg-[linear-gradient(160deg,rgba(1,53,39,0.98),rgba(4,79,57,0.96))] shadow-[0_28px_80px_rgba(2,12,9,0.45)] backdrop-blur-xl">
                         <div className="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-5">
                           <div>
@@ -930,8 +1073,8 @@ export default function Sidebar() {
 
                 {financeHubOpen && (
                   <>
-                    <div className="fixed inset-0 z-[220] hidden md:block" onClick={() => setFinanceHubOpen(false)} />
-                    <div className="absolute left-0 right-0 top-[calc(100%+12px)] z-[230] md:left-[calc(100%+16px)] md:right-auto md:top-0 md:w-[860px]">
+                    <div className="fixed inset-0 z-[540] hidden md:block" onClick={() => setFinanceHubOpen(false)} />
+                    <div className="absolute left-0 right-0 top-[calc(100%+12px)] z-[550] md:fixed md:left-[calc(20rem+16px)] md:right-auto md:top-24 md:max-h-[calc(100vh-7rem)] md:w-[860px] md:overflow-y-auto">
                       <div className="overflow-hidden rounded-[28px] border border-emerald-700/60 bg-[linear-gradient(160deg,rgba(1,53,39,0.98),rgba(4,79,57,0.96))] shadow-[0_28px_80px_rgba(2,12,9,0.45)] backdrop-blur-xl">
                         <div className="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-5">
                           <div>
@@ -1183,6 +1326,26 @@ function getOperationsIndicators() {
       label: 'Entregas por cerrar',
       value: '12',
       detail: 'Registros pendientes de consolidacion operativa.',
+    },
+  ];
+}
+
+function getSuppliesIndicators() {
+  return [
+    {
+      label: 'Items criticos',
+      value: '05',
+      detail: 'Insumos con reposicion prioritaria para no frenar operaciones.',
+    },
+    {
+      label: 'Compras abiertas',
+      value: '08',
+      detail: 'Ordenes y adquisiciones pendientes de recepcion o imputacion.',
+    },
+    {
+      label: 'Stock valorizado',
+      value: '$ 9.6M',
+      detail: 'Valuacion consolidada del inventario activo del modulo.',
     },
   ];
 }
