@@ -92,7 +92,7 @@ export default function DashboardPage() {
   return (
     <PageShell
       title={`Bienvenido, ${firstName}`}
-      subtitle={organization?.nombre || 'Resumen operativo del establecimiento'}
+      subtitle={organization?.name || 'Resumen operativo del establecimiento'}
       rightSlot={
         <div className="flex items-center gap-3">
           <button

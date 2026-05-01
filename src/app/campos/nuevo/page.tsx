@@ -132,7 +132,7 @@ export default function NuevoCampoPage() {
         <Section title="Delimitacion GIS" description="Dibuja el perimetro del campo.">
           <BaseCard>
             <div className="space-y-4">
-              <MapaEditor onPolygonCreated={handlePolygonCreated} initialPolygon={poligono} />
+              <MapaEditor onPolygonChange={handlePolygonCreated} poligonoInicial={poligono} />
               <div className="text-sm text-slate-600">Superficie estimada: <b>{(formData.superficieTotal || areaCalculada).toFixed(2)} ha</b></div>
               <div className="flex justify-between gap-2">
                 <BaseButton variant="outline" onClick={() => setStep(1)}>Volver</BaseButton>

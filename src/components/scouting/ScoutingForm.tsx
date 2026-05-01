@@ -150,8 +150,8 @@ export default function ScoutingForm({
                 urgente,
                 estado: 'pendiente',
                 fotos: [],
-                createdBy: user.uid
-            }, user.uid);
+                createdBy: user.id
+            }, user.id);
 
             // Subir fotos
             if (fotos.length > 0) {

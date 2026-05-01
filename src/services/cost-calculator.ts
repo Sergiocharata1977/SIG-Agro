@@ -321,13 +321,14 @@ export async function generarOrdenAplicacion(
     try {
         // Registrar consumo de stock
         const movimiento = await registrarMovimiento(orgId, {
+            orgId,
             productId: productoId,
             tipo: 'salida_consumo',
             cantidad: prescripcion.cantidadTotal,
+            precioUnitario: 0,
             fecha: new Date(),
-            descripcion: `Aplicación VRA: ${prescripcion.productoNombre} - ${prescripcion.tipo}`,
-            loteId: prescripcion.plotId,
-            userId
+            observaciones: `Aplicación VRA: ${prescripcion.productoNombre} - ${prescripcion.tipo}`,
+            plotId: prescripcion.plotId
         });
 
         return {

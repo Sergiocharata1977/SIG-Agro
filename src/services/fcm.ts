@@ -1,5 +1,5 @@
 import { getMessaging, getToken, onMessage, type Messaging, type MessagePayload } from 'firebase/messaging';
-import { app } from '@/lib/firebase';
+import app from '@/firebase/config';
 import type { NotificationPayload, NotificationType, NotificationPreferences } from '@/types/notifications';
 
 // VAPID Key - debe estar configurado en Firebase Console

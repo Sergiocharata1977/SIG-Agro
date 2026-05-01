@@ -73,7 +73,7 @@ export default function CampoDetallePage() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Estado general</p>
             <div className="mt-4 space-y-3 text-sm text-slate-600">
               <p>Campana activa: <span className="font-semibold text-slate-900">2025/26</span></p>
-              <p>Superficie util: <span className="font-semibold text-slate-900">{campo.superficieAgricola || campo.superficieTotal} ha</span></p>
+              <p>Superficie util: <span className="font-semibold text-slate-900">{campo.superficieCultivable || campo.superficieTotal} ha</span></p>
               <p>Cultivos activos: <span className="font-semibold text-slate-900">{lotes.filter(l => l.cultivoActual).length}</span></p>
             </div>
           </div>

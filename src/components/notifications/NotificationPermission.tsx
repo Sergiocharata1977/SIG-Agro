@@ -25,8 +25,8 @@ export function NotificationPermission() {
             const granted = await fcmService.requestPermission();
             if (granted) {
                 const token = await fcmService.initialize();
-                if (token && user?.uid) {
-                    await fcmService.saveTokenToServer(user.uid);
+                if (token && user?.id) {
+                    await fcmService.saveTokenToServer(user.id);
                 }
                 setStatus('granted');
             } else {
