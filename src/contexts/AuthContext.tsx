@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 /**
  * Multi-tenant auth context.
@@ -14,8 +14,12 @@ import {
     updateProfile,
     User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
+import { doc, setDoc, Timestamp } from 'firebase/firestore';
 import { auth, db } from '@/firebase/config';
+import { isSuperAdminEmail, resolveUserRole } from '@/lib/auth-utils';
+import { resolveEffectiveAccess } from '@/lib/access-control/effectiveAccess';
+import { CapabilityService } from '@/services/plugins/CapabilityService';
+import type { AgroEffectiveAccess } from '@/types/access-control';
 import { Organization, User, UserRole } from '@/types/organization';
 import {
     actualizarUltimoLogin,
@@ -25,7 +29,6 @@ import {
     obtenerOrganizacionesUsuario,
     obtenerUsuario,
 } from '@/services/organizations';
-import { isSuperAdminEmail, resolveUserRole } from '@/lib/auth-utils';
 
 interface AuthContextType {
     firebaseUser: FirebaseUser | null;
@@ -33,6 +36,9 @@ interface AuthContextType {
     organization: Organization | null;
     organizations: Organization[];
     organizationId: string | null;
+    activeOrgId: string | null;
+    effectiveAccess: AgroEffectiveAccess | null;
+    enabledPlugins: string[];
     loading: boolean;
     error: string | null;
 
@@ -41,6 +47,8 @@ interface AuthContextType {
     signOut: () => Promise<void>;
     clearError: () => void;
     setActiveOrganization: (organizationId: string) => Promise<void>;
+    setActiveOrg: (orgId: string) => void;
+    refreshPluginCapabilities: (organizationId?: string) => Promise<string[]>;
 
     hasModuleAccess: (module: string) => boolean;
     canPerformAction: (action: 'read' | 'write' | 'delete' | 'admin') => boolean;
@@ -59,12 +67,14 @@ interface SignUpData {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
     const [user, setUser] = useState<User | null>(null);
     const [organization, setOrganization] = useState<Organization | null>(null);
     const [organizations, setOrganizations] = useState<Organization[]>([]);
+    const [activeOrgId, setActiveOrgId] = useState<string | null>(null);
+    const [enabledPlugins, setEnabledPlugins] = useState<string[]>([]);
+    const [effectiveAccess, setEffectiveAccess] = useState<AgroEffectiveAccess | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -78,6 +88,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setUser(null);
                 setOrganization(null);
                 setOrganizations([]);
+                setActiveOrgId(null);
+                setEnabledPlugins([]);
+                setEffectiveAccess(null);
             }
 
             setLoading(false);
@@ -99,14 +112,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setOrganizations(orgs);
 
                 const fallbackOrgId = orgs[0]?.id || null;
-                const activeOrgId = userData.organizationId || fallbackOrgId;
+                const nextActiveOrgId = userData.organizationId || fallbackOrgId;
 
-                if (activeOrgId && activeOrgId !== userData.organizationId) {
-                    await cambiarOrganizacionActiva(userId, activeOrgId);
+                if (nextActiveOrgId && nextActiveOrgId !== userData.organizationId) {
+                    await cambiarOrganizacionActiva(userId, nextActiveOrgId);
                 }
 
-                const activeOrg = activeOrgId
-                    ? orgs.find((org) => org.id === activeOrgId) || await obtenerOrganizacion(activeOrgId)
+                const activeOrg = nextActiveOrgId
+                    ? orgs.find((org) => org.id === nextActiveOrgId) || await obtenerOrganizacion(nextActiveOrgId)
                     : null;
 
                 const resolvedRole = resolveUserRole(userData, tokenClaims, fbUser.email);
@@ -114,10 +127,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setUser({
                     ...userData,
                     role: resolvedRole,
-                    organizationId: activeOrgId || '',
+                    organizationId: nextActiveOrgId || '',
+                    activeOrganizationId: nextActiveOrgId || undefined,
                     organizationIds: Array.from(new Set([...(userData.organizationIds || []), ...orgs.map((o) => o.id)])),
                     accessAllOrganizations: userData.accessAllOrganizations !== false,
                 });
+                setActiveOrgId(nextActiveOrgId || null);
                 setOrganization(activeOrg || null);
                 await actualizarUltimoLogin(userId);
                 console.info('[AuthDebug] user loaded', {
@@ -141,6 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     role: 'super_admin',
                     status: 'active',
                     organizationId: '',
+                    activeOrganizationId: undefined,
                     organizationIds: [],
                     accessAllOrganizations: true,
                     modulosHabilitados: null,
@@ -163,6 +179,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     updatedAt: new Date(),
                     lastLogin: new Date(),
                 });
+                setActiveOrgId(null);
                 setOrganization(null);
                 setOrganizations([]);
                 console.info('[AuthDebug] super admin auto-bootstrapped', {
@@ -183,6 +200,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 role: 'owner',
                 status: 'active',
                 organizationId: '',
+                activeOrganizationId: undefined,
                 organizationIds: [],
                 accessAllOrganizations: true,
                 modulosHabilitados: null,
@@ -205,6 +223,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 updatedAt: new Date(),
                 lastLogin: new Date(),
             });
+            setActiveOrgId(null);
             setOrganization(null);
             setOrganizations([]);
             console.info('[AuthDebug] productor auto-bootstrapped in users', {
@@ -212,15 +231,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 email,
             });
             return;
-
-            setUser(null);
-            setOrganization(null);
-            setOrganizations([]);
-            console.info('[AuthDebug] user profile not found', {
-                uid: userId,
-                email: fbUser.email || '',
-                claimRole: tokenClaims.role || tokenClaims.rol || null,
-            });
         } catch (err) {
             console.error('Error loading user data:', err);
             const roleFromFallback = resolveUserRole(null, tokenClaims, fbUser.email);
@@ -232,6 +242,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     role: 'super_admin',
                     status: 'active',
                     organizationId: '',
+                    activeOrganizationId: undefined,
                     organizationIds: [],
                     accessAllOrganizations: true,
                     modulosHabilitados: null,
@@ -239,6 +250,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     updatedAt: new Date(),
                     lastLogin: new Date(),
                 });
+                setActiveOrgId(null);
                 setOrganization(null);
                 setOrganizations([]);
                 console.info('[AuthDebug] super admin fallback enabled after error', {
@@ -259,6 +271,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 role: fallbackRole,
                 status: 'active',
                 organizationId: '',
+                activeOrganizationId: undefined,
                 organizationIds: [],
                 accessAllOrganizations: true,
                 modulosHabilitados: null,
@@ -266,6 +279,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 updatedAt: new Date(),
                 lastLogin: new Date(),
             });
+            setActiveOrgId(null);
             setOrganization(null);
             setOrganizations([]);
             console.info('[AuthDebug] generic fallback enabled after error', {
@@ -333,6 +347,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(null);
             setOrganization(null);
             setOrganizations([]);
+            setActiveOrgId(null);
+            setEnabledPlugins([]);
+            setEffectiveAccess(null);
         } catch (err: unknown) {
             setError(getErrorMessage(err));
         } finally {
@@ -355,13 +372,97 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return {
                 ...prev,
                 organizationId,
+                activeOrganizationId: organizationId,
                 organizationIds: Array.from(new Set([...(prev.organizationIds || []), organizationId])),
             };
         });
+        setActiveOrgId(organizationId);
         setOrganization(org);
     };
 
+    const setActiveOrg = (orgId: string) => {
+        void setActiveOrganization(orgId).catch((err: unknown) => {
+            setError(getErrorMessage(err));
+        });
+    };
+
+    const refreshPluginCapabilities = async (organizationId?: string): Promise<string[]> => {
+        const targetOrgId = organizationId ?? activeOrgId;
+
+        if (!targetOrgId) {
+            setEnabledPlugins([]);
+            return [];
+        }
+
+        CapabilityService.invalidateCache(targetOrgId);
+        const plugins = await CapabilityService.getEnabledPlugins(targetOrgId);
+
+        if (targetOrgId === activeOrgId) {
+            setEnabledPlugins(plugins);
+        }
+
+        return plugins;
+    };
+
     const clearError = () => setError(null);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        if (!activeOrgId) {
+            setEnabledPlugins([]);
+            return () => {
+                cancelled = true;
+            };
+        }
+
+        setEnabledPlugins([]);
+        refreshPluginCapabilities(activeOrgId)
+            .then((plugins) => {
+                if (!cancelled) {
+                    setEnabledPlugins(plugins);
+                }
+            })
+            .catch((err: unknown) => {
+                console.error('Error loading enabled plugins:', err);
+                if (!cancelled) {
+                    setEnabledPlugins([]);
+                }
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [activeOrgId]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        if (!user || !activeOrgId) {
+            setEffectiveAccess(null);
+            return () => {
+                cancelled = true;
+            };
+        }
+
+        setEffectiveAccess(null);
+        resolveEffectiveAccess(user, activeOrgId, undefined, enabledPlugins)
+            .then((access) => {
+                if (!cancelled) {
+                    setEffectiveAccess(access);
+                }
+            })
+            .catch((err: unknown) => {
+                console.error('Error resolving effective access:', err);
+                if (!cancelled) {
+                    setEffectiveAccess(null);
+                }
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [user, activeOrgId, enabledPlugins]);
 
     const hasModuleAccess = (module: string): boolean => {
         if (!user) return false;
@@ -394,7 +495,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         organization,
         organizations,
-        organizationId: user?.organizationId || organization?.id || null,
+        organizationId: activeOrgId || user?.organizationId || organization?.id || null,
+        activeOrgId,
+        effectiveAccess,
+        enabledPlugins,
         loading,
         error,
         signIn,
@@ -402,9 +506,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signOut,
         clearError,
         setActiveOrganization,
+        setActiveOrg,
+        refreshPluginCapabilities,
         hasModuleAccess,
         canPerformAction,
-    }), [firebaseUser, user, organization, organizations, loading, error]);
+    }), [
+        firebaseUser,
+        user,
+        organization,
+        organizations,
+        activeOrgId,
+        effectiveAccess,
+        enabledPlugins,
+        loading,
+        error,
+    ]);
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
