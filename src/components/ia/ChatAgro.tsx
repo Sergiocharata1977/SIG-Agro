@@ -6,6 +6,7 @@
  */
 
 import { useState, useRef, useEffect } from 'react';
+import { Volume2, VolumeX } from 'lucide-react';
 
 interface Mensaje {
     id: string;
@@ -26,7 +27,75 @@ export default function ChatAgro({ contexto }: ChatAgroProps) {
     const [mensajes, setMensajes] = useState<Mensaje[]>([]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
+    const [ttsAvailable, setTtsAvailable] = useState<boolean | null>(null);
+    const [playingMessageId, setPlayingMessageId] = useState<string | null>(null);
+    const [ttsErrorMessageId, setTtsErrorMessageId] = useState<string | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+    const audioUrlRef = useRef<string | null>(null);
+    const errorTimeoutRef = useRef<number | null>(null);
+
+    const clearAudioResources = () => {
+        audioRef.current?.pause();
+        audioRef.current = null;
+
+        if (audioUrlRef.current) {
+            URL.revokeObjectURL(audioUrlRef.current);
+            audioUrlRef.current = null;
+        }
+    };
+
+    const showTtsError = (messageId: string) => {
+        setTtsErrorMessageId(messageId);
+
+        if (errorTimeoutRef.current !== null) {
+            window.clearTimeout(errorTimeoutRef.current);
+        }
+
+        errorTimeoutRef.current = window.setTimeout(() => {
+            setTtsErrorMessageId((current) => (current === messageId ? null : current));
+            errorTimeoutRef.current = null;
+        }, 2000);
+    };
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const probeTtsAvailability = async () => {
+            try {
+                const response = await fetch('/api/elevenlabs/speech', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: '' }),
+                });
+
+                if (cancelled) return;
+
+                if (response.status === 400) {
+                    setTtsAvailable(true);
+                    return;
+                }
+
+                if (response.status === 503) {
+                    setTtsAvailable(false);
+                }
+            } catch (error) {
+                console.error('Error verificando TTS:', error);
+            }
+        };
+
+        probeTtsAvailability();
+
+        return () => {
+            cancelled = true;
+
+            if (errorTimeoutRef.current !== null) {
+                window.clearTimeout(errorTimeoutRef.current);
+            }
+
+            clearAudioResources();
+        };
+    }, []);
 
     // Scroll al final cuando hay nuevos mensajes
     useEffect(() => {
@@ -117,6 +186,62 @@ Puedo ayudarte con:
         }
     };
 
+    const reproducirAudio = async (mensaje: Mensaje) => {
+        if (playingMessageId || ttsAvailable === false) return;
+
+        setPlayingMessageId(mensaje.id);
+        setTtsErrorMessageId(null);
+
+        try {
+            const response = await fetch('/api/elevenlabs/speech', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: mensaje.content }),
+            });
+
+            if (response.status === 503) {
+                setTtsAvailable(false);
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error(`TTS request failed with status ${response.status}`);
+            }
+
+            setTtsAvailable(true);
+
+            const audioBlob = await response.blob();
+            const audioUrl = URL.createObjectURL(audioBlob);
+
+            clearAudioResources();
+            audioUrlRef.current = audioUrl;
+
+            const audio = new Audio(audioUrl);
+            audioRef.current = audio;
+
+            audio.addEventListener('ended', () => {
+                clearAudioResources();
+            }, { once: true });
+
+            audio.addEventListener('error', () => {
+                clearAudioResources();
+                showTtsError(mensaje.id);
+            }, { once: true });
+
+            try {
+                await audio.play();
+            } catch (error) {
+                clearAudioResources();
+                throw error;
+            }
+        } catch (error) {
+            console.error('Error reproduciendo audio TTS:', error);
+            showTtsError(mensaje.id);
+        } finally {
+            setPlayingMessageId((current) => (current === mensaje.id ? null : current));
+        }
+    };
+
     return (
         <>
             {/* Botón flotante */}
@@ -160,20 +285,40 @@ Puedo ayudarte con:
                                 key={msg.id}
                                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                             >
-                                <div
-                                    className={`max-w-[80%] px-4 py-2 rounded-2xl ${msg.role === 'user'
-                                            ? 'bg-green-500 text-white rounded-br-none'
-                                            : 'bg-gray-100 text-gray-800 rounded-bl-none'
-                                        }`}
-                                >
+                                <div className="flex items-end gap-2 max-w-[80%]">
                                     <div
-                                        className="text-sm whitespace-pre-wrap"
-                                        dangerouslySetInnerHTML={{
-                                            __html: msg.content
-                                                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                                                .replace(/\n/g, '<br/>')
-                                        }}
-                                    />
+                                        className={`px-4 py-2 rounded-2xl ${msg.role === 'user'
+                                                ? 'bg-green-500 text-white rounded-br-none'
+                                                : 'bg-gray-100 text-gray-800 rounded-bl-none'
+                                            }`}
+                                    >
+                                        <div
+                                            className="text-sm whitespace-pre-wrap"
+                                            dangerouslySetInnerHTML={{
+                                                __html: msg.content
+                                                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                                                    .replace(/\n/g, '<br/>')
+                                            }}
+                                        />
+                                    </div>
+
+                                    {msg.role === 'assistant' && ttsAvailable === true && (
+                                        <button
+                                            type="button"
+                                            onClick={() => void reproducirAudio(msg)}
+                                            disabled={playingMessageId !== null}
+                                            className="mb-1 flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                            aria-label="Reproducir respuesta"
+                                        >
+                                            {playingMessageId === msg.id ? (
+                                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-green-500" />
+                                            ) : ttsErrorMessageId === msg.id ? (
+                                                <VolumeX className="h-4 w-4 text-red-500" />
+                                            ) : (
+                                                <Volume2 className="h-4 w-4" />
+                                            )}
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         ))}
