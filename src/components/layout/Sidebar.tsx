@@ -26,6 +26,7 @@ import {
   Package,
   Pin,
   Receipt,
+  Send,
   Settings,
   Sprout,
   Tractor,
@@ -89,6 +90,8 @@ export default function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [megaMenuOpen, setMegaMenuOpen] = useState(false);
   const [operationsHubOpen, setOperationsHubOpen] = useState(false);
+  const [grainsHubOpen, setGrainsHubOpen] = useState(false);
+  const [financeHubOpen, setFinanceHubOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const contextualPlotId = searchParams.get('plotId');
   const hasActiveOrganization = Boolean(
@@ -107,6 +110,8 @@ export default function Sidebar() {
   useEffect(() => {
     setMegaMenuOpen(false);
     setOperationsHubOpen(false);
+    setGrainsHubOpen(false);
+    setFinanceHubOpen(false);
   }, [pathname]);
 
   const pluginSlugs = useMemo(
@@ -309,10 +314,15 @@ export default function Sidebar() {
         key: 'config',
         title: 'Configuracion',
         icon: Settings,
-        active: pathname?.startsWith('/organizaciones') || false,
+        active:
+          pathname?.startsWith('/organizaciones') ||
+          pathname?.startsWith('/configuracion') ||
+          false,
         module: 'admin',
         items: [
           { icon: Settings, label: 'Parametros', href: '/organizaciones', active: pathname?.startsWith('/organizaciones') || false, module: 'admin' },
+          { icon: Send, label: 'WhatsApp', href: '/configuracion/whatsapp', active: pathname?.startsWith('/configuracion/whatsapp') || false, module: 'admin' },
+          { icon: Boxes, label: 'Plugins', href: '/configuracion/plugins', active: pathname?.startsWith('/configuracion/plugins') || false, module: 'admin' },
           { icon: Package, label: 'Tipos de insumos', href: '/operaciones', active: false, module: 'contabilidad' },
           { icon: MapPin, label: 'Parametros GIS', href: '/dashboard', active: false, module: 'mapa_gis' },
         ],
@@ -397,15 +407,17 @@ export default function Sidebar() {
   const opKeys = new Set([
     'contexto-lote',
     'insumos-stock',
-    'granos-silos',
-    'finanzas',
   ]);
 
   const megaMenuKeys = new Set(['panel', 'gis', 'campanias']);
-  const popupMenuKeys = new Set(['operaciones-agro']);
+  const popupMenuKeys = new Set(['operaciones-agro', 'granos-silos', 'finanzas']);
   const megaMenuGroups = filteredGroups.filter((g) => megaMenuKeys.has(g.key));
   const operationsHubGroup = filteredGroups.find((g) => g.key === 'operaciones-agro');
   const OperationsHubIcon = operationsHubGroup?.icon ?? Tractor;
+  const grainsHubGroup = filteredGroups.find((g) => g.key === 'granos-silos');
+  const GrainsHubIcon = grainsHubGroup?.icon ?? Warehouse;
+  const financeHubGroup = filteredGroups.find((g) => g.key === 'finanzas');
+  const FinanceHubIcon = financeHubGroup?.icon ?? Landmark;
   const operationalGroups = filteredGroups.filter((g) => opKeys.has(g.key));
   const controlGroups = filteredGroups.filter((g) => !opKeys.has(g.key) && !megaMenuKeys.has(g.key) && !popupMenuKeys.has(g.key));
 
@@ -749,6 +761,286 @@ export default function Sidebar() {
           </div>
         )}
 
+        {hasActiveOrganization && grainsHubGroup && (
+          <div className="relative px-3 pt-3">
+            {!collapsed ? (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setGrainsHubOpen((prev) => !prev)}
+                  className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
+                    grainsHubOpen || grainsHubGroup.active
+                      ? 'border-emerald-500/70 bg-gradient-to-r from-emerald-800 to-emerald-700 text-white shadow-lg shadow-emerald-950/20'
+                      : 'border-emerald-800 bg-emerald-900/45 text-emerald-50 hover:border-emerald-700 hover:bg-emerald-900/70'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white/10 ring-1 ring-white/10">
+                      <Warehouse className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-semibold">{grainsHubGroup.title}</div>
+                      <div className="mt-0.5 text-xs text-emerald-100/75">
+                        Silos, stock, entregas y cartas en un solo panel
+                      </div>
+                    </div>
+                    <ChevronRight className={`h-5 w-5 transition-transform ${grainsHubOpen ? 'rotate-90' : ''}`} />
+                  </div>
+                </button>
+
+                {grainsHubOpen && (
+                  <>
+                    <div className="fixed inset-0 z-[220] hidden md:block" onClick={() => setGrainsHubOpen(false)} />
+                    <div className="absolute left-0 right-0 top-[calc(100%+12px)] z-[230] md:left-[calc(100%+16px)] md:right-auto md:top-0 md:w-[860px]">
+                      <div className="overflow-hidden rounded-[28px] border border-emerald-700/60 bg-[linear-gradient(160deg,rgba(1,53,39,0.98),rgba(4,79,57,0.96))] shadow-[0_28px_80px_rgba(2,12,9,0.45)] backdrop-blur-xl">
+                        <div className="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-5">
+                          <div>
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-300/80">Modulo logistico</p>
+                            <h3 className="mt-1 text-2xl font-semibold text-white">Granos y silos</h3>
+                            <p className="mt-2 max-w-2xl text-sm leading-6 text-emerald-100/75">
+                              Control de acopio, movimientos de grano y documentacion de salida.
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setGrainsHubOpen(false)}
+                            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-emerald-50 transition hover:bg-white/10"
+                            aria-label="Cerrar panel de granos y silos"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+
+                        <div className="grid gap-5 p-5 md:grid-cols-[1.15fr_0.85fr]">
+                          <section className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
+                            <div className="mb-4 flex items-start gap-3">
+                              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-400/10 text-emerald-200 ring-1 ring-emerald-300/15">
+                                <GrainsHubIcon className="h-5 w-5" />
+                              </div>
+                              <div>
+                                <h4 className="text-base font-semibold text-white">Frente de granos</h4>
+                                <p className="mt-1 text-xs leading-5 text-emerald-100/70">
+                                  Accesos directos a silos, stock, entregas y cartas de porte.
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="grid gap-3 md:grid-cols-2">
+                              {grainsHubGroup.items.map((item) => {
+                                const Icon = item.icon;
+                                const cls = `flex items-center gap-3 rounded-2xl border px-3 py-3 text-sm transition ${
+                                  item.active
+                                    ? 'border-emerald-300/40 bg-emerald-300/12 text-white'
+                                    : 'border-white/8 bg-black/10 text-emerald-50/88 hover:border-emerald-300/25 hover:bg-white/8'
+                                }`;
+
+                                if (item.disabled || !item.href) {
+                                  return (
+                                    <div key={`${grainsHubGroup.key}-${item.label}`} className={`${cls} cursor-not-allowed opacity-70`}>
+                                      <Icon className="h-4 w-4" />
+                                      <span className="flex-1">{item.label}</span>
+                                      {item.badge && <span className="text-[10px] uppercase tracking-[0.18em] text-emerald-300/75">{item.badge}</span>}
+                                    </div>
+                                  );
+                                }
+
+                                return (
+                                  <Link
+                                    key={`${grainsHubGroup.key}-${item.href}-${item.label}`}
+                                    href={item.href}
+                                    onClick={() => {
+                                      setGrainsHubOpen(false);
+                                      setMobileOpen(false);
+                                    }}
+                                    className={cls}
+                                  >
+                                    <Icon className="h-4 w-4" />
+                                    <span className="flex-1">{item.label}</span>
+                                    {item.badge && <span className="text-[10px] uppercase tracking-[0.18em] text-emerald-300/75">{item.badge}</span>}
+                                  </Link>
+                                );
+                              })}
+                            </div>
+                          </section>
+
+                          <aside className="rounded-[24px] border border-emerald-400/20 bg-white/[0.06] p-4">
+                            <div className="mb-4">
+                              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-300/80">Indicadores</p>
+                              <h4 className="mt-1 text-lg font-semibold text-white">Pulso del modulo</h4>
+                              <p className="mt-1 text-xs leading-5 text-emerald-100/70">
+                                Lectura rapida del frente logístico y del flujo de granos.
+                              </p>
+                            </div>
+
+                            <div className="space-y-3">
+                              {getGrainsIndicators().map((indicator) => (
+                                <div key={indicator.label} className="rounded-2xl border border-white/10 bg-black/10 p-4">
+                                  <div className="text-[11px] uppercase tracking-[0.18em] text-emerald-300/75">{indicator.label}</div>
+                                  <div className="mt-2 text-3xl font-semibold text-white">{indicator.value}</div>
+                                  <div className="mt-1 text-sm text-emerald-100/75">{indicator.detail}</div>
+                                </div>
+                              ))}
+                            </div>
+                          </aside>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setCollapsed(false)}
+                className="flex w-full items-center justify-center rounded-md border border-transparent px-3 py-2.5 text-emerald-100/80 transition hover:border-emerald-800 hover:bg-emerald-900/50 hover:text-emerald-50"
+                aria-label="Expandir granos y silos"
+              >
+                <Warehouse className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        )}
+
+        {hasActiveOrganization && financeHubGroup && (
+          <div className="relative px-3 pt-3">
+            {!collapsed ? (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setFinanceHubOpen((prev) => !prev)}
+                  className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
+                    financeHubOpen || financeHubGroup.active
+                      ? 'border-emerald-500/70 bg-gradient-to-r from-emerald-800 to-emerald-700 text-white shadow-lg shadow-emerald-950/20'
+                      : 'border-emerald-800 bg-emerald-900/45 text-emerald-50 hover:border-emerald-700 hover:bg-emerald-900/70'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white/10 ring-1 ring-white/10">
+                      <Landmark className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-semibold">{financeHubGroup.title}</div>
+                      <div className="mt-0.5 text-xs text-emerald-100/75">
+                        Ventas, cobranzas, pagos y control financiero unificado
+                      </div>
+                    </div>
+                    <ChevronRight className={`h-5 w-5 transition-transform ${financeHubOpen ? 'rotate-90' : ''}`} />
+                  </div>
+                </button>
+
+                {financeHubOpen && (
+                  <>
+                    <div className="fixed inset-0 z-[220] hidden md:block" onClick={() => setFinanceHubOpen(false)} />
+                    <div className="absolute left-0 right-0 top-[calc(100%+12px)] z-[230] md:left-[calc(100%+16px)] md:right-auto md:top-0 md:w-[860px]">
+                      <div className="overflow-hidden rounded-[28px] border border-emerald-700/60 bg-[linear-gradient(160deg,rgba(1,53,39,0.98),rgba(4,79,57,0.96))] shadow-[0_28px_80px_rgba(2,12,9,0.45)] backdrop-blur-xl">
+                        <div className="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-5">
+                          <div>
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-300/80">Modulo financiero</p>
+                            <h3 className="mt-1 text-2xl font-semibold text-white">Finanzas</h3>
+                            <p className="mt-2 max-w-2xl text-sm leading-6 text-emerald-100/75">
+                              Flujo comercial, libro diario, rentabilidad y relacion con terceros en un mismo panel.
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setFinanceHubOpen(false)}
+                            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-emerald-50 transition hover:bg-white/10"
+                            aria-label="Cerrar panel de finanzas"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+
+                        <div className="grid gap-5 p-5 md:grid-cols-[1.15fr_0.85fr]">
+                          <section className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
+                            <div className="mb-4 flex items-start gap-3">
+                              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-400/10 text-emerald-200 ring-1 ring-emerald-300/15">
+                                <FinanceHubIcon className="h-5 w-5" />
+                              </div>
+                              <div>
+                                <h4 className="text-base font-semibold text-white">Control financiero</h4>
+                                <p className="mt-1 text-xs leading-5 text-emerald-100/70">
+                                  Accesos a cobranzas, pagos, libro diario, rentabilidad y terceros.
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="grid gap-3 md:grid-cols-2">
+                              {financeHubGroup.items.map((item) => {
+                                const Icon = item.icon;
+                                const cls = `flex items-center gap-3 rounded-2xl border px-3 py-3 text-sm transition ${
+                                  item.active
+                                    ? 'border-emerald-300/40 bg-emerald-300/12 text-white'
+                                    : 'border-white/8 bg-black/10 text-emerald-50/88 hover:border-emerald-300/25 hover:bg-white/8'
+                                }`;
+
+                                if (item.disabled || !item.href) {
+                                  return (
+                                    <div key={`${financeHubGroup.key}-${item.label}`} className={`${cls} cursor-not-allowed opacity-70`}>
+                                      <Icon className="h-4 w-4" />
+                                      <span className="flex-1">{item.label}</span>
+                                      {item.badge && <span className="text-[10px] uppercase tracking-[0.18em] text-emerald-300/75">{item.badge}</span>}
+                                    </div>
+                                  );
+                                }
+
+                                return (
+                                  <Link
+                                    key={`${financeHubGroup.key}-${item.href}-${item.label}`}
+                                    href={item.href}
+                                    onClick={() => {
+                                      setFinanceHubOpen(false);
+                                      setMobileOpen(false);
+                                    }}
+                                    className={cls}
+                                  >
+                                    <Icon className="h-4 w-4" />
+                                    <span className="flex-1">{item.label}</span>
+                                    {item.badge && <span className="text-[10px] uppercase tracking-[0.18em] text-emerald-300/75">{item.badge}</span>}
+                                  </Link>
+                                );
+                              })}
+                            </div>
+                          </section>
+
+                          <aside className="rounded-[24px] border border-emerald-400/20 bg-white/[0.06] p-4">
+                            <div className="mb-4">
+                              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-300/80">Indicadores</p>
+                              <h4 className="mt-1 text-lg font-semibold text-white">Pulso del modulo</h4>
+                              <p className="mt-1 text-xs leading-5 text-emerald-100/70">
+                                Resumen financiero para seguir liquidez, margen y relacion con terceros.
+                              </p>
+                            </div>
+
+                            <div className="space-y-3">
+                              {getFinanceIndicators().map((indicator) => (
+                                <div key={indicator.label} className="rounded-2xl border border-white/10 bg-black/10 p-4">
+                                  <div className="text-[11px] uppercase tracking-[0.18em] text-emerald-300/75">{indicator.label}</div>
+                                  <div className="mt-2 text-3xl font-semibold text-white">{indicator.value}</div>
+                                  <div className="mt-1 text-sm text-emerald-100/75">{indicator.detail}</div>
+                                </div>
+                              ))}
+                            </div>
+                          </aside>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setCollapsed(false)}
+                className="flex w-full items-center justify-center rounded-md border border-transparent px-3 py-2.5 text-emerald-100/80 transition hover:border-emerald-800 hover:bg-emerald-900/50 hover:text-emerald-50"
+                aria-label="Expandir finanzas"
+              >
+                <Landmark className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        )}
+
         <nav className="flex-1 p-3 overflow-y-auto space-y-4">
           {!hasActiveOrganization && !collapsed && (
             <div className="rounded-xl bg-emerald-900/40 p-3 text-xs text-emerald-100/80 border border-emerald-800">
@@ -891,6 +1183,46 @@ function getOperationsIndicators() {
       label: 'Entregas por cerrar',
       value: '12',
       detail: 'Registros pendientes de consolidacion operativa.',
+    },
+  ];
+}
+
+function getGrainsIndicators() {
+  return [
+    {
+      label: 'Silos operativos',
+      value: '04',
+      detail: 'Capacidad activa para recepcion y despacho de granos.',
+    },
+    {
+      label: 'Stock consolidado',
+      value: '820 t',
+      detail: 'Volumen disponible entre silo bolsa y almacenamiento fijo.',
+    },
+    {
+      label: 'Entregas abiertas',
+      value: '06',
+      detail: 'Remitos y salidas en seguimiento logistico.',
+    },
+  ];
+}
+
+function getFinanceIndicators() {
+  return [
+    {
+      label: 'Cobros proyectados',
+      value: '$ 14.2M',
+      detail: 'Ingresos previstos para la proxima ventana operativa.',
+    },
+    {
+      label: 'Pagos en agenda',
+      value: '09',
+      detail: 'Compromisos por ejecutar con proveedores y servicios.',
+    },
+    {
+      label: 'Margen bajo control',
+      value: '18.4%',
+      detail: 'Balance preliminar del modulo financiero activo.',
     },
   ];
 }
