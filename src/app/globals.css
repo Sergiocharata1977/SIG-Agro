@@ -71,6 +71,10 @@ body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 .glass-panel {
   background: var(--chat-glass-bg);
   backdrop-filter: blur(var(--chat-glass-blur));
@@ -96,4 +100,12 @@ body {
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+.landing-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-position: center;
+  background-size: 72px 72px;
 }

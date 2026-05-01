@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .ai-gradient {
+            background: linear-gradient(135deg, #1b4332 0%, #446900 100%);
+        }
+        .glass-panel {
+            backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.8);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-secondary-container": "#496f00",
+                      "on-primary-fixed-variant": "#274e3d",
+                      "surface-bright": "#f8f9ff",
+                      "tertiary-fixed-dim": "#bec6e0",
+                      "inverse-surface": "#213145",
+                      "surface-variant": "#d3e4fe",
+                      "on-error-container": "#93000a",
+                      "primary": "#012d1d",
+                      "primary-container": "#1b4332",
+                      "error-container": "#ffdad6",
+                      "surface-container-highest": "#d3e4fe",
+                      "secondary-fixed": "#b2f746",
+                      "primary-fixed-dim": "#a5d0b9",
+                      "outline-variant": "#c1c8c2",
+                      "on-secondary-fixed-variant": "#334f00",
+                      "on-tertiary-container": "#9ea5be",
+                      "on-primary": "#ffffff",
+                      "tertiary-fixed": "#dae2fd",
+                      "on-secondary-fixed": "#121f00",
+                      "tertiary-container": "#333b50",
+                      "on-error": "#ffffff",
+                      "secondary-container": "#b2f746",
+                      "surface-tint": "#3f6653",
+                      "on-primary-container": "#86af99",
+                      "surface-container": "#e5eeff",
+                      "secondary-fixed-dim": "#98da27",
+                      "on-tertiary": "#ffffff",
+                      "surface-dim": "#cbdbf5",
+                      "surface": "#f8f9ff",
+                      "on-tertiary-fixed-variant": "#3f465c",
+                      "background": "#f8f9ff",
+                      "surface-container-low": "#eff4ff",
+                      "on-surface-variant": "#414844",
+                      "on-primary-fixed": "#002114",
+                      "on-tertiary-fixed": "#131b2e",
+                      "on-background": "#0b1c30",
+                      "inverse-primary": "#a5d0b9",
+                      "surface-container-high": "#dce9ff",
+                      "primary-fixed": "#c1ecd4",
+                      "on-secondary": "#ffffff",
+                      "outline": "#717973",
+                      "error": "#ba1a1a",
+                      "inverse-on-surface": "#eaf1ff",
+                      "tertiary": "#1e2539",
+                      "surface-container-lowest": "#ffffff",
+                      "secondary": "#446900",
+                      "on-surface": "#0b1c30"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "base": "4px",
+                      "xs": "8px",
+                      "sm": "16px",
+                      "md": "24px",
+                      "margin": "24px",
+                      "lg": "32px",
+                      "xl": "48px",
+                      "gutter": "20px"
+              },
+              "fontFamily": {
+                      "body-lg": ["Inter"],
+                      "body-md": ["Inter"],
+                      "label-caps": ["Inter"],
+                      "h3": ["Manrope"],
+                      "h1": ["Manrope"],
+                      "body-sm": ["Inter"],
+                      "metric": ["Manrope"],
+                      "h2": ["Manrope"]
+              },
+              "fontSize": {
+                      "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                      "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                      "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "h3": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                      "h1": ["40px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                      "body-sm": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                      "metric": ["28px", {"lineHeight": "1", "fontWeight": "700"}],
+                      "h2": ["32px", {"lineHeight": "1.25", "fontWeight": "600"}]
+              }
+            },
+          },
+        }
+      </script>
+</head>
+<body class="bg-background font-body-md text-on-background min-h-screen flex overflow-hidden">
+<!-- SideNavBar (Shared Component) -->
+<aside class="hidden md:flex flex-col h-screen fixed left-0 top-0 overflow-y-auto w-64 bg-slate-50 border-r border-slate-200 z-50">
+<div class="p-md flex items-center gap-xs">
+<div class="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-white" data-icon="agriculture">agriculture</span>
+</div>
+<div>
+<h2 class="text-lg font-black text-emerald-900 leading-none">AgroCorp Solutions</h2>
+<span class="text-xs font-semibold text-slate-500">Multi-tenant Manager</span>
+</div>
+</div>
+<nav class="mt-md flex-1 px-sm space-y-1">
+<a class="flex items-center gap-sm px-sm py-xs text-slate-500 hover:bg-slate-100 rounded-lg transition-all font-semibold text-sm" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-sm px-sm py-xs text-slate-500 hover:bg-slate-100 rounded-lg transition-all font-semibold text-sm" href="#">
+<span class="material-symbols-outlined" data-icon="map">map</span>
+                Maps/GIS
+            </a>
+<a class="flex items-center gap-sm px-sm py-xs text-slate-500 hover:bg-slate-100 rounded-lg transition-all font-semibold text-sm" href="#">
+<span class="material-symbols-outlined" data-icon="agriculture">agriculture</span>
+                Lots &amp; Campaigns
+            </a>
+<!-- Active Tab: Scouting/IA -->
+<a class="flex items-center gap-sm px-sm py-xs bg-emerald-50 text-emerald-700 border-r-4 border-emerald-700 rounded-lg transition-all font-semibold text-sm" href="#">
+<span class="material-symbols-outlined" data-icon="psychology">psychology</span>
+                Scouting/IA
+            </a>
+<a class="flex items-center gap-sm px-sm py-xs text-slate-500 hover:bg-slate-100 rounded-lg transition-all font-semibold text-sm" href="#">
+<span class="material-symbols-outlined" data-icon="assessment">assessment</span>
+                Reports
+            </a>
+<a class="flex items-center gap-sm px-sm py-xs text-slate-500 hover:bg-slate-100 rounded-lg transition-all font-semibold text-sm" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+                Settings
+            </a>
+</nav>
+<div class="px-sm mb-md">
+<button class="w-full py-sm bg-primary-container text-white rounded-xl font-bold flex items-center justify-center gap-xs shadow-md active:scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+                New Campaign
+            </button>
+</div>
+<div class="mt-auto border-t border-slate-200 p-sm space-y-1">
+<a class="flex items-center gap-sm px-sm py-xs text-slate-500 hover:bg-slate-100 rounded-lg transition-all font-semibold text-sm" href="#">
+<span class="material-symbols-outlined" data-icon="contact_support">contact_support</span>
+                Support
+            </a>
+<a class="flex items-center gap-sm px-sm py-xs text-slate-500 hover:bg-slate-100 rounded-lg transition-all font-semibold text-sm" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+                Sign Out
+            </a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 md:ml-64 h-screen overflow-y-auto bg-surface-container-low p-md lg:p-xl">
+<!-- Header Section -->
+<header class="flex flex-col md:flex-row md:items-center justify-between mb-lg gap-md">
+<div>
+<h1 class="font-h1 text-h1 text-primary">Panel de Scouting &amp; IA</h1>
+<p class="font-body-lg text-slate-600">Monitoreo avanzado con Don Cándido Intelligence.</p>
+</div>
+<div class="flex items-center gap-sm">
+<button class="px-lg py-sm bg-secondary text-white font-bold rounded-full shadow-lg flex items-center gap-xs hover:bg-on-secondary-container transition-colors duration-200">
+<span class="material-symbols-outlined" data-icon="add_a_photo">add_a_photo</span>
+                    Nuevo Relevamiento a Campo
+                </button>
+</div>
+</header>
+<!-- Main Grid Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-lg">
+<!-- Left Column: Don Cándido IA Feed -->
+<section class="lg:col-span-7 flex flex-col gap-sm">
+<div class="flex items-center justify-between mb-xs">
+<h3 class="font-h3 text-h3 text-primary flex items-center gap-xs">
+<span class="material-symbols-outlined text-secondary" data-icon="smart_toy" data-weight="fill">smart_toy</span>
+                        Recomendaciones de Don Cándido IA
+                    </h3>
+<span class="bg-primary-container/10 text-primary-container text-label-caps px-sm py-xs rounded-full uppercase">En Vivo</span>
+</div>
+<div class="space-y-sm">
+<!-- AI Insight 1 -->
+<article class="bg-white rounded-xl p-md border border-slate-200 shadow-sm relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-error"></div>
+<div class="flex gap-md">
+<div class="w-12 h-12 rounded-full bg-error-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-error" data-icon="water_drop">water_drop</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-xs">
+<span class="text-label-caps text-error font-bold">ALERTA CRÍTICA • LOTE 7</span>
+<span class="text-xs text-slate-400">Hace 15 min</span>
+</div>
+<p class="font-body-md text-on-background font-semibold mb-xs">Detección de estrés hídrico en Lote 7 (Soja de 1ra).</p>
+<p class="font-body-sm text-slate-600 mb-md">Se recomienda revisar el sistema de riego pivot central y monitorear el índice NDMI. El sensor de humedad de suelo a 30cm indica valores por debajo del umbral crítico (18%).</p>
+<div class="flex gap-sm">
+<button class="text-label-caps text-primary border border-primary px-sm py-xs rounded-lg hover:bg-primary hover:text-white transition-all">Ver Mapa NDMI</button>
+<button class="text-label-caps text-slate-500 hover:text-primary transition-all">Descartar</button>
+</div>
+</div>
+</div>
+</article>
+<!-- AI Insight 2 -->
+<article class="bg-white rounded-xl p-md border border-slate-200 shadow-sm relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-secondary"></div>
+<div class="flex gap-md">
+<div class="w-12 h-12 rounded-full bg-secondary-container/30 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-secondary" data-icon="pest_control">pest_control</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-xs">
+<span class="text-label-caps text-secondary font-bold">PREDICCIÓN IA • SECTOR NORTE</span>
+<span class="text-xs text-slate-400">Hace 2 horas</span>
+</div>
+<p class="font-body-md text-on-background font-semibold mb-xs">Riesgo moderado de aparición de Isoca Bolillera.</p>
+<p class="font-body-sm text-slate-600 mb-md">Las condiciones térmicas y de humedad de las últimas 72hs han favorecido el ciclo biológico. Se sugiere intensificar el scouting presencial en el Lote 12 y 14.</p>
+<div class="flex gap-sm">
+<button class="text-label-caps text-primary border border-primary px-sm py-xs rounded-lg hover:bg-primary hover:text-white transition-all">Planificar Scouting</button>
+</div>
+</div>
+</div>
+</article>
+<!-- AI Insight 3 - Interactive -->
+<div class="bg-primary-container text-white rounded-xl p-md shadow-xl ai-gradient">
+<div class="flex items-center gap-sm mb-md">
+<span class="material-symbols-outlined text-secondary-fixed" data-icon="auto_awesome">auto_awesome</span>
+<h4 class="font-bold text-lg">Chat con Don Cándido</h4>
+</div>
+<div class="bg-white/10 rounded-lg p-sm mb-md border border-white/20">
+<p class="text-sm italic">"Don Cándido, ¿cuál es el pronóstico de rendimiento para el Lote 5 basado en el último vuelo de drone?"</p>
+</div>
+<div class="flex gap-sm items-center">
+<input class="flex-1 bg-white/5 border border-white/20 rounded-lg px-sm py-xs text-sm focus:ring-secondary-fixed focus:border-secondary-fixed placeholder-white/50" placeholder="Escribe tu consulta..." type="text"/>
+<button class="w-10 h-10 bg-secondary-fixed text-primary rounded-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-all">
+<span class="material-symbols-outlined" data-icon="send">send</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Column: Scouting Reports -->
+<section class="lg:col-span-5 flex flex-col gap-sm">
+<div class="flex items-center justify-between mb-xs">
+<h3 class="font-h3 text-h3 text-primary flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary" data-icon="assignment">assignment</span>
+                        Reportes de Scouting
+                    </h3>
+<button class="text-primary text-sm font-semibold hover:underline">Ver todo</button>
+</div>
+<div class="flex flex-col gap-sm">
+<!-- Scouting Card 1 -->
+<div class="bg-white rounded-xl overflow-hidden border border-slate-200 shadow-sm flex h-32">
+<div class="w-32 shrink-0 relative">
+<img class="w-full h-full object-cover" data-alt="A detailed close-up shot of healthy green soybean leaves in a sunlit field during the golden hour. The lighting is warm and directional, highlighting the intricate vein patterns of the leaves. The background is a soft, out-of-focus expanse of the plantation, conveying a sense of vastness and agricultural precision. The overall mood is professional, high-performance, and serene, fitting a modern agricultural technology interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQWUP1HxFZT-yHWYl3f_A15xsu-4WXdySw7wJbrVgkW-dDnWb1kh_atWx0ps1Yx_D_7iquqVU1Vz39CmeSBankr6ORl0Ga6jUa89ybTwEGE067BNhZsyeEpveWXF_8XfLSwxWm_IzwsZppm1QVPYAJ0zQOJOHflXREvMHhZUEPxDshvKtZ6FhbYaMp83j86A8qLFBHBqKzSX90ackzYqxzWU0OghoOJ2AURJLVj_rVaG_i8hrZK5kLzJAmPteQOs4aRE1eeIC0gNvl"/>
+<div class="absolute bottom-1 right-1 bg-black/50 text-white p-1 rounded-md">
+<span class="material-symbols-outlined text-xs" data-icon="location_on">location_on</span>
+</div>
+</div>
+<div class="flex-1 p-sm flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-center mb-1">
+<span class="text-[10px] font-bold text-slate-400 uppercase">12 Oct • Lote 04</span>
+<span class="bg-secondary-fixed text-on-secondary-fixed-variant text-[10px] px-2 py-0.5 rounded-full font-bold">NORMAL</span>
+</div>
+<h4 class="font-bold text-sm text-primary leading-tight">Estado Fenológico: V3</h4>
+<p class="text-xs text-slate-500 line-clamp-2 mt-1">Buena emergencia, sin presencia de malezas resistentes detectada en el transecto sur.</p>
+</div>
+<div class="text-[10px] text-slate-400 flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]" data-icon="person">person</span>
+                                Ing. Carlos Mendez
+                            </div>
+</div>
+</div>
+<!-- Scouting Card 2 -->
+<div class="bg-white rounded-xl overflow-hidden border border-slate-200 shadow-sm flex h-32">
+<div class="w-32 shrink-0 relative">
+<img class="w-full h-full object-cover" data-alt="A high-angle macro photograph of dry, cracked earth in a distressed agricultural field under harsh, midday sun. The lighting creates sharp shadows within the fissures of the soil, emphasizing a state of extreme drought. A single wilted seedling is visible, struggling for survival. The visual style is clinical and documentary-like, using a desaturated palette to highlight environmental stress and the need for data-driven intervention." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDK6ZhGUnzUDRiZEQRm3EqoYNy1e6CksuDRZu3JcUKM6amZ7GqVHcZHX_RxgiqG0o756y8V0yfwOuYh3BWzdH2M_xkUq9WjnQ-MXXQ4iNlwcZYXqYgOmbYZikqX728kF4RRfBTa9JuyNyTKUM7giT2Nw1nbGkIAjtARhFZUg6D0eS_D4K9FQUiiIhMc7d13STmMCYsRZO9jQ4OOT_DAprwARNBkNrQfVEF0TbNH7WiXyst6VN5t-S1U-FKd2NUwL1Xj_quaGR4cXgtH"/>
+<div class="absolute bottom-1 right-1 bg-black/50 text-white p-1 rounded-md">
+<span class="material-symbols-outlined text-xs" data-icon="location_on">location_on</span>
+</div>
+</div>
+<div class="flex-1 p-sm flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-center mb-1">
+<span class="text-[10px] font-bold text-slate-400 uppercase">11 Oct • Lote 07</span>
+<span class="bg-error-container text-on-error-container text-[10px] px-2 py-0.5 rounded-full font-bold">ALERTA</span>
+</div>
+<h4 class="font-bold text-sm text-primary leading-tight">Compactación detectada</h4>
+<p class="text-xs text-slate-500 line-clamp-2 mt-1">Suelo con costra superficial. Se observa marchitamiento temporal en horas de mayor radiación.</p>
+</div>
+<div class="text-[10px] text-slate-400 flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]" data-icon="person">person</span>
+                                Téc. Lucia Rossi
+                            </div>
+</div>
+</div>
+<!-- Mini Map GIS Widget -->
+<div class="bg-white rounded-xl p-sm border border-slate-200 shadow-sm mt-xs">
+<div class="relative rounded-lg overflow-hidden h-48 mb-sm bg-slate-200">
+<!-- Placeholder for Interactive Map -->
+<div class="absolute inset-0 bg-slate-200 flex items-center justify-center">
+<img class="w-full h-full object-cover opacity-80" data-alt="A satellite-view map of neatly partitioned agricultural fields in various shades of green and gold, showing precise circular and rectangular lot boundaries. Overlaid on the map are semi-transparent heat-map layers indicating moisture levels in teal and nutrient density in lime green. The interface design features floating UI panels for zooming and layer selection, rendered with a modern glassmorphism effect." data-location="General Villegas, Argentina" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDHJ-TN9waDuHXoPr-G-CGMxE33geraRG28suN96GuVaAckpkDDnMXqOTS5mhqQyko2wAHObosaJkYW4Ge1VF0dvubhxuiKPRmU4bGwQQ9flFjUHU47d-uZ5CiIYQdQO8gODqbnh_XpRJeSxhS1diJdGrKSK1TyrV0xDZJzUVQwPYPovUzGEthOEdUTW2q7cMRbjCCHXchvT7doBkUiHj6PTpvGD_X0PkTqdGnNzyhlJtFFKMwEC_mioYHPqU8EgeUKpEAL-SjMhCpG"/>
+<div class="absolute inset-0 bg-primary/10"></div>
+<!-- Floating Map Pin -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
+<div class="bg-white px-xs py-1 rounded-full text-[10px] font-bold shadow-lg mb-1 border border-primary">Lote 7: Estrés</div>
+<span class="material-symbols-outlined text-error" data-icon="location_on" data-weight="fill">location_on</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-slate-400" data-icon="layers">layers</span>
+<span class="text-xs font-semibold text-slate-600">Capa: Salud Vegetal (NDVI)</span>
+</div>
+<button class="p-xs hover:bg-slate-100 rounded-lg transition-all">
+<span class="material-symbols-outlined text-primary" data-icon="open_in_full">open_in_full</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Footer (Shared Component) -->
+<footer class="w-full py-12 px-8 grid grid-cols-1 md:grid-cols-4 gap-8 mt-xl border-t border-slate-200 bg-slate-50">
+<div class="md:col-span-2">
+<h4 class="font-bold text-emerald-900 text-lg mb-xs">SIG Agro</h4>
+<p class="font-body-sm text-slate-500 mb-md">© 2024 SIG Agro. Precision stewardship for the modern producer.</p>
+<div class="flex gap-sm">
+<a class="text-slate-400 hover:text-emerald-600 transition-colors" href="#"><span class="material-symbols-outlined" data-icon="public">public</span></a>
+<a class="text-slate-400 hover:text-emerald-600 transition-colors" href="#"><span class="material-symbols-outlined" data-icon="terminal">terminal</span></a>
+</div>
+</div>
+<div>
+<h5 class="text-label-caps text-emerald-900 mb-sm">Recursos</h5>
+<ul class="space-y-xs">
+<li><a class="font-body-sm text-slate-500 hover:underline" href="#">API Documentation</a></li>
+<li><a class="font-body-sm text-slate-500 hover:underline" href="#">Contact Support</a></li>
+</ul>
+</div>
+<div>
+<h5 class="text-label-caps text-emerald-900 mb-sm">Legal</h5>
+<ul class="space-y-xs">
+<li><a class="font-body-sm text-slate-500 hover:underline" href="#">Privacy Policy</a></li>
+<li><a class="font-body-sm text-slate-500 hover:underline" href="#">Terms of Service</a></li>
+</ul>
+</div>
+</footer>
+</main>
+<!-- Floating Action Button Mobile Only (Suppressed per instructions for Details/Settings, but added here for Scouting functionality) -->
+<div class="md:hidden fixed bottom-md right-md z-50">
+<button class="w-14 h-14 bg-secondary text-white rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-transform">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+</button>
+</div>
+</body></html>

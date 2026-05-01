@@ -9,8 +9,11 @@
     "lint": "eslint",
     "ui:check": "node scripts/verify-design-system.js",
     "test": "vitest run tests/api",
-    "test:e2e": "npm run build && node scripts/e2e-api-smoke.js",
-    "qa:gate": "npm run ui:check && npm run lint && npm run test && npm run build",
+    "test:security": "vitest run tests/security",
+    "test:all": "vitest run tests/api tests/security",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "qa:gate": "npm run ui:check && npm run lint && npm run test:all && npm run build",
     "bootstrap": "node scripts/bootstrap.js",
     "migrate:a1:dry": "node scripts/migrate-a1-domain-model.js --dry-run",
     "migrate:a1": "node scripts/migrate-a1-domain-model.js",
@@ -52,6 +55,7 @@
     "eslint-config-next": "16.0.8",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "@playwright/test": "^1.49.0"
   }
 }

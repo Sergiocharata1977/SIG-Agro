@@ -1,506 +1,200 @@
-﻿'use client';
+'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { AlertTriangle, Bell, CalendarDays, CheckCircle2, DollarSign, Layers3, LogOut, MapPinned, Tractor } from 'lucide-react';
-import Sidebar, { toggleMobileSidebar } from '@/components/layout/Sidebar';
+import Link from 'next/link';
+import {
+  AlertTriangle,
+  ArrowRight,
+  Bell,
+  CheckCircle2,
+  CloudSun,
+  Layers3,
+  Sparkles,
+  Tractor,
+} from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { isSuperAdminEmail } from '@/lib/auth-utils';
-import type { Field, Plot, Crop } from '@/types/sig-agro';
-import type { Alert } from '@/types/sig-agro-advanced';
-import type { OperationRecord } from '@/types/contabilidad-simple';
-import { obtenerFields } from '@/services/fields';
-import { obtenerPlots } from '@/services/plots';
-import { obtenerCrops, getCampaniaActual, obtenerCampaniasDisponibles } from '@/services/crops';
-import { obtenerAlertas, obtenerConteoNoLeidas } from '@/services/alerts';
-import { listOperationsByOrg } from '@/services/operations-registry';
-import { BaseButton } from '@/components/design-system';
-import { LanguageSelector } from '@/components/i18n/LanguageSelector';
-import { CULTIVOS_CONFIG } from '@/types/sig-agro';
-import { TIPOS_ALERTA_CONFIG, SEVERIDAD_CONFIG } from '@/types/sig-agro-advanced';
+import { PageShell } from '@/components/layout/PageShell';
 
 const MapaGeneral = dynamic(() => import('@/components/mapa/MapaGeneral'), {
   ssr: false,
   loading: () => (
-    <div className="h-full bg-slate-100 animate-pulse flex items-center justify-center">
-      <span className="text-slate-500 text-sm">Cargando mapa...</span>
+    <div className="flex h-[28rem] items-center justify-center rounded-[28px] bg-slate-100 text-sm text-slate-500">
+      Cargando mapa...
     </div>
   ),
 });
 
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(value || 0);
-}
+const kpis = [
+  {
+    title: 'NDVI promedio',
+    value: '0.82',
+    detail: '+4.2% vs mes anterior',
+    icon: Layers3,
+    accent: 'from-emerald-500/15 to-lime-200/40',
+  },
+  {
+    title: 'Alertas IA',
+    value: '3 nuevas',
+    detail: 'Anomalias detectadas en lotes priorizados',
+    icon: AlertTriangle,
+    accent: 'from-red-500/10 to-orange-100/50',
+  },
+  {
+    title: 'Clima Charata',
+    value: '28°C',
+    detail: 'Soleado · Viento SE 12 km/h',
+    icon: CloudSun,
+    accent: 'from-amber-400/10 to-yellow-100/60',
+  },
+  {
+    title: 'Hectareas activas',
+    value: '1,250 ha',
+    detail: '12 lotes bajo gestion',
+    icon: Tractor,
+    accent: 'from-sky-500/10 to-sky-100/60',
+  },
+];
 
-function currentMonthCount(operations: OperationRecord[]) {
-  const now = new Date();
-  const m = now.getMonth();
-  const y = now.getFullYear();
-  return operations.filter((op) => {
-    const d = new Date(op.fecha);
-    return d.getMonth() === m && d.getFullYear() === y;
-  }).length;
-}
+const timeline = [
+  {
+    title: 'Siembra en Lote 12 finalizada',
+    description: 'Maiz tardio · 450 ha procesadas con precision de 2 cm.',
+    tone: 'emerald',
+  },
+  {
+    title: 'Riego programado Lote 4',
+    description: 'Ciclo profundo iniciado por Pivot Central.',
+    tone: 'blue',
+  },
+  {
+    title: 'Reporte de scouting generado',
+    description: 'Se cargo evidencia de cogollero y recomendacion de seguimiento.',
+    tone: 'amber',
+  },
+  {
+    title: 'Sincronizacion de maquinaria',
+    description: 'Datos de telemetria recibidos del tractor JD 7230J.',
+    tone: 'slate',
+  },
+];
 
-function calculateFinance(operations: OperationRecord[]) {
-  const isVentaDirecta = (op: OperationRecord) => op.type === 'entrega_acopiador' && Boolean((op.metadata as { esVenta?: boolean } | undefined)?.esVenta);
-  const costos = operations
-    .filter((op) => ['compra_insumo', 'aplicacion_insumo', 'pago'].includes(op.type))
-    .reduce((sum, op) => sum + (op.amount || 0), 0);
-  const ingresos = operations
-    .filter((op) => ['venta', 'cobro'].includes(op.type) || isVentaDirecta(op))
-    .reduce((sum, op) => sum + (op.amount || 0), 0);
-  return { costos, ingresos, margen: ingresos - costos };
-}
-
-function DashboardHeader({
-  selectedField,
-  fields,
-  selectedCampaign,
-  campaigns,
-  onFieldChange,
-  onCampaignChange,
-  activeAlerts,
-}: {
-  selectedField: Field | null;
-  fields: Field[];
-  selectedCampaign: string;
-  campaigns: string[];
-  onFieldChange: (id: string) => void;
-  onCampaignChange: (campaign: string) => void;
-  activeAlerts: number;
-}) {
-  const { user, signOut } = useAuth();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const handleOutsideClick = (event: MouseEvent) => {
-      if (!menuRef.current) return;
-      if (!menuRef.current.contains(event.target as Node)) {
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleOutsideClick);
-    return () => document.removeEventListener('mousedown', handleOutsideClick);
-  }, []);
-
-  return (
-    <header className="h-16 bg-white border-b border-slate-200 px-3 md:px-4 flex items-center justify-between gap-3">
-      <div className="flex items-center gap-2 md:gap-3 min-w-0">
-        <button onClick={toggleMobileSidebar} className="w-10 h-10 flex md:hidden items-center justify-center rounded-md hover:bg-slate-100" aria-label="Abrir menu">
-          <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-
-        <div className="hidden lg:flex items-center gap-2 text-slate-700 text-sm">
-          {activeAlerts > 0 ? <AlertTriangle className="w-4 h-4 text-amber-600" /> : <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
-          <span>{activeAlerts > 0 ? `${activeAlerts} alertas activas` : 'Operacion estable'}</span>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-2 md:gap-3">
-        <select
-          className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-700 min-w-[180px]"
-          value={selectedField?.id || ''}
-          onChange={(e) => onFieldChange(e.target.value)}
-        >
-          <option value="" disabled>Campo activo</option>
-          {fields.map((field) => (
-            <option key={field.id} value={field.id}>{field.nombre}</option>
-          ))}
-        </select>
-
-        <select
-          className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-700 min-w-[150px]"
-          value={selectedCampaign}
-          onChange={(e) => onCampaignChange(e.target.value)}
-        >
-          {campaigns.map((campaign) => (
-            <option key={campaign} value={campaign}>{campaign}</option>
-          ))}
-        </select>
-
-        <div ref={menuRef} className="relative">
-          <button
-            onClick={() => setMenuOpen((prev) => !prev)}
-            className="w-9 h-9 bg-emerald-600 hover:bg-emerald-700 rounded-full text-white text-sm font-semibold grid place-items-center"
-            title={user?.email || ''}
-          >
-            {(user?.email || 'U').charAt(0).toUpperCase()}
-          </button>
-
-          {menuOpen && (
-            <div className="absolute right-0 mt-2 w-72 rounded-xl border border-slate-200 bg-white shadow-xl p-3 z-50">
-              <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-                <div className="w-10 h-10 rounded-full bg-emerald-600 text-white grid place-items-center font-semibold">
-                  {(user?.displayName || user?.email || 'U').charAt(0).toUpperCase()}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-slate-900 truncate">{user?.displayName || 'Usuario'}</p>
-                  <p className="text-xs text-slate-500 truncate">{user?.email || ''}</p>
-                </div>
-              </div>
-
-              <div className="py-3 flex justify-center border-b border-slate-100">
-                <LanguageSelector />
-              </div>
-
-              <button
-                onClick={async () => {
-                  setMenuOpen(false);
-                  await signOut();
-                }}
-                className="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-100"
-              >
-                <LogOut className="w-4 h-4" />
-                Cerrar sesion
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </header>
-  );
-}
-
-function KpiCard({ icon, label, value, subtitle, tone = 'default' }: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  subtitle?: string;
-  tone?: 'default' | 'success' | 'danger' | 'warning';
-}) {
-  const toneStyles = {
-    default: 'border-slate-200 text-slate-900',
-    success: 'border-emerald-200 text-emerald-700',
-    danger: 'border-rose-200 text-rose-700',
-    warning: 'border-amber-200 text-amber-700',
-  } as const;
-
-  return (
-    <div className="rounded-xl border bg-white p-4 shadow-sm">
-      <div className="flex items-center gap-2 text-slate-600 text-sm mb-2">
-        {icon}
-        <span>{label}</span>
-      </div>
-      <div className={`text-2xl font-semibold ${toneStyles[tone]}`}>{value}</div>
-      {subtitle && <div className="text-xs text-slate-500 mt-1">{subtitle}</div>}
-    </div>
-  );
+function toneClass(tone: string) {
+  if (tone === 'emerald') return 'bg-emerald-100 text-emerald-700';
+  if (tone === 'blue') return 'bg-blue-100 text-blue-700';
+  if (tone === 'amber') return 'bg-amber-100 text-amber-700';
+  return 'bg-slate-100 text-slate-700';
 }
 
 export default function DashboardPage() {
-  const { firebaseUser, user, loading: authLoading } = useAuth();
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const isSuperAdmin = user?.role === 'super_admin' || isSuperAdminEmail(firebaseUser?.email);
-
-  const [fields, setFields] = useState<Field[]>([]);
-  const [plots, setPlots] = useState<Plot[]>([]);
-  const [crops, setCrops] = useState<Crop[]>([]);
-  const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [operations, setOperations] = useState<OperationRecord[]>([]);
-  const [alertCount, setAlertCount] = useState(0);
-
-  const [selectedField, setSelectedField] = useState<Field | null>(null);
-  const [selectedCampaign, setSelectedCampaign] = useState(getCampaniaActual());
-  const [campaigns, setCampaigns] = useState<string[]>([getCampaniaActual()]);
-  const [selectedPlot, setSelectedPlot] = useState<Plot | null>(null);
-  const [loadingData, setLoadingData] = useState(true);
-
-  useEffect(() => {
-    if (authLoading) return;
-    if (!firebaseUser) {
-      router.replace('/auth/login');
-      return;
-    }
-    if (isSuperAdmin) {
-      router.replace('/super-admin/productores');
-      return;
-    }
-    if (!user?.organizationId) {
-      router.replace('/organizaciones');
-    }
-  }, [authLoading, firebaseUser, isSuperAdmin, router, user?.organizationId]);
-
-  useEffect(() => {
-    const loadData = async () => {
-      if (!user?.organizationId) return;
-      try {
-        setLoadingData(true);
-        const orgId = user.organizationId;
-
-        const [f, p, c, a, cnt, ops, campList] = await Promise.all([
-          obtenerFields(orgId, { activo: true }),
-          obtenerPlots(orgId, { activo: true }),
-          obtenerCrops(orgId),
-          obtenerAlertas(orgId, { soloNoResueltas: true, limite: 10 }),
-          obtenerConteoNoLeidas(orgId),
-          listOperationsByOrg(orgId, 80),
-          obtenerCampaniasDisponibles(orgId),
-        ]);
-
-        setFields(f);
-        setPlots(p);
-        setCrops(c);
-        setAlerts(a);
-        setAlertCount(cnt);
-        setOperations(ops);
-
-        const availableCampaigns = campList.length ? campList : [getCampaniaActual()];
-        setCampaigns(availableCampaigns);
-        setSelectedCampaign((prev) => (availableCampaigns.includes(prev) ? prev : availableCampaigns[0]));
-
-        if (!selectedField && f.length > 0) {
-          setSelectedField(f[0]);
-        }
-      } catch (error) {
-        console.error('Error cargando dashboard productor:', error);
-      } finally {
-        setLoadingData(false);
-      }
-    };
-
-    if (!authLoading && user?.organizationId) {
-      void loadData();
-    }
-  }, [authLoading, user?.organizationId]);
-
-  useEffect(() => {
-    const plotId = searchParams.get('plotId');
-    if (!plotId) {
-      setSelectedPlot(null);
-      return;
-    }
-    const found = plots.find((plot) => plot.id === plotId) || null;
-    setSelectedPlot(found);
-  }, [plots, searchParams]);
-
-  const plotsByField = useMemo(() => {
-    if (!selectedField) return plots;
-    return plots.filter((plot) => plot.fieldId === selectedField.id);
-  }, [plots, selectedField]);
-
-  const cropsByCampaign = useMemo(() => crops.filter((crop) => crop.campania === selectedCampaign), [crops, selectedCampaign]);
-
-  const hectares = useMemo(() => plotsByField.reduce((sum, plot) => sum + (plot.superficie || 0), 0), [plotsByField]);
-
-  const fieldsCount = fields.length;
-  const cultivosCount = cropsByCampaign.length;
-  const opsMonth = currentMonthCount(operations);
-  const finance = calculateFinance(operations);
-  const marginTone = finance.margen >= 0 ? 'success' : 'danger';
-
-  const plotCostRanking = useMemo(() => {
-    const map = new Map<string, number>();
-    operations
-      .filter((op) => ['compra_insumo', 'aplicacion_insumo', 'pago'].includes(op.type) && op.plotId)
-      .forEach((op) => {
-        const key = op.plotId as string;
-        map.set(key, (map.get(key) || 0) + (op.amount || 0));
-      });
-
-    return Array.from(map.entries())
-      .map(([plotId, amount]) => ({
-        plotId,
-        amount,
-        plotName: plots.find((plot) => plot.id === plotId)?.nombre || plotId,
-      }))
-      .sort((a, b) => b.amount - a.amount)
-      .slice(0, 5);
-  }, [operations, plots]);
-
-  const activeCropForSelectedPlot = useMemo(() => {
-    if (!selectedPlot) return null;
-    return cropsByCampaign.find((crop) => crop.plotId === selectedPlot.id) || null;
-  }, [selectedPlot, cropsByCampaign]);
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center">
-        <div className="text-sm text-slate-600">Cargando sesion...</div>
-      </div>
-    );
-  }
-
-  if (!firebaseUser || isSuperAdmin) return null;
-  if (!user?.organizationId) return null;
+  const { organization, user } = useAuth();
+  const firstName = user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'Productor';
 
   return (
-    <div className="h-screen flex overflow-hidden bg-slate-100">
-      <Sidebar />
-
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <DashboardHeader
-          selectedField={selectedField}
-          fields={fields}
-          selectedCampaign={selectedCampaign}
-          campaigns={campaigns}
-          onFieldChange={(fieldId) => {
-            const field = fields.find((f) => f.id === fieldId) || null;
-            setSelectedField(field);
-            setSelectedPlot(null);
-            router.replace('/dashboard');
-          }}
-          onCampaignChange={setSelectedCampaign}
-          activeAlerts={alertCount}
-        />
-
-        <div className="flex-1 overflow-auto p-3 md:p-4 space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-            <KpiCard icon={<MapPinned className="w-4 h-4" />} label="Campos activos" value={String(fieldsCount)} />
-            <KpiCard icon={<Layers3 className="w-4 h-4" />} label="Hectareas sembradas" value={`${hectares.toLocaleString('es-AR')} ha`} />
-            <KpiCard icon={<Tractor className="w-4 h-4" />} label="Actividades del mes" value={String(opsMonth)} />
-            <KpiCard icon={<DollarSign className="w-4 h-4" />} label="Costo campana" value={formatCurrency(finance.costos)} tone="warning" />
-            <KpiCard icon={<DollarSign className="w-4 h-4" />} label="Ingreso estimado" value={formatCurrency(finance.ingresos)} tone="success" />
-            <KpiCard icon={<Bell className="w-4 h-4" />} label="Margen estimado" value={formatCurrency(finance.margen)} tone={marginTone} subtitle={selectedCampaign} />
-          </div>
-
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
-            <div className="xl:col-span-8 space-y-4">
-              <div className="rounded-xl border border-slate-200 bg-white overflow-hidden h-[460px]">
-                {loadingData ? (
-                  <div className="h-full bg-slate-100 animate-pulse flex items-center justify-center text-sm text-slate-500">Cargando mapa...</div>
-                ) : (
-                  <MapaGeneral
-                    campos={fields as any}
-                    lotes={plotsByField as any}
-                    onCampoClick={(field: Field) => setSelectedField(field)}
-                    onLoteClick={(plot: Plot) => {
-                      setSelectedPlot(plot);
-                      router.replace(`/dashboard?plotId=${plot.id}`);
-                    }}
-                  />
-                )}
-              </div>
-
-              <div className="rounded-xl border border-slate-200 bg-white p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-slate-900">Costo por lote</h3>
-                  <span className="text-xs text-slate-500">Campana {selectedCampaign}</span>
-                </div>
-                {plotCostRanking.length === 0 ? (
-                  <p className="text-sm text-slate-500">Sin datos de costos por lote.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {plotCostRanking.map((row) => (
-                      <div key={row.plotId} className="flex items-center gap-3">
-                        <div className="w-40 text-sm text-slate-700 truncate">{row.plotName}</div>
-                        <div className="flex-1 h-2 rounded bg-slate-100 overflow-hidden">
-                          <div className="h-full bg-slate-700" style={{ width: `${Math.min(100, (row.amount / Math.max(plotCostRanking[0].amount, 1)) * 100)}%` }} />
-                        </div>
-                        <div className="text-sm font-medium text-slate-800">{formatCurrency(row.amount)}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="xl:col-span-4 space-y-4">
-              <div className="rounded-xl border border-slate-200 bg-white p-4">
-                <h3 className="font-semibold text-slate-900 mb-2">Detalle de lote</h3>
-                {!selectedPlot ? (
-                  <p className="text-sm text-slate-500">Selecciona un lote en el mapa para ver detalle.</p>
-                ) : (
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between"><span className="text-slate-500">Lote</span><span className="font-medium text-slate-900">{selectedPlot.nombre}</span></div>
-                    <div className="flex justify-between"><span className="text-slate-500">Superficie</span><span className="text-slate-900">{selectedPlot.superficie || 0} ha</span></div>
-                    <div className="flex justify-between"><span className="text-slate-500">Estado</span><span className="text-slate-900">{selectedPlot.estado}</span></div>
-                    <div className="flex justify-between"><span className="text-slate-500">Cultivo</span><span className="text-slate-900">{activeCropForSelectedPlot?.cultivo || 'Sin asignar'}</span></div>
-                    <div className="flex justify-between"><span className="text-slate-500">Rendimiento proyectado</span><span className="text-slate-900">{activeCropForSelectedPlot?.rendimientoEstimado ? `${activeCropForSelectedPlot.rendimientoEstimado} kg/ha` : 'Pendiente'}</span></div>
-                    <div className="pt-2">
-                      <div className="flex flex-wrap gap-2">
-                        <BaseButton variant="outline" size="sm" onClick={() => router.push(`/campos/${selectedPlot.fieldId}`)}>Ver ficha del campo</BaseButton>
-                        <BaseButton variant="outline" size="sm" onClick={() => router.push(`/operaciones?plotId=${selectedPlot.id}`)}>Actividades</BaseButton>
-                        <BaseButton variant="outline" size="sm" onClick={() => router.push(`/rentabilidad?plotId=${selectedPlot.id}`)}>Costos y margen</BaseButton>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="rounded-xl border border-slate-200 bg-white p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-slate-900">Actividad reciente</h3>
-                  <CalendarDays className="w-4 h-4 text-slate-500" />
-                </div>
-                {operations.length === 0 ? (
-                  <p className="text-sm text-slate-500">Sin actividad registrada.</p>
-                ) : (
-                  <div className="space-y-2 max-h-52 overflow-y-auto">
-                    {operations.slice(0, 8).map((op) => (
-                      <div key={op.id} className="border-l-2 border-slate-300 pl-3 py-1">
-                        <p className="text-sm text-slate-900">{op.descripcion}</p>
-                        <p className="text-xs text-slate-500">{new Date(op.fecha).toLocaleDateString('es-AR')} · {formatCurrency(op.amount)}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="rounded-xl border border-slate-200 bg-white p-4">
-                <h3 className="font-semibold text-slate-900 mb-3">Alertas inteligentes</h3>
-                {alerts.length === 0 ? (
-                  <div className="flex items-center gap-2 text-emerald-700 text-sm"><CheckCircle2 className="w-4 h-4" /> Sin alertas activas</div>
-                ) : (
-                  <div className="space-y-2">
-                    {alerts.slice(0, 5).map((alert) => {
-                      const tipo = TIPOS_ALERTA_CONFIG[alert.tipo];
-                      const sev = SEVERIDAD_CONFIG[alert.severidad];
-                      return (
-                        <div key={alert.id} className={`rounded-md border p-2 ${sev.bgColor}`}>
-                          <div className="text-sm font-medium text-slate-900">{tipo.icon} {alert.titulo}</div>
-                          <div className="text-xs text-slate-600">{alert.descripcion}</div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              <div className="rounded-xl border border-slate-200 bg-white p-4">
-                <h3 className="font-semibold text-slate-900 mb-2">Cultivos campana {selectedCampaign}</h3>
-                {cropsByCampaign.length === 0 ? (
-                  <p className="text-sm text-slate-500">Sin cultivos registrados.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {Object.entries(
-                      cropsByCampaign.reduce<Record<string, number>>((acc, crop) => {
-                        acc[crop.cultivo] = (acc[crop.cultivo] || 0) + 1;
-                        return acc;
-                      }, {})
-                    ).map(([cultivo, count]) => {
-                      const cfg = CULTIVOS_CONFIG[cultivo as keyof typeof CULTIVOS_CONFIG] || CULTIVOS_CONFIG.otro;
-                      return (
-                        <div key={cultivo} className="flex items-center justify-between text-sm">
-                          <span className="text-slate-700">{cfg.icon} {cfg.label}</span>
-                          <span className="text-slate-900 font-medium">{count}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+    <PageShell
+      title={`Bienvenido, ${firstName}`}
+      subtitle={organization?.nombre || 'Resumen operativo del establecimiento'}
+      rightSlot={
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50"
+          >
+            <Bell className="h-5 w-5" />
+          </button>
+          <Link
+            href="/analisis-ia"
+            className="inline-flex items-center gap-2 rounded-2xl bg-[#0f2e21] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#174531]"
+          >
+            Abrir IA
+            <Sparkles className="h-4 w-4" />
+          </Link>
         </div>
+      }
+    >
+      <div className="space-y-6">
+        <section className="grid gap-4 xl:grid-cols-4">
+          {kpis.map((item) => {
+            const Icon = item.icon;
+            return (
+              <article
+                key={item.title}
+                className={`rounded-[28px] border border-slate-200 bg-gradient-to-br ${item.accent} p-6 shadow-sm`}
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="text-sm font-medium text-slate-500">{item.title}</div>
+                    <div className="mt-6 text-4xl font-semibold text-slate-950">{item.value}</div>
+                    <div className="mt-2 text-sm text-slate-600">{item.detail}</div>
+                  </div>
+                  <div className="rounded-2xl bg-white/80 p-3 text-emerald-700 shadow-sm">
+                    <Icon className="h-6 w-6" />
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </section>
 
-        {selectedPlot && (
-          <div className="xl:hidden sticky bottom-0 z-20 bg-white border-t border-slate-200 p-2">
-            <div className="text-xs text-slate-500 mb-1 px-1">Lote activo: {selectedPlot.nombre}</div>
-            <div className="grid grid-cols-3 gap-2">
-              <BaseButton size="sm" variant="outline" onClick={() => router.push(`/operaciones?plotId=${selectedPlot.id}`)}>Actividades</BaseButton>
-              <BaseButton size="sm" variant="outline" onClick={() => router.push(`/rentabilidad?plotId=${selectedPlot.id}`)}>Costos</BaseButton>
-              <BaseButton size="sm" variant="outline" onClick={() => router.push(`/campos/${selectedPlot.fieldId}`)}>Ficha</BaseButton>
+        <section className="grid gap-6 xl:grid-cols-[1.6fr_0.7fr]">
+          <article className="overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-sm">
+            <div className="flex flex-col gap-4 border-b border-slate-200 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-3xl font-semibold text-slate-950">Vista rapida del campo</h2>
+                <p className="mt-1 text-sm text-slate-500">Mapa base con lectura visual de lotes y seguimiento satelital.</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button type="button" className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700">
+                  NDVI
+                </button>
+                <button type="button" className="rounded-xl bg-[#476d0c] px-4 py-2 text-sm font-semibold text-white shadow-sm">
+                  Satelite
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+            <div className="relative h-[28rem] bg-slate-100">
+              <MapaGeneral />
+              <div className="pointer-events-none absolute right-5 top-5 rounded-3xl border border-white/60 bg-white/92 p-4 shadow-xl backdrop-blur-sm">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 text-sm font-medium text-slate-800">
+                    <span className="h-3 w-3 rounded-full bg-[#5a8107]" />
+                    Lote 12 - Optimo
+                  </div>
+                  <div className="flex items-center gap-3 text-sm font-medium text-slate-800">
+                    <span className="h-3 w-3 rounded-full bg-amber-400" />
+                    Lote 4 - Estres hidrico
+                  </div>
+                  <div className="text-xs text-slate-500">Ultima actualizacion: hace 4 horas via Sentinel-2</div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article className="rounded-[30px] border border-slate-200 bg-white shadow-sm">
+            <div className="border-b border-slate-200 px-6 py-5">
+              <h2 className="text-3xl font-semibold text-slate-950">Actividades recientes</h2>
+            </div>
+            <div className="space-y-6 px-6 py-6">
+              {timeline.map((item) => (
+                <div key={item.title} className="flex gap-4">
+                  <div className={`mt-1 flex h-10 w-10 items-center justify-center rounded-full ${toneClass(item.tone)}`}>
+                    <CheckCircle2 className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="text-lg font-semibold text-slate-950">{item.title}</div>
+                    <div className="mt-1 text-sm leading-6 text-slate-600">{item.description}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="border-t border-slate-200 px-6 py-5">
+              <Link href="/operaciones" className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-800 hover:text-emerald-700">
+                Ver todo el historial
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </article>
+        </section>
       </div>
-    </div>
+    </PageShell>
   );
 }
-

@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SIG Agro - Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-container": "#496f00",
+                    "on-primary-fixed-variant": "#274e3d",
+                    "surface-bright": "#f8f9ff",
+                    "tertiary-fixed-dim": "#bec6e0",
+                    "inverse-surface": "#213145",
+                    "surface-variant": "#d3e4fe",
+                    "on-error-container": "#93000a",
+                    "primary": "#012d1d",
+                    "primary-container": "#1b4332",
+                    "error-container": "#ffdad6",
+                    "surface-container-highest": "#d3e4fe",
+                    "secondary-fixed": "#b2f746",
+                    "primary-fixed-dim": "#a5d0b9",
+                    "outline-variant": "#c1c8c2",
+                    "on-secondary-fixed-variant": "#334f00",
+                    "on-tertiary-container": "#9ea5be",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed": "#dae2fd",
+                    "on-secondary-fixed": "#121f00",
+                    "tertiary-container": "#333b50",
+                    "on-error": "#ffffff",
+                    "secondary-container": "#b2f746",
+                    "surface-tint": "#3f6653",
+                    "on-primary-container": "#86af99",
+                    "surface-container": "#e5eeff",
+                    "secondary-fixed-dim": "#98da27",
+                    "on-tertiary": "#ffffff",
+                    "surface-dim": "#cbdbf5",
+                    "surface": "#f8f9ff",
+                    "on-tertiary-fixed-variant": "#3f465c",
+                    "background": "#f8f9ff",
+                    "surface-container-low": "#eff4ff",
+                    "on-surface-variant": "#414844",
+                    "on-primary-fixed": "#002114",
+                    "on-tertiary-fixed": "#131b2e",
+                    "on-background": "#0b1c30",
+                    "inverse-primary": "#a5d0b9",
+                    "surface-container-high": "#dce9ff",
+                    "primary-fixed": "#c1ecd4",
+                    "on-secondary": "#ffffff",
+                    "outline": "#717973",
+                    "error": "#ba1a1a",
+                    "inverse-on-surface": "#eaf1ff",
+                    "tertiary": "#1e2539",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary": "#446900",
+                    "on-surface": "#0b1c30"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "base": "4px",
+                    "xs": "8px",
+                    "sm": "16px",
+                    "md": "24px",
+                    "margin": "24px",
+                    "lg": "32px",
+                    "xl": "48px",
+                    "gutter": "20px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "label-caps": ["Inter"],
+                    "h3": ["Manrope"],
+                    "h1": ["Manrope"],
+                    "body-sm": ["Inter"],
+                    "metric": ["Manrope"],
+                    "h2": ["Manrope"]
+            },
+            "fontSize": {
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "h3": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "h1": ["40px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "body-sm": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "metric": ["28px", {"lineHeight": "1", "fontWeight": "700"}],
+                    "h2": ["32px", {"lineHeight": "1.25", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md">
+<!-- SideNavBar (Shared Component) -->
+<aside class="hidden md:flex flex-col h-screen fixed left-0 top-0 overflow-y-auto w-64 border-r border-slate-200 bg-slate-50 z-40">
+<div class="p-md flex items-center gap-xs">
+<div class="w-10 h-10 rounded bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined">agriculture</span>
+</div>
+<div>
+<h2 class="text-lg font-black text-emerald-900 leading-none">AgroCorp Solutions</h2>
+<p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Multi-tenant Manager</p>
+</div>
+</div>
+<nav class="flex-1 px-sm py-md space-y-xs">
+<!-- Active: Dashboard -->
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg bg-emerald-50 text-emerald-700 border-r-4 border-emerald-700 font-manrope text-sm font-semibold transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg text-slate-500 hover:bg-emerald-50/50 hover:text-emerald-700 font-manrope text-sm font-semibold transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="map">map</span>
+<span>Maps/GIS</span>
+</a>
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg text-slate-500 hover:bg-emerald-50/50 hover:text-emerald-700 font-manrope text-sm font-semibold transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="agriculture">agriculture</span>
+<span>Lots &amp; Campaigns</span>
+</a>
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg text-slate-500 hover:bg-emerald-50/50 hover:text-emerald-700 font-manrope text-sm font-semibold transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="psychology">psychology</span>
+<span>Scouting/IA</span>
+</a>
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg text-slate-500 hover:bg-emerald-50/50 hover:text-emerald-700 font-manrope text-sm font-semibold transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="assessment">assessment</span>
+<span>Reports</span>
+</a>
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg text-slate-500 hover:bg-emerald-50/50 hover:text-emerald-700 font-manrope text-sm font-semibold transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+</nav>
+<div class="px-sm pb-md space-y-xs">
+<button class="w-full py-xs px-sm bg-primary text-on-primary rounded font-bold text-sm flex items-center justify-center gap-xs active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-sm">add</span>
+                New Campaign
+            </button>
+<div class="pt-md mt-md border-t border-slate-200">
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg text-slate-500 hover:bg-slate-100 font-manrope text-sm font-semibold transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="contact_support">contact_support</span>
+<span>Support</span>
+</a>
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg text-slate-500 hover:bg-slate-100 font-manrope text-sm font-semibold transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span>Sign Out</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="md:ml-64 min-h-screen">
+<!-- Header -->
+<header class="h-20 flex items-center justify-between px-lg bg-white/80 backdrop-blur-md sticky top-0 z-30">
+<div class="flex flex-col">
+<h1 class="font-h2 text-h2 text-primary">Bienvenido, Roberto</h1>
+<div class="flex items-center gap-xs text-slate-500">
+<span class="material-symbols-outlined text-[18px]">business</span>
+<span class="font-body-sm">AgroCorp Chaco</span>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<div class="relative">
+<span class="material-symbols-outlined p-xs text-slate-600 hover:bg-slate-100 rounded-full cursor-pointer">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full border-2 border-white"></span>
+</div>
+<img alt="User Profile" class="w-10 h-10 rounded-full border-2 border-emerald-100 object-cover" data-alt="A professional headshot of a middle-aged male agricultural consultant with a warm, confident expression. The lighting is bright and natural, suggesting an outdoor or glass-walled office environment. He wears a clean, button-down shirt. The aesthetic is modern and corporate, reflecting a high-performance, data-driven agricultural technology company's user profile." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBLkNzVsZbon9odJTla0SDjz1pOPbsD3YGnO2rYh7d8Wgi5_zRMNpAkTYN08Zb5ef9RFVFKiigI7av0fh5GQsaR74bju45hjct7-cyjgcV8J0WI_yfkSdhUy_LZv6eHQapUKmNSZlok9P9IfdmivaI3AWSiHU4_E4SG9bA9nY0DdABU2FX6TYHXbOnl7z9HIJ8hlU3ooW2k-LPbQAUxTByLblcl4buatg5H6p3Oxe2bkuI9x6gp84H10m84vx8n5Q6M1qIB_gaJC1fh"/>
+</div>
+</header>
+<!-- Dashboard Content Grid -->
+<div class="p-lg space-y-lg">
+<!-- KPI Section -->
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-md">
+<!-- NDVI Card -->
+<div class="bg-white p-md rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between overflow-hidden relative group">
+<div class="flex justify-between items-start">
+<span class="font-label-caps text-slate-500 uppercase">NDVI Promedio</span>
+<div class="p-xs bg-emerald-50 rounded-lg">
+<span class="material-symbols-outlined text-emerald-700" data-icon="energy_savings_leaf">energy_savings_leaf</span>
+</div>
+</div>
+<div class="mt-sm">
+<p class="font-metric text-metric text-primary">0.72</p>
+<div class="flex items-center gap-xs mt-base">
+<span class="text-secondary font-bold text-xs">↑ 4.2%</span>
+<span class="text-slate-400 text-xs">vs. mes pasado</span>
+</div>
+</div>
+<!-- Micro Chart (Mock) -->
+<div class="absolute bottom-0 left-0 w-full h-8 flex items-end">
+<div class="w-full h-full bg-gradient-to-t from-emerald-50/50 to-transparent"></div>
+<svg class="absolute bottom-0 w-full h-8 text-secondary opacity-30" preserveaspectratio="none" viewbox="0 0 100 20">
+<path d="M0 20 L0 15 Q25 10 50 18 T100 5 L100 20 Z" fill="currentColor"></path>
+</svg>
+</div>
+</div>
+<!-- Alertas IA Card -->
+<div class="bg-white p-md rounded-xl border-t-4 border-t-error border-x border-b border-slate-200 shadow-sm flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<span class="font-label-caps text-slate-500 uppercase">Alertas IA</span>
+<div class="p-xs bg-red-50 rounded-lg">
+<span class="material-symbols-outlined text-error" data-icon="warning" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+</div>
+<div class="mt-sm">
+<p class="font-metric text-metric text-error">3 nuevas</p>
+<p class="text-body-sm text-slate-600 mt-base">Don Cándido IA detectó anomalías en <strong>Lote 4</strong></p>
+</div>
+</div>
+<!-- Weather Card -->
+<div class="bg-white p-md rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<span class="font-label-caps text-slate-500 uppercase">Clima Charata</span>
+<div class="p-xs bg-amber-50 rounded-lg">
+<span class="material-symbols-outlined text-amber-500" data-icon="wb_sunny">wb_sunny</span>
+</div>
+</div>
+<div class="mt-sm">
+<p class="font-metric text-metric text-on-background">28°C</p>
+<div class="flex items-center gap-xs mt-base">
+<span class="text-slate-600 text-body-sm">Soleado</span>
+<span class="text-slate-300">•</span>
+<span class="text-slate-600 text-body-sm">Viento SE 12km/h</span>
+</div>
+</div>
+</div>
+<!-- Hectares Card -->
+<div class="bg-white p-md rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<span class="font-label-caps text-slate-500 uppercase">Hectáreas bajo gestión</span>
+<div class="p-xs bg-blue-50 rounded-lg">
+<span class="material-symbols-outlined text-blue-600" data-icon="layers">layers</span>
+</div>
+</div>
+<div class="mt-sm">
+<p class="font-metric text-metric text-primary">1,250 ha</p>
+<p class="text-body-sm text-slate-400 mt-base">12 Lotes activos</p>
+</div>
+</div>
+</div>
+<!-- Bento Layout Content -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-lg">
+<!-- Field Quick View (Mini Map) -->
+<div class="lg:col-span-8 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col min-h-[500px]">
+<div class="p-md border-b border-slate-100 flex justify-between items-center bg-white/50 backdrop-blur-sm z-10">
+<h3 class="font-h3 text-h3 text-primary">Vista Rápida del Campo</h3>
+<div class="flex gap-xs">
+<button class="px-sm py-xs bg-slate-50 border border-slate-200 rounded text-xs font-semibold hover:bg-slate-100 transition-colors">NDVI</button>
+<button class="px-sm py-xs bg-secondary text-on-primary rounded text-xs font-semibold shadow-sm">Satélite</button>
+</div>
+</div>
+<div class="flex-1 relative bg-slate-200 overflow-hidden">
+<!-- Simulated Map Layout -->
+<div class="absolute inset-0 bg-cover bg-center" data-alt="A high-resolution aerial satellite view of structured agricultural fields in South America. The landscape shows various green and golden rectangular plots of crops, with distinct boundaries and irrigation patterns. The lighting is clear daylight, highlighting textures of the earth and vegetation. The aesthetic is precise, technical, and data-centric, fitting for a modern GIS agriculture dashboard." data-location="Charata, Chaco" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDEcVxAVETmVnOouSYihpW_HG-a6pVnuszOZ8KN7mNV_lvkKIpq7qNO6-irAe9Ip95mAo2kCpiahUkZWTcz6tFhGBlvCw_qx9epSg04dsSxA7Ncqf6uLq-XRU5s7t3W7f8gLwwv1JQUq21S4ILDZxHDtiAeJcwarWlvDE0LaHoNvc8zlhNhtgefrve-iasJx9J6CYlRBoaU5aT3dmTuauAj4brlFZ7lH3qyJghfpMSreMuB9kLxRYniPCaTBNnEDvhGhssF4-GfZX4k')">
+</div>
+<!-- Floating GIS Controls -->
+<div class="absolute bottom-md left-md flex flex-col gap-xs">
+<button class="w-10 h-10 glass-panel border border-white/40 rounded flex items-center justify-center text-primary shadow-lg active:scale-90 transition-transform">
+<span class="material-symbols-outlined">zoom_in</span>
+</button>
+<button class="w-10 h-10 glass-panel border border-white/40 rounded flex items-center justify-center text-primary shadow-lg active:scale-90 transition-transform">
+<span class="material-symbols-outlined">zoom_out</span>
+</button>
+</div>
+<!-- Legend/Status Overlay -->
+<div class="absolute top-md right-md glass-panel p-sm rounded-lg border border-white/40 shadow-xl max-w-xs">
+<div class="flex items-center gap-sm mb-xs">
+<div class="w-3 h-3 rounded-full bg-secondary"></div>
+<span class="text-xs font-bold text-primary">Lote 12 - Óptimo</span>
+</div>
+<div class="flex items-center gap-sm mb-xs">
+<div class="w-3 h-3 rounded-full bg-amber-500"></div>
+<span class="text-xs font-bold text-primary">Lote 4 - Stress Hídrico</span>
+</div>
+<p class="text-[10px] text-slate-600 mt-sm italic">Última actualización: hace 4 horas via Sentinel-2</p>
+</div>
+</div>
+</div>
+<!-- Recent Activities -->
+<div class="lg:col-span-4 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col">
+<div class="p-md border-b border-slate-100">
+<h3 class="font-h3 text-h3 text-primary">Actividades Recientes</h3>
+</div>
+<div class="flex-1 overflow-y-auto p-md space-y-md">
+<!-- Activity Item 1 -->
+<div class="flex gap-md group">
+<div class="relative flex flex-col items-center">
+<div class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 z-10 border-2 border-white">
+<span class="material-symbols-outlined text-[18px]">check_circle</span>
+</div>
+<div class="w-0.5 h-full bg-slate-100 absolute top-8"></div>
+</div>
+<div>
+<h4 class="font-bold text-body-md text-primary group-hover:text-secondary transition-colors">Siembra en Lote 12 finalizada</h4>
+<p class="text-body-sm text-slate-500 mt-base">Maíz tardío - 450 ha procesadas con precisión de 2cm.</p>
+<span class="text-[10px] text-slate-400 font-semibold uppercase mt-xs block">Hoy, 09:45 AM</span>
+</div>
+</div>
+<!-- Activity Item 2 -->
+<div class="flex gap-md group">
+<div class="relative flex flex-col items-center">
+<div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 z-10 border-2 border-white">
+<span class="material-symbols-outlined text-[18px]">water_drop</span>
+</div>
+<div class="w-0.5 h-full bg-slate-100 absolute top-8"></div>
+</div>
+<div>
+<h4 class="font-bold text-body-md text-primary">Riego programado Lote 4</h4>
+<p class="text-body-sm text-slate-500 mt-base">Ciclo de hidratación profunda iniciado por Pivot Central.</p>
+<span class="text-[10px] text-slate-400 font-semibold uppercase mt-xs block">Ayer, 18:20 PM</span>
+</div>
+</div>
+<!-- Activity Item 3 -->
+<div class="flex gap-md group">
+<div class="relative flex flex-col items-center">
+<div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 z-10 border-2 border-white">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</div>
+<div class="w-0.5 h-full bg-slate-100 absolute top-8"></div>
+</div>
+<div>
+<h4 class="font-bold text-body-md text-primary">Reporte de Scouting Generado</h4>
+<p class="text-body-sm text-slate-500 mt-base">Ing. Martínez cargó fotos de presencia de cogollero en Lote 7.</p>
+<span class="text-[10px] text-slate-400 font-semibold uppercase mt-xs block">22 Oct, 14:10 PM</span>
+</div>
+</div>
+<!-- Activity Item 4 -->
+<div class="flex gap-md group">
+<div class="relative flex flex-col items-center">
+<div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 z-10 border-2 border-white">
+<span class="material-symbols-outlined text-[18px]">sync</span>
+</div>
+</div>
+<div>
+<h4 class="font-bold text-body-md text-primary">Sincronización de Maquinaria</h4>
+<p class="text-body-sm text-slate-500 mt-base">Datos de telemetría recibidos del tractor JD 7230J.</p>
+<span class="text-[10px] text-slate-400 font-semibold uppercase mt-xs block">21 Oct, 11:30 AM</span>
+</div>
+</div>
+</div>
+<div class="p-md bg-slate-50 rounded-b-xl">
+<button class="w-full text-center text-xs font-bold text-emerald-800 hover:text-emerald-600 transition-colors">VER TODO EL HISTORIAL</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer (Shared Component) -->
+<footer class="w-full py-12 px-8 grid grid-cols-1 md:grid-cols-4 gap-8 border-t border-slate-200 bg-slate-50">
+<div class="space-y-sm">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary">agriculture</span>
+<span class="font-bold text-emerald-900 text-lg">SIG Agro</span>
+</div>
+<p class="font-manrope text-xs text-slate-500 leading-relaxed">
+                    © 2024 SIG Agro. Precision stewardship for the modern producer.
+                </p>
+</div>
+<div class="flex flex-col gap-xs">
+<span class="font-bold text-xs text-primary uppercase tracking-widest mb-xs">Legal</span>
+<a class="font-manrope text-xs text-slate-500 hover:underline" href="#">Privacy Policy</a>
+<a class="font-manrope text-xs text-slate-500 hover:underline" href="#">Terms of Service</a>
+</div>
+<div class="flex flex-col gap-xs">
+<span class="font-bold text-xs text-primary uppercase tracking-widest mb-xs">Developers</span>
+<a class="font-manrope text-xs text-slate-500 hover:underline" href="#">API Documentation</a>
+</div>
+<div class="flex flex-col gap-xs">
+<span class="font-bold text-xs text-primary uppercase tracking-widest mb-xs">Help</span>
+<a class="font-manrope text-xs text-slate-500 hover:underline" href="#">Contact Support</a>
+</div>
+</footer>
+</main>
+<!-- Contextual FAB (Restricted to Dashboard as per mandate) -->
+<button class="fixed bottom-lg right-lg w-14 h-14 bg-secondary text-on-primary rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-transform z-50">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'wght' 600;">add</span>
+</button>
+</body></html>

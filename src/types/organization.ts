@@ -7,7 +7,7 @@
 // ORGANIZACIÃ“N (EMPRESA AGROPECUARIA)
 // ============================================
 
-export type OrganizationPlan = 'free' | 'professional' | 'enterprise';
+export type OrganizationPlan = 'free' | 'starter' | 'professional' | 'pro' | 'enterprise';
 export type OrganizationStatus = 'active' | 'suspended' | 'trial';
 
 /**
@@ -64,6 +64,9 @@ export interface Organization {
 
     // Plan y estado
     plan: OrganizationPlan;
+    installedPlugins?: string[];         // slugs de plugins instalados en la org
+    pluginSettings?: Record<string, unknown>; // settings por plugin
+    planFeatures?: string[];             // feature flags del plan
     status: OrganizationStatus;
 
     // ConfiguraciÃ³n
@@ -122,10 +125,18 @@ export interface User {
     organizationId: string;      // ID de la organizaciÃ³n
     organizationIds?: string[];          // Organizaciones habilitadas explicitamente
     accessAllOrganizations?: boolean;    // true = acceso por defecto a todas las organizaciones del productor
+    activeOrganizationId?: string;       // org activa en la sesiÃ³n (multi-org)
 
     // Rol y permisos
     role: UserRole;
     status: UserStatus;
+    functionalProfile?: string;          // AgroFunctionalProfile
+    workspaceView?: string;              // AgroWorkspaceView
+    installedPlugins?: string[];         // slugs de plugins habilitados para este user
+    permissionOverrides?: {
+        allow?: string[];
+        deny?: string[];
+    };
 
     // MÃ³dulos habilitados (checklist)
     // null = acceso completo
@@ -164,6 +175,10 @@ export interface OrganizationMember {
     displayName: string;
     role: UserRole;
     status: UserStatus;
+    functionalProfile?: string;
+    dataScope?: string;          // AgroDataScope
+    assignedFieldIds?: string[];
+    assignedPlotIds?: string[];
     modulosHabilitados: UserModule[] | null;
     invitedBy: string;
     joinedAt: Date;

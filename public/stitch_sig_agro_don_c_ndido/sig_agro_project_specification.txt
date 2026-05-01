@@ -1,0 +1,18 @@
+# SIG Agro — Don Cándido IA: Project Specification
+
+## Overview
+SIG Agro is a comprehensive agricultural management platform for producers in the Argentine Chaco. It integrates GIS technology, satellite analysis (Copernicus/Sentinel), and AI (Google Gemini) for agronomic recommendations.
+
+## Technical Stack
+- Framework: Next.js 16 (App Router)
+- UI Library: React 19, Tailwind CSS
+- Backend: Firebase (Auth, Firestore, Cloud Messaging)
+- Data Sources: Copernicus/Sentinel API, Open-Meteo API
+- Features: Multi-tenant, PWA, Offline mode, PDF Reports, VRA Map Export (ISOXML, GeoJSON, KML).
+
+## Screen Plan
+1. **Landing Page**: Value proposition, GIS highlights, Gemini IA integration.
+2. **User Dashboard**: KPI overview (NDVI, IA alerts, Weather, Hectares).
+3. **GIS & Maps Module**: Core satellite visualization, vegetation index layers, geospatial management.
+4. **Lots & Campaigns Management**: Operation tracking (sowing, harvesting), cost/yield analysis.
+5. **Scouting & IA Panel**: Don Cándido IA recommendations and field scouting reports.

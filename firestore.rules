@@ -250,6 +250,29 @@ service cloud.firestore {
       }
     }
     
+    // === Plugin System Rules ===
+
+    match /organizations/{orgId}/installed_plugins/{pluginId} {
+      allow read: if isMember(orgId) && isAdminOrOwner(orgId);
+      allow create: if isMember(orgId) && isAdminOrOwner(orgId);
+      allow update: if isMember(orgId) && isAdminOrOwner(orgId);
+      allow delete: if hasRole(orgId, ['owner']);
+    }
+
+    match /organizations/{orgId}/plugin_settings/{pluginId} {
+      allow read: if isMember(orgId);
+      allow write: if isMember(orgId) && isAdminOrOwner(orgId);
+    }
+
+    // ============================================
+    // COLLECTIONGROUP: members
+    // Permite al AuthContext descubrir organizaciones del usuario
+    // sin disparar warnings de permisos en colecciones ajenas.
+    // ============================================
+    match /{path=**}/members/{memberId} {
+      allow read: if isAuthenticated() && request.auth.uid == memberId;
+    }
+
     // ============================================
     // COLECCIÓN LEGACY: agro_productores
     // Para compatibilidad con datos existentes
