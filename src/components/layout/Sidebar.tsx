@@ -88,6 +88,7 @@ export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [megaMenuOpen, setMegaMenuOpen] = useState(false);
+  const [operationsHubOpen, setOperationsHubOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const contextualPlotId = searchParams.get('plotId');
   const hasActiveOrganization = Boolean(
@@ -105,6 +106,7 @@ export default function Sidebar() {
 
   useEffect(() => {
     setMegaMenuOpen(false);
+    setOperationsHubOpen(false);
   }, [pathname]);
 
   const pluginSlugs = useMemo(
@@ -395,15 +397,17 @@ export default function Sidebar() {
   const opKeys = new Set([
     'contexto-lote',
     'insumos-stock',
-    'operaciones-agro',
     'granos-silos',
     'finanzas',
   ]);
 
   const megaMenuKeys = new Set(['panel', 'gis', 'campanias']);
+  const popupMenuKeys = new Set(['operaciones-agro']);
   const megaMenuGroups = filteredGroups.filter((g) => megaMenuKeys.has(g.key));
+  const operationsHubGroup = filteredGroups.find((g) => g.key === 'operaciones-agro');
+  const OperationsHubIcon = operationsHubGroup?.icon ?? Tractor;
   const operationalGroups = filteredGroups.filter((g) => opKeys.has(g.key));
-  const controlGroups = filteredGroups.filter((g) => !opKeys.has(g.key) && !megaMenuKeys.has(g.key));
+  const controlGroups = filteredGroups.filter((g) => !opKeys.has(g.key) && !megaMenuKeys.has(g.key) && !popupMenuKeys.has(g.key));
 
   return (
     <>
@@ -601,6 +605,150 @@ export default function Sidebar() {
           </div>
         )}
 
+        {hasActiveOrganization && operationsHubGroup && (
+          <div className="relative px-3 pt-3">
+            {!collapsed ? (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setOperationsHubOpen((prev) => !prev)}
+                  className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
+                    operationsHubOpen || operationsHubGroup.active
+                      ? 'border-emerald-500/70 bg-gradient-to-r from-emerald-800 to-emerald-700 text-white shadow-lg shadow-emerald-950/20'
+                      : 'border-emerald-800 bg-emerald-900/45 text-emerald-50 hover:border-emerald-700 hover:bg-emerald-900/70'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white/10 ring-1 ring-white/10">
+                      <Tractor className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-semibold">{operationsHubGroup.title}</div>
+                      <div className="mt-0.5 text-xs text-emerald-100/75">
+                        Labores, ejecucion y trazabilidad en un solo panel
+                      </div>
+                    </div>
+                    <ChevronRight className={`h-5 w-5 transition-transform ${operationsHubOpen ? 'rotate-90' : ''}`} />
+                  </div>
+                </button>
+
+                {operationsHubOpen && (
+                  <>
+                    <div className="fixed inset-0 z-[220] hidden md:block" onClick={() => setOperationsHubOpen(false)} />
+                    <div className="absolute left-0 right-0 top-[calc(100%+12px)] z-[230] md:left-[calc(100%+16px)] md:right-auto md:top-0 md:w-[860px]">
+                      <div className="overflow-hidden rounded-[28px] border border-emerald-700/60 bg-[linear-gradient(160deg,rgba(1,53,39,0.98),rgba(4,79,57,0.96))] shadow-[0_28px_80px_rgba(2,12,9,0.45)] backdrop-blur-xl">
+                        <div className="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-5">
+                          <div>
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-300/80">Modulo operativo</p>
+                            <h3 className="mt-1 text-2xl font-semibold text-white">Operaciones agricolas</h3>
+                            <p className="mt-2 max-w-2xl text-sm leading-6 text-emerald-100/75">
+                              Registro de labores, control de ejecucion y seguimiento operativo del frente agricola.
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setOperationsHubOpen(false)}
+                            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-emerald-50 transition hover:bg-white/10"
+                            aria-label="Cerrar panel de operaciones"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+
+                        <div className="grid gap-5 p-5 md:grid-cols-[1.15fr_0.85fr]">
+                          <section className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
+                            <div className="mb-4 flex items-start gap-3">
+                              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-400/10 text-emerald-200 ring-1 ring-emerald-300/15">
+                                <OperationsHubIcon className="h-5 w-5" />
+                              </div>
+                              <div>
+                                <h4 className="text-base font-semibold text-white">Frentes de trabajo</h4>
+                                <p className="mt-1 text-xs leading-5 text-emerald-100/70">
+                                  Accesos directos a siembra, aplicaciones, cosecha y entregas.
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="grid gap-3 md:grid-cols-2">
+                              {operationsHubGroup.items.map((item) => {
+                                const Icon = item.icon;
+                                const cls = `flex items-center gap-3 rounded-2xl border px-3 py-3 text-sm transition ${
+                                  item.active
+                                    ? 'border-emerald-300/40 bg-emerald-300/12 text-white'
+                                    : 'border-white/8 bg-black/10 text-emerald-50/88 hover:border-emerald-300/25 hover:bg-white/8'
+                                }`;
+
+                                if (item.disabled || !item.href) {
+                                  return (
+                                    <div key={`${operationsHubGroup.key}-${item.label}`} className={`${cls} cursor-not-allowed opacity-70`}>
+                                      <Icon className="h-4 w-4" />
+                                      <span className="flex-1">{item.label}</span>
+                                      {item.badge && <span className="text-[10px] uppercase tracking-[0.18em] text-emerald-300/75">{item.badge}</span>}
+                                    </div>
+                                  );
+                                }
+
+                                return (
+                                  <Link
+                                    key={`${operationsHubGroup.key}-${item.href}-${item.label}`}
+                                    href={item.href}
+                                    onClick={() => {
+                                      setOperationsHubOpen(false);
+                                      setMobileOpen(false);
+                                    }}
+                                    className={cls}
+                                  >
+                                    <Icon className="h-4 w-4" />
+                                    <span className="flex-1">{item.label}</span>
+                                    {item.badge && <span className="text-[10px] uppercase tracking-[0.18em] text-emerald-300/75">{item.badge}</span>}
+                                  </Link>
+                                );
+                              })}
+                            </div>
+                          </section>
+
+                          <aside className="rounded-[24px] border border-emerald-400/20 bg-white/[0.06] p-4">
+                            <div className="mb-4">
+                              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-300/80">Indicadores</p>
+                              <h4 className="mt-1 text-lg font-semibold text-white">Pulso del modulo</h4>
+                              <p className="mt-1 text-xs leading-5 text-emerald-100/70">
+                                Resumen ejecutivo del frente operativo para priorizar la agenda diaria.
+                              </p>
+                            </div>
+
+                            <div className="space-y-3">
+                              {getOperationsIndicators().map((indicator) => (
+                                <div key={indicator.label} className="rounded-2xl border border-white/10 bg-black/10 p-4">
+                                  <div className="text-[11px] uppercase tracking-[0.18em] text-emerald-300/75">{indicator.label}</div>
+                                  <div className="mt-2 text-3xl font-semibold text-white">{indicator.value}</div>
+                                  <div className="mt-1 text-sm text-emerald-100/75">{indicator.detail}</div>
+                                </div>
+                              ))}
+                            </div>
+
+                            <div className="mt-4 rounded-2xl border border-emerald-300/15 bg-emerald-300/10 p-4 text-sm leading-6 text-emerald-50/85">
+                              Ventana sugerida: priorizar labores de alto impacto operativo y consolidar entregas pendientes antes del cierre del dia.
+                            </div>
+                          </aside>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setCollapsed(false)}
+                className="flex w-full items-center justify-center rounded-md border border-transparent px-3 py-2.5 text-emerald-100/80 transition hover:border-emerald-800 hover:bg-emerald-900/50 hover:text-emerald-50"
+                aria-label="Expandir operaciones agricolas"
+              >
+                <Tractor className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        )}
+
         <nav className="flex-1 p-3 overflow-y-auto space-y-4">
           {!hasActiveOrganization && !collapsed && (
             <div className="rounded-xl bg-emerald-900/40 p-3 text-xs text-emerald-100/80 border border-emerald-800">
@@ -725,4 +873,24 @@ function describeGroup(groupKey: string) {
     default:
       return 'Accesos principales del sistema.';
   }
+}
+
+function getOperationsIndicators() {
+  return [
+    {
+      label: 'Frentes activos',
+      value: '07',
+      detail: 'Siembra, aplicaciones y cosecha en seguimiento.',
+    },
+    {
+      label: 'Ventanas criticas',
+      value: '03',
+      detail: 'Labores con prioridad alta durante las proximas 24 h.',
+    },
+    {
+      label: 'Entregas por cerrar',
+      value: '12',
+      detail: 'Registros pendientes de consolidacion operativa.',
+    },
+  ];
 }
