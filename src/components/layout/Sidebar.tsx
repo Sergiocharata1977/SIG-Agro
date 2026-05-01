@@ -333,7 +333,6 @@ export default function Sidebar() {
         if (group.key === 'organizacion') return true;
         return canPerformAction('admin');
       }
-      if (!isPluginEnabled(group.module, group.feature)) return false;
       return hasModuleAccess(group.module);
     })
     .map((group) => ({
@@ -343,7 +342,6 @@ export default function Sidebar() {
           if (item.href === '/organizaciones') return true;
           return canPerformAction('admin');
         }
-        if (!isPluginEnabled(item.module, item.feature, item.href)) return false;
         return hasModuleAccess(item.module);
       }),
     }))
