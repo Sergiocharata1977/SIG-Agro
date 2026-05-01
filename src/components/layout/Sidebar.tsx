@@ -409,7 +409,7 @@ export default function Sidebar() {
     <>
       {mobileOpen && <div className="fixed inset-0 bg-slate-950/60 z-40 md:hidden" onClick={() => setMobileOpen(false)} />}
 
-      <aside className={`fixed md:relative z-50 h-screen bg-emerald-950 text-emerald-50 flex flex-col transition-all duration-300 border-r border-emerald-900 ${collapsed ? 'md:w-20' : 'md:w-80'} w-80 ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+      <aside className={`fixed md:relative z-[200] h-screen bg-emerald-950 text-emerald-50 flex flex-col transition-all duration-300 border-r border-emerald-900 ${collapsed ? 'md:w-20' : 'md:w-80'} w-80 ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         <div className="p-4 border-b border-emerald-900 relative">
           <div className="flex items-center gap-3">
             <Image src="/logo-sig-agro.png" alt="SIG Agro" width={40} height={40} className="rounded-lg" />
@@ -498,8 +498,8 @@ export default function Sidebar() {
 
                 {megaMenuOpen && (
                   <>
-                    <div className="fixed inset-0 z-40 hidden md:block" onClick={() => setMegaMenuOpen(false)} />
-                    <div className="absolute left-0 right-0 top-[calc(100%+12px)] z-[60] md:left-[calc(100%+16px)] md:right-auto md:top-0 md:w-[780px]">
+                    <div className="fixed inset-0 z-[220] hidden md:block" onClick={() => setMegaMenuOpen(false)} />
+                    <div className="absolute left-0 right-0 top-[calc(100%+12px)] z-[230] md:left-[calc(100%+16px)] md:right-auto md:top-0 md:w-[780px]">
                       <div className="overflow-hidden rounded-[28px] border border-emerald-700/60 bg-[linear-gradient(160deg,rgba(1,53,39,0.98),rgba(4,79,57,0.96))] shadow-[0_28px_80px_rgba(2,12,9,0.45)] backdrop-blur-xl">
                         <div className="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-5">
                           <div>
