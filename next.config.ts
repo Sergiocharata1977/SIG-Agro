@@ -3,18 +3,20 @@ import createNextIntlPlugin from "next-intl/plugin";
 
 const withNextIntl = createNextIntlPlugin("./i18n.ts");
 
+// CAPACITOR_BUILD=true → static export for Android APK (no API routes)
+// Default (Vercel) → SSR with API routes enabled
+const isCapacitorBuild = process.env.CAPACITOR_BUILD === "true";
+
 const nextConfig: NextConfig = {
-  // Capacitor requires a static export in `out/`; Next.js API routes must be
-  // deployed separately because `/api/*` is not included in static builds.
-  output: "export",
-  distDir: "out",
+  ...(isCapacitorBuild && {
+    output: "export",
+    distDir: "out",
+    trailingSlash: true,
+  }),
   images: {
     unoptimized: true,
   },
-  trailingSlash: true,
   typescript: {
-    // This allows production builds to successfully complete even if
-    // your project has type errors.
     ignoreBuildErrors: true,
   },
 };
