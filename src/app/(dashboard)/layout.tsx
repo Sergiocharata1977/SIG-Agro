@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -28,6 +28,28 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
 import { isSuperAdminEmail } from '@/lib/auth-utils';
+
+type QuickSearchItem = {
+    label: string;
+    href: string;
+    keywords: string[];
+};
+
+const QUICK_SEARCH_ITEMS: QuickSearchItem[] = [
+    { label: 'Panel', href: '/dashboard', keywords: ['dashboard', 'panel', 'inicio', 'resumen'] },
+    { label: 'Mapa GIS', href: '/campos', keywords: ['gis', 'mapa', 'campos', 'territorio'] },
+    { label: 'Lotes', href: '/lotes', keywords: ['lotes', 'parcelas', 'lote'] },
+    { label: 'Operaciones', href: '/operaciones', keywords: ['operaciones', 'labores', 'siembra', 'cosecha'] },
+    { label: 'Riego', href: '/riego', keywords: ['riego', 'agua', 'irrigacion'] },
+    { label: 'Campañas', href: '/campanias', keywords: ['campanas', 'campaña', 'cultivos'] },
+    { label: 'Scouting', href: '/scouting', keywords: ['scouting', 'observaciones', 'monitoreo'] },
+    { label: 'Análisis IA', href: '/analisis-ia', keywords: ['ia', 'analisis', 'alertas', 'radar'] },
+    { label: 'Contabilidad', href: '/contabilidad', keywords: ['contabilidad', 'asientos', 'libro diario'] },
+    { label: 'Rentabilidad', href: '/rentabilidad', keywords: ['rentabilidad', 'margen', 'roi', 'finanzas'] },
+    { label: 'Terceros', href: '/terceros', keywords: ['terceros', 'clientes', 'proveedores'] },
+    { label: 'Organizaciones', href: '/organizaciones', keywords: ['usuarios', 'organizaciones', 'workspace', 'permisos'] },
+    { label: 'Plugins', href: '/configuracion/plugins', keywords: ['plugins', 'configuracion', 'marketplace'] },
+];
 
 export default function DashboardLayout({
     children,
@@ -167,22 +189,7 @@ function DesktopWorkspaceBar({
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <div
-                        className="hidden items-center gap-2 rounded-full px-3 py-2.5 lg:flex xl:min-w-[280px]"
-                        style={{
-                            border: '1px solid var(--dashboard-sidebar-border)',
-                            background: 'var(--dashboard-sidebar-panel)',
-                            color: 'var(--dashboard-sidebar-text)',
-                        }}
-                    >
-                        <Search className="h-4 w-4 shrink-0" style={{ color: 'var(--dashboard-muted)' }} />
-                        <input
-                            type="text"
-                            placeholder="Buscar modulo, lote o accion..."
-                            className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-                            aria-label="Buscar en SIG Agro"
-                        />
-                    </div>
+                    <HeaderSearchBar className="hidden lg:flex xl:min-w-[280px]" listId="sigagro-desktop-search" />
 
                     <HeaderActionLink href="/dashboard" label="Mi Panel" icon={LayoutDashboard} />
                     <HeaderActionLink href="/analisis-ia" label="Radar de Campo" icon={Radar} />
@@ -309,22 +316,7 @@ function MobileWorkspaceBar({
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <div
-                        className="flex min-w-0 flex-1 items-center gap-2 rounded-full px-3 py-2.5"
-                        style={{
-                            border: '1px solid var(--dashboard-sidebar-border)',
-                            background: 'var(--dashboard-sidebar-panel)',
-                            color: 'var(--dashboard-sidebar-text)',
-                        }}
-                    >
-                        <Search className="h-4 w-4 shrink-0" style={{ color: 'var(--dashboard-muted)' }} />
-                        <input
-                            type="text"
-                            placeholder="Buscar modulo, lote o accion..."
-                            className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-                            aria-label="Buscar en SIG Agro"
-                        />
-                    </div>
+                    <HeaderSearchBar className="flex min-w-0 flex-1" listId="sigagro-mobile-search" />
 
                     <HeaderActionLink href="/organizaciones" label="Usuarios" icon={Users} compact />
                 </div>
@@ -398,6 +390,85 @@ function HeaderPill({
             <Icon className="h-3.5 w-3.5" style={{ color: 'var(--dashboard-accent)' }} />
             {label}
         </div>
+    );
+}
+
+function HeaderSearchBar({
+    className,
+    listId,
+}: {
+    className?: string;
+    listId: string;
+}) {
+    const router = useRouter();
+    const pathname = usePathname();
+    const [query, setQuery] = useState('');
+
+    const suggestions = useMemo(() => {
+        const normalized = query.trim().toLowerCase();
+        if (!normalized) {
+            return QUICK_SEARCH_ITEMS.slice(0, 6);
+        }
+
+        return QUICK_SEARCH_ITEMS.filter((item) => {
+            const haystack = [item.label, item.href, ...item.keywords].join(' ').toLowerCase();
+            return haystack.includes(normalized);
+        }).slice(0, 6);
+    }, [query]);
+
+    const submitSearch = () => {
+        const normalized = query.trim().toLowerCase();
+        if (!normalized) return;
+
+        const directMatch = QUICK_SEARCH_ITEMS.find(
+            (item) =>
+                item.label.toLowerCase() === normalized ||
+                item.href.toLowerCase() === normalized ||
+                item.keywords.some((keyword) => keyword.toLowerCase() === normalized)
+        );
+
+        const partialMatch = QUICK_SEARCH_ITEMS.find((item) => {
+            const haystack = [item.label, item.href, ...item.keywords].join(' ').toLowerCase();
+            return haystack.includes(normalized);
+        });
+
+        const target = directMatch ?? partialMatch;
+        if (!target) return;
+        if (target.href !== pathname) {
+            router.push(target.href);
+        }
+        setQuery('');
+    };
+
+    return (
+        <form
+            className={`items-center gap-2 rounded-full px-3 py-2.5 ${className || ''}`}
+            style={{
+                border: '1px solid var(--dashboard-sidebar-border)',
+                background: 'var(--dashboard-sidebar-panel)',
+                color: 'var(--dashboard-sidebar-text)',
+            }}
+            onSubmit={(event) => {
+                event.preventDefault();
+                submitSearch();
+            }}
+        >
+            <Search className="h-4 w-4 shrink-0" style={{ color: 'var(--dashboard-muted)' }} />
+            <input
+                type="text"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                list={listId}
+                placeholder="Buscar modulo, lote o accion..."
+                className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+                aria-label="Buscar en SIG Agro"
+            />
+            <datalist id={listId}>
+                {suggestions.map((item) => (
+                    <option key={`${listId}-${item.href}`} value={item.label} />
+                ))}
+            </datalist>
+        </form>
     );
 }
 
