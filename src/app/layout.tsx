@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import CapacitorProvider from "@/components/capacitor/CapacitorProvider";
+import { OfflineToast } from "@/components/capacitor/OfflineToast";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
@@ -16,7 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Don Juan GIS",
+  title: "SIG Agro",
   description: "Sistema de Información Geográfica Agrícola para productores del Chaco",
   icons: {
     icon: "/favicon.ico",
@@ -36,11 +38,14 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <NextIntlClientProvider messages={messages}>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
-        </NextIntlClientProvider>
+        <CapacitorProvider>
+          <NextIntlClientProvider messages={messages}>
+            <AuthProvider>
+              {children}
+              <OfflineToast />
+            </AuthProvider>
+          </NextIntlClientProvider>
+        </CapacitorProvider>
       </body>
     </html>
   );

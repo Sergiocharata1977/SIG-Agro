@@ -71,6 +71,12 @@ type MenuGroup = {
   items: MenuNode[];
 };
 
+type ModuleIndicator = {
+  label: string;
+  value: string;
+  detail: string;
+};
+
 export default function Sidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -424,6 +430,173 @@ export default function Sidebar() {
   const operationalGroups = filteredGroups.filter((g) => opKeys.has(g.key));
   const controlGroups = filteredGroups.filter((g) => !opKeys.has(g.key) && !megaMenuKeys.has(g.key) && !popupMenuKeys.has(g.key));
 
+  const renderHubPanel = ({
+    open,
+    onClose,
+    widthClass,
+    group,
+    HubIcon,
+    eyebrow,
+    title,
+    description,
+    summaryTitle,
+    summaryDescription,
+    indicators,
+  }: {
+    open: boolean;
+    onClose: () => void;
+    widthClass: string;
+    group: MenuGroup;
+    HubIcon: ComponentType<{ className?: string }>;
+    eyebrow: string;
+    title: string;
+    description: string;
+    summaryTitle: string;
+    summaryDescription: string;
+    indicators: ModuleIndicator[];
+  }) => {
+    if (!open) return null;
+
+    const accent = getHubAccentClasses(group.key);
+
+    return (
+      <>
+        <div className="fixed inset-0 z-[540] hidden bg-slate-950/18 backdrop-blur-[2px] md:block" onClick={onClose} />
+        <div className={`absolute left-0 right-0 top-[calc(100%+12px)] z-[550] md:fixed md:left-[calc(20rem+16px)] md:right-auto md:top-24 md:max-h-[calc(100vh-7rem)] md:overflow-y-auto ${widthClass}`}>
+          <div className="overflow-hidden rounded-[32px] border border-emerald-950/10 bg-[#f6f8f4] shadow-[0_32px_96px_rgba(10,21,16,0.28)]">
+            <div className={`flex items-start justify-between gap-4 bg-gradient-to-br ${accent.header} px-7 py-6 text-white`}>
+              <div className="max-w-3xl">
+                <div className="flex items-center gap-3 text-emerald-100/88">
+                  <div className={`grid h-10 w-10 place-items-center rounded-2xl ${accent.headerChip}`}>
+                    <HubIcon className="h-5 w-5" />
+                  </div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.26em]">{eyebrow}</p>
+                </div>
+                <h3 className="mt-4 text-3xl font-semibold tracking-[-0.03em] text-white">{title}</h3>
+                <p className="mt-3 max-w-3xl text-base leading-8 text-emerald-50/76">{description}</p>
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-white/15 bg-white/5 text-white transition hover:bg-white/10"
+                aria-label={`Cerrar panel de ${title.toLowerCase()}`}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="grid md:grid-cols-[minmax(0,1.35fr)_320px]">
+              <section className="bg-[#f8faf7] px-6 py-6 md:px-7">
+                <div className="mb-5">
+                  <h4 className="text-xl font-semibold tracking-[-0.02em] text-slate-950">{summaryTitle}</h4>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{summaryDescription}</p>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  {group.items.map((item) => {
+                    const Icon = item.icon;
+                    const cardContent = (
+                      <>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className={`grid h-12 w-12 place-items-center rounded-2xl ${accent.cardChip}`}>
+                            <Icon className="h-5 w-5" />
+                          </div>
+                          <ChevronRight className="mt-1 h-5 w-5 text-slate-400" />
+                        </div>
+                        <div className="mt-6">
+                          <h5 className="text-[1.05rem] font-semibold tracking-[-0.02em] text-slate-950">{item.label}</h5>
+                          <p className="mt-2 text-sm leading-7 text-slate-600">
+                            {describeModuleItem(group.key, item.label)}
+                          </p>
+                        </div>
+                        {item.badge && (
+                          <div className="mt-5 text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                            {item.badge}
+                          </div>
+                        )}
+                      </>
+                    );
+
+                    const cls = `group rounded-[26px] border p-5 transition ${
+                      item.active
+                        ? 'border-slate-900 bg-white shadow-[0_18px_34px_rgba(15,23,42,0.08)]'
+                        : 'border-slate-200 bg-white hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_18px_34px_rgba(15,23,42,0.08)]'
+                    }`;
+
+                    if (item.disabled || !item.href) {
+                      return (
+                        <div key={`${group.key}-${item.label}`} className={`${cls} cursor-not-allowed opacity-75`}>
+                          {cardContent}
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <Link
+                        key={`${group.key}-${item.href}-${item.label}`}
+                        href={item.href}
+                        onClick={() => {
+                          onClose();
+                          setMobileOpen(false);
+                        }}
+                        className={cls}
+                      >
+                        {cardContent}
+                      </Link>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-6 flex items-center justify-between rounded-[24px] border border-slate-200 bg-white px-5 py-4 text-sm text-slate-600">
+                  <div className="flex items-center gap-3">
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                    <span>Sistema en linea</span>
+                  </div>
+                  <div className="text-slate-500">{getHubFooterCopy(group.key)}</div>
+                </div>
+              </section>
+
+              <aside className={`border-l border-slate-200 px-6 py-6 md:px-7 ${accent.rail}`}>
+                <div className="mb-5">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500">Indicadores clave</p>
+                  <h4 className="mt-2 text-xl font-semibold tracking-[-0.02em] text-slate-950">Pulso del modulo</h4>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    Estado ejecutivo para ver el modulo antes de ejecutar acciones.
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  {indicators.map((indicator, index) => (
+                    <div key={indicator.label} className="rounded-[24px] border border-slate-200 bg-white/88 p-4 shadow-[0_14px_30px_rgba(15,23,42,0.06)] backdrop-blur-sm">
+                      <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500">{indicator.label}</div>
+                      <div className="mt-2 flex items-end justify-between gap-3">
+                        <div className="text-3xl font-semibold tracking-[-0.03em] text-slate-950">{indicator.value}</div>
+                        <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] ${accent.metricTag}`}>
+                          {getIndicatorBadge(group.key, index)}
+                        </span>
+                      </div>
+                      <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
+                        <div className={`h-full rounded-full ${accent.progress}`} style={{ width: getIndicatorProgress(group.key, index) }} />
+                      </div>
+                      <div className="mt-3 text-sm leading-6 text-slate-600">{indicator.detail}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className={`mt-5 rounded-[24px] border-l-4 bg-white/86 p-5 shadow-[0_14px_30px_rgba(15,23,42,0.05)] ${accent.callout}`}>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Lectura recomendada</div>
+                  <div className="mt-3 text-base leading-8 text-slate-700">
+                    {getHubInsightCopy(group.key)}
+                  </div>
+                </div>
+              </aside>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  };
+
   return (
     <>
       {mobileOpen && <div className="fixed inset-0 bg-slate-950/60 z-40 md:hidden" onClick={() => setMobileOpen(false)} />}
@@ -647,109 +820,20 @@ export default function Sidebar() {
                   </div>
                 </button>
 
-                {operationsHubOpen && (
-                  <>
-                    <div className="fixed inset-0 z-[540] hidden md:block" onClick={() => setOperationsHubOpen(false)} />
-                    <div className="absolute left-0 right-0 top-[calc(100%+12px)] z-[550] md:fixed md:left-[calc(20rem+16px)] md:right-auto md:top-24 md:max-h-[calc(100vh-7rem)] md:w-[860px] md:overflow-y-auto">
-                      <div className="overflow-hidden rounded-[28px] border border-emerald-700/60 bg-[linear-gradient(160deg,rgba(1,53,39,0.98),rgba(4,79,57,0.96))] shadow-[0_28px_80px_rgba(2,12,9,0.45)] backdrop-blur-xl">
-                        <div className="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-5">
-                          <div>
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-300/80">Modulo operativo</p>
-                            <h3 className="mt-1 text-2xl font-semibold text-white">Operaciones agricolas</h3>
-                            <p className="mt-2 max-w-2xl text-sm leading-6 text-emerald-100/75">
-                              Registro de labores, control de ejecucion y seguimiento operativo del frente agricola.
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setOperationsHubOpen(false)}
-                            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-emerald-50 transition hover:bg-white/10"
-                            aria-label="Cerrar panel de operaciones"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-
-                        <div className="grid gap-5 p-5 md:grid-cols-[1.15fr_0.85fr]">
-                          <section className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
-                            <div className="mb-4 flex items-start gap-3">
-                              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-400/10 text-emerald-200 ring-1 ring-emerald-300/15">
-                                <OperationsHubIcon className="h-5 w-5" />
-                              </div>
-                              <div>
-                                <h4 className="text-base font-semibold text-white">Frentes de trabajo</h4>
-                                <p className="mt-1 text-xs leading-5 text-emerald-100/70">
-                                  Accesos directos a siembra, aplicaciones, cosecha y entregas.
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="grid gap-3 md:grid-cols-2">
-                              {operationsHubGroup.items.map((item) => {
-                                const Icon = item.icon;
-                                const cls = `flex items-center gap-3 rounded-2xl border px-3 py-3 text-sm transition ${
-                                  item.active
-                                    ? 'border-emerald-300/40 bg-emerald-300/12 text-white'
-                                    : 'border-white/8 bg-black/10 text-emerald-50/88 hover:border-emerald-300/25 hover:bg-white/8'
-                                }`;
-
-                                if (item.disabled || !item.href) {
-                                  return (
-                                    <div key={`${operationsHubGroup.key}-${item.label}`} className={`${cls} cursor-not-allowed opacity-70`}>
-                                      <Icon className="h-4 w-4" />
-                                      <span className="flex-1">{item.label}</span>
-                                      {item.badge && <span className="text-[10px] uppercase tracking-[0.18em] text-emerald-300/75">{item.badge}</span>}
-                                    </div>
-                                  );
-                                }
-
-                                return (
-                                  <Link
-                                    key={`${operationsHubGroup.key}-${item.href}-${item.label}`}
-                                    href={item.href}
-                                    onClick={() => {
-                                      setOperationsHubOpen(false);
-                                      setMobileOpen(false);
-                                    }}
-                                    className={cls}
-                                  >
-                                    <Icon className="h-4 w-4" />
-                                    <span className="flex-1">{item.label}</span>
-                                    {item.badge && <span className="text-[10px] uppercase tracking-[0.18em] text-emerald-300/75">{item.badge}</span>}
-                                  </Link>
-                                );
-                              })}
-                            </div>
-                          </section>
-
-                          <aside className="rounded-[24px] border border-emerald-400/20 bg-white/[0.06] p-4">
-                            <div className="mb-4">
-                              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-300/80">Indicadores</p>
-                              <h4 className="mt-1 text-lg font-semibold text-white">Pulso del modulo</h4>
-                              <p className="mt-1 text-xs leading-5 text-emerald-100/70">
-                                Resumen ejecutivo del frente operativo para priorizar la agenda diaria.
-                              </p>
-                            </div>
-
-                            <div className="space-y-3">
-                              {getOperationsIndicators().map((indicator) => (
-                                <div key={indicator.label} className="rounded-2xl border border-white/10 bg-black/10 p-4">
-                                  <div className="text-[11px] uppercase tracking-[0.18em] text-emerald-300/75">{indicator.label}</div>
-                                  <div className="mt-2 text-3xl font-semibold text-white">{indicator.value}</div>
-                                  <div className="mt-1 text-sm text-emerald-100/75">{indicator.detail}</div>
-                                </div>
-                              ))}
-                            </div>
-
-                            <div className="mt-4 rounded-2xl border border-emerald-300/15 bg-emerald-300/10 p-4 text-sm leading-6 text-emerald-50/85">
-                              Ventana sugerida: priorizar labores de alto impacto operativo y consolidar entregas pendientes antes del cierre del dia.
-                            </div>
-                          </aside>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
+                {operationsHubOpen &&
+                  renderHubPanel({
+                    open: operationsHubOpen,
+                    onClose: () => setOperationsHubOpen(false),
+                    widthClass: 'md:w-[980px]',
+                    group: operationsHubGroup,
+                    HubIcon: OperationsHubIcon,
+                    eyebrow: 'Modulo operativo',
+                    title: 'Operaciones agricolas',
+                    description: 'Registro de labores, control de ejecucion y seguimiento operativo del frente agricola.',
+                    summaryTitle: 'Resumen de operaciones',
+                    summaryDescription: 'Accesos directos a siembra, aplicaciones, cosecha, mano de obra y entregas con trazabilidad operativa.',
+                    indicators: getOperationsIndicators(),
+                  })}
               </div>
             ) : (
               <button
@@ -791,105 +875,20 @@ export default function Sidebar() {
                   </div>
                 </button>
 
-                {suppliesHubOpen && (
-                  <>
-                    <div className="fixed inset-0 z-[540] hidden md:block" onClick={() => setSuppliesHubOpen(false)} />
-                    <div className="absolute left-0 right-0 top-[calc(100%+12px)] z-[550] md:fixed md:left-[calc(20rem+16px)] md:right-auto md:top-24 md:max-h-[calc(100vh-7rem)] md:w-[860px] md:overflow-y-auto">
-                      <div className="overflow-hidden rounded-[28px] border border-emerald-700/60 bg-[linear-gradient(160deg,rgba(1,53,39,0.98),rgba(4,79,57,0.96))] shadow-[0_28px_80px_rgba(2,12,9,0.45)] backdrop-blur-xl">
-                        <div className="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-5">
-                          <div>
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-300/80">Modulo de abastecimiento</p>
-                            <h3 className="mt-1 text-2xl font-semibold text-white">Insumos y stock</h3>
-                            <p className="mt-2 max-w-2xl text-sm leading-6 text-emerald-100/75">
-                              Gestion de abastecimiento, almacenamiento, compras y movimientos de stock del establecimiento.
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setSuppliesHubOpen(false)}
-                            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-emerald-50 transition hover:bg-white/10"
-                            aria-label="Cerrar panel de insumos y stock"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-
-                        <div className="grid gap-5 p-5 md:grid-cols-[1.15fr_0.85fr]">
-                          <section className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
-                            <div className="mb-4 flex items-start gap-3">
-                              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-400/10 text-emerald-200 ring-1 ring-emerald-300/15">
-                                <SuppliesHubIcon className="h-5 w-5" />
-                              </div>
-                              <div>
-                                <h4 className="text-base font-semibold text-white">Control de abastecimiento</h4>
-                                <p className="mt-1 text-xs leading-5 text-emerald-100/70">
-                                  Accesos directos a insumos, depositos, compras y movimientos de stock.
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="grid gap-3 md:grid-cols-2">
-                              {suppliesHubGroup.items.map((item) => {
-                                const Icon = item.icon;
-                                const cls = `flex items-center gap-3 rounded-2xl border px-3 py-3 text-sm transition ${
-                                  item.active
-                                    ? 'border-emerald-300/40 bg-emerald-300/12 text-white'
-                                    : 'border-white/8 bg-black/10 text-emerald-50/88 hover:border-emerald-300/25 hover:bg-white/8'
-                                }`;
-
-                                if (item.disabled || !item.href) {
-                                  return (
-                                    <div key={`${suppliesHubGroup.key}-${item.label}`} className={`${cls} cursor-not-allowed opacity-70`}>
-                                      <Icon className="h-4 w-4" />
-                                      <span className="flex-1">{item.label}</span>
-                                      {item.badge && <span className="text-[10px] uppercase tracking-[0.18em] text-emerald-300/75">{item.badge}</span>}
-                                    </div>
-                                  );
-                                }
-
-                                return (
-                                  <Link
-                                    key={`${suppliesHubGroup.key}-${item.href}-${item.label}`}
-                                    href={item.href}
-                                    onClick={() => {
-                                      setSuppliesHubOpen(false);
-                                      setMobileOpen(false);
-                                    }}
-                                    className={cls}
-                                  >
-                                    <Icon className="h-4 w-4" />
-                                    <span className="flex-1">{item.label}</span>
-                                    {item.badge && <span className="text-[10px] uppercase tracking-[0.18em] text-emerald-300/75">{item.badge}</span>}
-                                  </Link>
-                                );
-                              })}
-                            </div>
-                          </section>
-
-                          <aside className="rounded-[24px] border border-emerald-400/20 bg-white/[0.06] p-4">
-                            <div className="mb-4">
-                              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-300/80">Indicadores</p>
-                              <h4 className="mt-1 text-lg font-semibold text-white">Pulso del modulo</h4>
-                              <p className="mt-1 text-xs leading-5 text-emerald-100/70">
-                                Lectura rapida del estado de inventario y del frente de compras.
-                              </p>
-                            </div>
-
-                            <div className="space-y-3">
-                              {getSuppliesIndicators().map((indicator) => (
-                                <div key={indicator.label} className="rounded-2xl border border-white/10 bg-black/10 p-4">
-                                  <div className="text-[11px] uppercase tracking-[0.18em] text-emerald-300/75">{indicator.label}</div>
-                                  <div className="mt-2 text-3xl font-semibold text-white">{indicator.value}</div>
-                                  <div className="mt-1 text-sm text-emerald-100/75">{indicator.detail}</div>
-                                </div>
-                              ))}
-                            </div>
-                          </aside>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
+                {suppliesHubOpen &&
+                  renderHubPanel({
+                    open: suppliesHubOpen,
+                    onClose: () => setSuppliesHubOpen(false),
+                    widthClass: 'md:w-[980px]',
+                    group: suppliesHubGroup,
+                    HubIcon: SuppliesHubIcon,
+                    eyebrow: 'Modulo de abastecimiento',
+                    title: 'Insumos y stock',
+                    description: 'Gestion de abastecimiento, almacenamiento, compras y movimientos de stock del establecimiento.',
+                    summaryTitle: 'Control de abastecimiento',
+                    summaryDescription: 'Vista integrada de inventario, depositos, compras y movimientos para sostener el ritmo operativo.',
+                    indicators: getSuppliesIndicators(),
+                  })}
               </div>
             ) : (
               <button
@@ -931,105 +930,20 @@ export default function Sidebar() {
                   </div>
                 </button>
 
-                {grainsHubOpen && (
-                  <>
-                    <div className="fixed inset-0 z-[540] hidden md:block" onClick={() => setGrainsHubOpen(false)} />
-                    <div className="absolute left-0 right-0 top-[calc(100%+12px)] z-[550] md:fixed md:left-[calc(20rem+16px)] md:right-auto md:top-24 md:max-h-[calc(100vh-7rem)] md:w-[860px] md:overflow-y-auto">
-                      <div className="overflow-hidden rounded-[28px] border border-emerald-700/60 bg-[linear-gradient(160deg,rgba(1,53,39,0.98),rgba(4,79,57,0.96))] shadow-[0_28px_80px_rgba(2,12,9,0.45)] backdrop-blur-xl">
-                        <div className="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-5">
-                          <div>
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-300/80">Modulo logistico</p>
-                            <h3 className="mt-1 text-2xl font-semibold text-white">Granos y silos</h3>
-                            <p className="mt-2 max-w-2xl text-sm leading-6 text-emerald-100/75">
-                              Control de acopio, movimientos de grano y documentacion de salida.
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setGrainsHubOpen(false)}
-                            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-emerald-50 transition hover:bg-white/10"
-                            aria-label="Cerrar panel de granos y silos"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-
-                        <div className="grid gap-5 p-5 md:grid-cols-[1.15fr_0.85fr]">
-                          <section className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
-                            <div className="mb-4 flex items-start gap-3">
-                              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-400/10 text-emerald-200 ring-1 ring-emerald-300/15">
-                                <GrainsHubIcon className="h-5 w-5" />
-                              </div>
-                              <div>
-                                <h4 className="text-base font-semibold text-white">Frente de granos</h4>
-                                <p className="mt-1 text-xs leading-5 text-emerald-100/70">
-                                  Accesos directos a silos, stock, entregas y cartas de porte.
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="grid gap-3 md:grid-cols-2">
-                              {grainsHubGroup.items.map((item) => {
-                                const Icon = item.icon;
-                                const cls = `flex items-center gap-3 rounded-2xl border px-3 py-3 text-sm transition ${
-                                  item.active
-                                    ? 'border-emerald-300/40 bg-emerald-300/12 text-white'
-                                    : 'border-white/8 bg-black/10 text-emerald-50/88 hover:border-emerald-300/25 hover:bg-white/8'
-                                }`;
-
-                                if (item.disabled || !item.href) {
-                                  return (
-                                    <div key={`${grainsHubGroup.key}-${item.label}`} className={`${cls} cursor-not-allowed opacity-70`}>
-                                      <Icon className="h-4 w-4" />
-                                      <span className="flex-1">{item.label}</span>
-                                      {item.badge && <span className="text-[10px] uppercase tracking-[0.18em] text-emerald-300/75">{item.badge}</span>}
-                                    </div>
-                                  );
-                                }
-
-                                return (
-                                  <Link
-                                    key={`${grainsHubGroup.key}-${item.href}-${item.label}`}
-                                    href={item.href}
-                                    onClick={() => {
-                                      setGrainsHubOpen(false);
-                                      setMobileOpen(false);
-                                    }}
-                                    className={cls}
-                                  >
-                                    <Icon className="h-4 w-4" />
-                                    <span className="flex-1">{item.label}</span>
-                                    {item.badge && <span className="text-[10px] uppercase tracking-[0.18em] text-emerald-300/75">{item.badge}</span>}
-                                  </Link>
-                                );
-                              })}
-                            </div>
-                          </section>
-
-                          <aside className="rounded-[24px] border border-emerald-400/20 bg-white/[0.06] p-4">
-                            <div className="mb-4">
-                              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-300/80">Indicadores</p>
-                              <h4 className="mt-1 text-lg font-semibold text-white">Pulso del modulo</h4>
-                              <p className="mt-1 text-xs leading-5 text-emerald-100/70">
-                                Lectura rapida del frente logístico y del flujo de granos.
-                              </p>
-                            </div>
-
-                            <div className="space-y-3">
-                              {getGrainsIndicators().map((indicator) => (
-                                <div key={indicator.label} className="rounded-2xl border border-white/10 bg-black/10 p-4">
-                                  <div className="text-[11px] uppercase tracking-[0.18em] text-emerald-300/75">{indicator.label}</div>
-                                  <div className="mt-2 text-3xl font-semibold text-white">{indicator.value}</div>
-                                  <div className="mt-1 text-sm text-emerald-100/75">{indicator.detail}</div>
-                                </div>
-                              ))}
-                            </div>
-                          </aside>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
+                {grainsHubOpen &&
+                  renderHubPanel({
+                    open: grainsHubOpen,
+                    onClose: () => setGrainsHubOpen(false),
+                    widthClass: 'md:w-[980px]',
+                    group: grainsHubGroup,
+                    HubIcon: GrainsHubIcon,
+                    eyebrow: 'Modulo logistico',
+                    title: 'Granos y silos',
+                    description: 'Control de acopio, movimientos de grano y documentacion de salida.',
+                    summaryTitle: 'Frente logistico',
+                    summaryDescription: 'Silos, stock, entregas y cartas de porte reunidos en una sola vista operativa para despachos y conservacion.',
+                    indicators: getGrainsIndicators(),
+                  })}
               </div>
             ) : (
               <button
@@ -1071,105 +985,20 @@ export default function Sidebar() {
                   </div>
                 </button>
 
-                {financeHubOpen && (
-                  <>
-                    <div className="fixed inset-0 z-[540] hidden md:block" onClick={() => setFinanceHubOpen(false)} />
-                    <div className="absolute left-0 right-0 top-[calc(100%+12px)] z-[550] md:fixed md:left-[calc(20rem+16px)] md:right-auto md:top-24 md:max-h-[calc(100vh-7rem)] md:w-[860px] md:overflow-y-auto">
-                      <div className="overflow-hidden rounded-[28px] border border-emerald-700/60 bg-[linear-gradient(160deg,rgba(1,53,39,0.98),rgba(4,79,57,0.96))] shadow-[0_28px_80px_rgba(2,12,9,0.45)] backdrop-blur-xl">
-                        <div className="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-5">
-                          <div>
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-300/80">Modulo financiero</p>
-                            <h3 className="mt-1 text-2xl font-semibold text-white">Finanzas</h3>
-                            <p className="mt-2 max-w-2xl text-sm leading-6 text-emerald-100/75">
-                              Flujo comercial, libro diario, rentabilidad y relacion con terceros en un mismo panel.
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setFinanceHubOpen(false)}
-                            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-emerald-50 transition hover:bg-white/10"
-                            aria-label="Cerrar panel de finanzas"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-
-                        <div className="grid gap-5 p-5 md:grid-cols-[1.15fr_0.85fr]">
-                          <section className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
-                            <div className="mb-4 flex items-start gap-3">
-                              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-400/10 text-emerald-200 ring-1 ring-emerald-300/15">
-                                <FinanceHubIcon className="h-5 w-5" />
-                              </div>
-                              <div>
-                                <h4 className="text-base font-semibold text-white">Control financiero</h4>
-                                <p className="mt-1 text-xs leading-5 text-emerald-100/70">
-                                  Accesos a cobranzas, pagos, libro diario, rentabilidad y terceros.
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="grid gap-3 md:grid-cols-2">
-                              {financeHubGroup.items.map((item) => {
-                                const Icon = item.icon;
-                                const cls = `flex items-center gap-3 rounded-2xl border px-3 py-3 text-sm transition ${
-                                  item.active
-                                    ? 'border-emerald-300/40 bg-emerald-300/12 text-white'
-                                    : 'border-white/8 bg-black/10 text-emerald-50/88 hover:border-emerald-300/25 hover:bg-white/8'
-                                }`;
-
-                                if (item.disabled || !item.href) {
-                                  return (
-                                    <div key={`${financeHubGroup.key}-${item.label}`} className={`${cls} cursor-not-allowed opacity-70`}>
-                                      <Icon className="h-4 w-4" />
-                                      <span className="flex-1">{item.label}</span>
-                                      {item.badge && <span className="text-[10px] uppercase tracking-[0.18em] text-emerald-300/75">{item.badge}</span>}
-                                    </div>
-                                  );
-                                }
-
-                                return (
-                                  <Link
-                                    key={`${financeHubGroup.key}-${item.href}-${item.label}`}
-                                    href={item.href}
-                                    onClick={() => {
-                                      setFinanceHubOpen(false);
-                                      setMobileOpen(false);
-                                    }}
-                                    className={cls}
-                                  >
-                                    <Icon className="h-4 w-4" />
-                                    <span className="flex-1">{item.label}</span>
-                                    {item.badge && <span className="text-[10px] uppercase tracking-[0.18em] text-emerald-300/75">{item.badge}</span>}
-                                  </Link>
-                                );
-                              })}
-                            </div>
-                          </section>
-
-                          <aside className="rounded-[24px] border border-emerald-400/20 bg-white/[0.06] p-4">
-                            <div className="mb-4">
-                              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-300/80">Indicadores</p>
-                              <h4 className="mt-1 text-lg font-semibold text-white">Pulso del modulo</h4>
-                              <p className="mt-1 text-xs leading-5 text-emerald-100/70">
-                                Resumen financiero para seguir liquidez, margen y relacion con terceros.
-                              </p>
-                            </div>
-
-                            <div className="space-y-3">
-                              {getFinanceIndicators().map((indicator) => (
-                                <div key={indicator.label} className="rounded-2xl border border-white/10 bg-black/10 p-4">
-                                  <div className="text-[11px] uppercase tracking-[0.18em] text-emerald-300/75">{indicator.label}</div>
-                                  <div className="mt-2 text-3xl font-semibold text-white">{indicator.value}</div>
-                                  <div className="mt-1 text-sm text-emerald-100/75">{indicator.detail}</div>
-                                </div>
-                              ))}
-                            </div>
-                          </aside>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
+                {financeHubOpen &&
+                  renderHubPanel({
+                    open: financeHubOpen,
+                    onClose: () => setFinanceHubOpen(false),
+                    widthClass: 'md:w-[1040px]',
+                    group: financeHubGroup,
+                    HubIcon: FinanceHubIcon,
+                    eyebrow: 'Modulo financiero',
+                    title: 'Finanzas',
+                    description: 'Flujo comercial, libro diario, rentabilidad y relacion con terceros en un mismo panel.',
+                    summaryTitle: 'Control financiero',
+                    summaryDescription: 'Ventas, cobranzas, pagos, libro diario, balance y terceros agrupados para lectura ejecutiva y accion inmediata.',
+                    indicators: getFinanceIndicators(),
+                  })}
               </div>
             ) : (
               <button
@@ -1328,6 +1157,139 @@ function getOperationsIndicators() {
       detail: 'Registros pendientes de consolidacion operativa.',
     },
   ];
+}
+
+function getHubAccentClasses(groupKey: string) {
+  switch (groupKey) {
+    case 'granos-silos':
+      return {
+        header: 'from-[#082f24] via-[#0e4a33] to-[#173e33]',
+        headerChip: 'bg-lime-300/14 text-lime-100 ring-1 ring-lime-200/20',
+        cardChip: 'bg-lime-100 text-lime-800',
+        rail: 'bg-[#eef2e7]',
+        metricTag: 'bg-lime-100 text-lime-800',
+        progress: 'bg-lime-700',
+        callout: 'border-lime-700',
+      };
+    case 'finanzas':
+      return {
+        header: 'from-[#0a3b2c] via-[#0c4631] to-[#16493a]',
+        headerChip: 'bg-emerald-200/14 text-emerald-50 ring-1 ring-emerald-100/20',
+        cardChip: 'bg-emerald-50 text-emerald-800',
+        rail: 'bg-[#f1f3ed]',
+        metricTag: 'bg-emerald-100 text-emerald-800',
+        progress: 'bg-emerald-700',
+        callout: 'border-emerald-800',
+      };
+    case 'insumos-stock':
+      return {
+        header: 'from-[#0b3d30] via-[#11513c] to-[#1d5d46]',
+        headerChip: 'bg-teal-200/14 text-teal-50 ring-1 ring-teal-100/20',
+        cardChip: 'bg-teal-50 text-teal-800',
+        rail: 'bg-[#eef4ef]',
+        metricTag: 'bg-teal-100 text-teal-800',
+        progress: 'bg-teal-700',
+        callout: 'border-teal-800',
+      };
+    default:
+      return {
+        header: 'from-[#0a3529] via-[#104633] to-[#1c5740]',
+        headerChip: 'bg-emerald-200/14 text-emerald-50 ring-1 ring-emerald-100/20',
+        cardChip: 'bg-emerald-50 text-emerald-800',
+        rail: 'bg-[#eef4ee]',
+        metricTag: 'bg-emerald-100 text-emerald-800',
+        progress: 'bg-emerald-700',
+        callout: 'border-emerald-800',
+      };
+  }
+}
+
+function describeModuleItem(groupKey: string, itemLabel: string) {
+  const descriptions: Record<string, Record<string, string>> = {
+    'operaciones-agro': {
+      'Siembra': 'Gestion de implantacion, densidades y arranque operativo por lote.',
+      'Fertilizacion': 'Control de aplicaciones de nutrientes, dosis y ventanas de uso.',
+      'Aplicaciones': 'Fitosanitarios, recetas y ordenes de pulverizacion con seguimiento.',
+      'Combustible': 'Despachos, consumo y control por unidad o frente operativo.',
+      'Mano de obra': 'Partes diarios, cuadrillas y asignacion de tareas de campo.',
+      'Cosecha': 'Rendimiento, logistica de tolvas y cierre de jornada productiva.',
+      'Entrega a acopiador': 'Despachos, cartas y trazabilidad de salida hacia destino.',
+    },
+    'insumos-stock': {
+      'Insumos': 'Catalogo operativo de semillas, fitosanitarios y consumibles criticos.',
+      'Depositos': 'Ubicaciones, disponibilidad y control fisico del inventario activo.',
+      'Compras de insumos': 'Ordenes, proveedores y recepcion pendiente de imputacion.',
+      'Stock y movimientos': 'Entradas, salidas y trazabilidad completa del inventario.',
+    },
+    'granos-silos': {
+      'Silos': 'Gestion de almacenamiento, conservacion y disponibilidad por unidad.',
+      'Stock de granos': 'Inventario consolidado por calidad, variedad y ubicacion.',
+      'Entregas': 'Despachos y recepciones logisticas en seguimiento operativo.',
+      'Cartas de porte': 'Emision y control documental para transporte y salida oficial.',
+    },
+    finanzas: {
+      'Ventas': 'Facturacion, notas de credito y seguimiento de pedidos comerciales.',
+      'Cobranzas': 'Control de ingresos, cuentas a cobrar y recupero programado.',
+      'Pagos': 'Proveedores, vencimientos y agenda financiera de corto plazo.',
+      'Libro diario': 'Registro cronologico, asientos y exportacion contable operativa.',
+      'Balance y rentabilidad': 'Margen, costos directos e informes ejecutivos del negocio.',
+      'Terceros': 'Maestro de clientes, proveedores, socios y contratistas vinculados.',
+    },
+  };
+
+  return descriptions[groupKey]?.[itemLabel] ?? 'Acceso directo al modulo seleccionado.';
+}
+
+function getHubFooterCopy(groupKey: string) {
+  switch (groupKey) {
+    case 'operaciones-agro':
+      return 'Ultima actualizacion: hace 2 min';
+    case 'insumos-stock':
+      return 'Inventario conciliado al cierre de hoy';
+    case 'granos-silos':
+      return 'Seguimiento logistico sincronizado';
+    case 'finanzas':
+      return 'Conciliacion financiera al dia';
+    default:
+      return 'Actualizacion continua';
+  }
+}
+
+function getIndicatorBadge(groupKey: string, index: number) {
+  const badges: Record<string, string[]> = {
+    'operaciones-agro': ['activo', 'alerta', 'seguimiento'],
+    'insumos-stock': ['reposicion', 'abierto', 'balance'],
+    'granos-silos': ['capacidad', 'flujo', 'transito'],
+    finanzas: ['proyeccion', 'agenda', 'margen'],
+  };
+
+  return badges[groupKey]?.[index] ?? 'estado';
+}
+
+function getIndicatorProgress(groupKey: string, index: number) {
+  const progress: Record<string, string[]> = {
+    'operaciones-agro': ['72%', '34%', '68%'],
+    'insumos-stock': ['48%', '63%', '84%'],
+    'granos-silos': ['61%', '74%', '46%'],
+    finanzas: ['79%', '38%', '65%'],
+  };
+
+  return progress[groupKey]?.[index] ?? '60%';
+}
+
+function getHubInsightCopy(groupKey: string) {
+  switch (groupKey) {
+    case 'operaciones-agro':
+      return 'Conviene priorizar labores con mayor sensibilidad climatica y cerrar entregas abiertas antes del cambio de ventana.';
+    case 'insumos-stock':
+      return 'Hay margen para reordenar compras abiertas y adelantar reposicion de insumos criticos sin tensionar el inventario.';
+    case 'granos-silos':
+      return 'El frente logistico muestra buena capacidad disponible, pero conviene acelerar entregas abiertas para evitar cuello de salida.';
+    case 'finanzas':
+      return 'La lectura financiera es estable; el siguiente foco deberia estar en pagos proximos y seguimiento del margen ponderado.';
+    default:
+      return 'El modulo presenta informacion suficiente para una accion operativa inmediata.';
+  }
 }
 
 function getSuppliesIndicators() {

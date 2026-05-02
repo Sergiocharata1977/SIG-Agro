@@ -16,7 +16,7 @@ export function NotificationPermission() {
             setStatus('unsupported');
             return;
         }
-        setStatus(Notification.permission as 'denied' | 'granted' | 'default');
+        setStatus(fcmService.getPermissionStatus() as 'denied' | 'granted' | 'default');
     }, []);
 
     const handleRequestPermission = async () => {
@@ -101,7 +101,7 @@ export function NotificationWidget() {
 
     useEffect(() => {
         if (fcmService.isSupported()) {
-            setPermissionStatus(Notification.permission);
+            setPermissionStatus(fcmService.getPermissionStatus() as NotificationPermission);
         }
 
         // Escuchar mensajes FCM

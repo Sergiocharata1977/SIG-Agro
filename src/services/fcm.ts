@@ -1,38 +1,55 @@
-import { getMessaging, getToken, onMessage, type Messaging, type MessagePayload } from 'firebase/messaging';
-import app from '@/firebase/config';
-import type { NotificationPayload, NotificationType, NotificationPreferences } from '@/types/notifications';
-
-// VAPID Key - debe estar configurado en Firebase Console
-const VAPID_KEY = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+import { Capacitor } from '@capacitor/core';
+import { LocalNotifications } from '@capacitor/local-notifications';
+import {
+    ActionPerformed,
+    PushNotificationSchema,
+    PushNotifications,
+    Token
+} from '@capacitor/push-notifications';
+import type { NotificationPayload, NotificationPreferences, NotificationType } from '@/types/notifications';
 
 class FCMService {
-    private messaging: Messaging | null = null;
     private token: string | null = null;
     private initialized = false;
+    private listenersRegistered = false;
+    private permissionStatus: NotificationPermission | 'unsupported' = 'default';
 
-    // Verificar si el navegador soporta notificaciones
     isSupported(): boolean {
-        return typeof window !== 'undefined' &&
-            'Notification' in window &&
-            'serviceWorker' in navigator &&
-            'PushManager' in window;
+        if (Capacitor.isNativePlatform()) {
+            return true;
+        }
+
+        return typeof Notification !== 'undefined';
     }
 
-    // Verificar estado del permiso
     getPermissionStatus(): NotificationPermission | 'unsupported' {
-        if (!this.isSupported()) return 'unsupported';
+        if (Capacitor.isNativePlatform()) {
+            return this.permissionStatus;
+        }
+
+        if (typeof Notification === 'undefined') {
+            return 'unsupported';
+        }
+
+        this.permissionStatus = Notification.permission;
         return Notification.permission;
     }
 
-    // Solicitar permiso de notificaciones
     async requestPermission(): Promise<boolean> {
         if (!this.isSupported()) {
-            console.warn('Push notifications not supported');
+            this.permissionStatus = 'unsupported';
             return false;
         }
 
         try {
+            if (Capacitor.isNativePlatform()) {
+                const permissions = await PushNotifications.requestPermissions();
+                this.permissionStatus = permissions.receive === 'granted' ? 'granted' : 'denied';
+                return permissions.receive === 'granted';
+            }
+
             const permission = await Notification.requestPermission();
+            this.permissionStatus = permission;
             return permission === 'granted';
         } catch (error) {
             console.error('Error requesting notification permission:', error);
@@ -40,76 +57,74 @@ class FCMService {
         }
     }
 
-    // Inicializar FCM
     async initialize(): Promise<string | null> {
-        if (this.initialized && this.token) return this.token;
-
         if (!this.isSupported()) {
-            console.warn('Push notifications not supported');
             return null;
         }
 
-        if (Notification.permission !== 'granted') {
-            console.warn('Notification permission not granted');
+        if (!Capacitor.isNativePlatform()) {
+            this.initialized = true;
+            this.permissionStatus = this.getPermissionStatus();
+            return this.token;
+        }
+
+        if (this.initialized) {
+            return this.token;
+        }
+
+        const granted = await this.requestPermission();
+        if (!granted) {
             return null;
         }
 
-        try {
-            // Registrar Service Worker
-            const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-            console.log('Service Worker registered:', registration);
+        if (!this.listenersRegistered) {
+            this.registerNativeListeners();
+        }
 
-            // Obtener instancia de messaging
-            this.messaging = getMessaging(app);
+        return new Promise((resolve) => {
+            let settled = false;
 
-            // Obtener token FCM
-            this.token = await getToken(this.messaging, {
-                vapidKey: VAPID_KEY,
-                serviceWorkerRegistration: registration,
+            const registrationListener = PushNotifications.addListener('registration', (token: Token) => {
+                this.token = token.value;
+                this.initialized = true;
+                this.permissionStatus = 'granted';
+
+                if (!settled) {
+                    settled = true;
+                    void registrationListener.then((listener) => listener.remove());
+                    void registrationErrorListener.then((listener) => listener.remove());
+                    resolve(token.value);
+                }
             });
 
-            console.log('FCM Token obtained:', this.token?.substring(0, 20) + '...');
+            const registrationErrorListener = PushNotifications.addListener('registrationError', (error) => {
+                console.error('Push registration error:', error);
 
-            // Configurar listener para mensajes en foreground
-            this.setupForegroundListener();
+                if (!settled) {
+                    settled = true;
+                    void registrationListener.then((listener) => listener.remove());
+                    void registrationErrorListener.then((listener) => listener.remove());
+                    resolve(null);
+                }
+            });
 
-            this.initialized = true;
-            return this.token;
-        } catch (error) {
-            console.error('Error initializing FCM:', error);
-            return null;
-        }
-    }
+            void PushNotifications.register().catch((error) => {
+                console.error('Push registration failed:', error);
 
-    // Configurar listener para mensajes cuando la app está en primer plano
-    private setupForegroundListener() {
-        if (!this.messaging) return;
-
-        onMessage(this.messaging, (payload: MessagePayload) => {
-            console.log('Foreground message received:', payload);
-
-            // Mostrar notificación nativa si tenemos permiso
-            if (Notification.permission === 'granted' && payload.notification) {
-                const { title, body, icon } = payload.notification;
-                new Notification(title || 'SIG Agro', {
-                    body: body || '',
-                    icon: icon || '/logo-sig-agro.png',
-                    badge: '/logo-sig-agro.png',
-                    data: payload.data,
-                });
-            }
-
-            // Disparar evento personalizado para que los componentes puedan reaccionar
-            window.dispatchEvent(new CustomEvent('fcm-message', { detail: payload }));
+                if (!settled) {
+                    settled = true;
+                    void registrationListener.then((listener) => listener.remove());
+                    void registrationErrorListener.then((listener) => listener.remove());
+                    resolve(null);
+                }
+            });
         });
     }
 
-    // Obtener token actual
     getToken(): string | null {
         return this.token;
     }
 
-    // Guardar token en el backend
     async saveTokenToServer(userId: string): Promise<boolean> {
         if (!this.token) {
             console.warn('No FCM token available');
@@ -123,7 +138,7 @@ class FCMService {
                 body: JSON.stringify({
                     token: this.token,
                     userId,
-                    platform: 'web',
+                    platform: Capacitor.getPlatform() === 'ios' ? 'ios' : 'android',
                     deviceId: this.getDeviceId(),
                 }),
             });
@@ -135,17 +150,6 @@ class FCMService {
         }
     }
 
-    // Generar ID de dispositivo único
-    private getDeviceId(): string {
-        let deviceId = localStorage.getItem('fcm_device_id');
-        if (!deviceId) {
-            deviceId = 'web_' + Math.random().toString(36).substring(2, 15);
-            localStorage.setItem('fcm_device_id', deviceId);
-        }
-        return deviceId;
-    }
-
-    // Enviar notificación a través del backend
     async sendNotification(
         targetUserId: string,
         type: NotificationType,
@@ -169,7 +173,6 @@ class FCMService {
         }
     }
 
-    // Actualizar preferencias de notificaciones
     async updatePreferences(preferences: Partial<NotificationPreferences>): Promise<boolean> {
         try {
             const response = await fetch('/api/notifications/preferences', {
@@ -185,9 +188,35 @@ class FCMService {
         }
     }
 
-    // Mostrar notificación local (sin servidor)
-    showLocalNotification(title: string, options?: NotificationOptions): void {
-        if (Notification.permission === 'granted') {
+    onMessage(callback: (notification: PushNotificationSchema) => void): void {
+        if (!Capacitor.isNativePlatform()) {
+            return;
+        }
+
+        void PushNotifications.addListener('pushNotificationReceived', callback);
+    }
+
+    async showLocalNotification(title: string, options?: NotificationOptions): Promise<void> {
+        if (Capacitor.isNativePlatform()) {
+            const permissions = await LocalNotifications.requestPermissions();
+            if (permissions.display !== 'granted') {
+                return;
+            }
+
+            await LocalNotifications.schedule({
+                notifications: [
+                    {
+                        id: Date.now(),
+                        title,
+                        body: options?.body ?? '',
+                        extra: options?.data,
+                    },
+                ],
+            });
+            return;
+        }
+
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
             new Notification(title, {
                 icon: '/logo-sig-agro.png',
                 badge: '/logo-sig-agro.png',
@@ -195,12 +224,40 @@ class FCMService {
             });
         }
     }
+
+    private getDeviceId(): string {
+        if (typeof localStorage === 'undefined') {
+            return `native_${Capacitor.getPlatform()}`;
+        }
+
+        let deviceId = localStorage.getItem('fcm_device_id');
+        if (!deviceId) {
+            const prefix = Capacitor.isNativePlatform() ? Capacitor.getPlatform() : 'web';
+            deviceId = `${prefix}_${Math.random().toString(36).substring(2, 15)}`;
+            localStorage.setItem('fcm_device_id', deviceId);
+        }
+        return deviceId;
+    }
+
+    private registerNativeListeners() {
+        this.listenersRegistered = true;
+
+        void PushNotifications.addListener('pushNotificationReceived', (notification: PushNotificationSchema) => {
+            if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('fcm-message', { detail: notification }));
+            }
+        });
+
+        void PushNotifications.addListener('pushNotificationActionPerformed', (action: ActionPerformed) => {
+            if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('fcm-action', { detail: action }));
+            }
+        });
+    }
 }
 
-// Exportar instancia singleton
 export const fcmService = new FCMService();
 
-// Hooks helper para componentes
 export function useFCMStatus() {
     return {
         isSupported: fcmService.isSupported(),

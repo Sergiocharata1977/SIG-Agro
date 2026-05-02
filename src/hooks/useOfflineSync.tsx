@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useCapacitorNetwork } from '@/hooks/useCapacitorNetwork';
 import {
     initDB,
     getPendingSync,
@@ -11,7 +12,6 @@ import {
 
 interface OfflineStatus {
     isOnline: boolean;
-    isServiceWorkerReady: boolean;
     pendingCount: number;
     isSyncing: boolean;
     lastSyncTime: Date | null;
@@ -20,135 +20,53 @@ interface OfflineStatus {
 interface UseOfflineSyncReturn {
     status: OfflineStatus;
     syncNow: () => Promise<void>;
-    registerServiceWorker: () => Promise<void>;
 }
 
 /**
- * Hook para manejar el estado offline y sincronización
+ * Hook para manejar el estado offline y sincronizacion.
  */
 export function useOfflineSync(): UseOfflineSyncReturn {
+    const { isOnline } = useCapacitorNetwork();
     const [status, setStatus] = useState<OfflineStatus>({
-        isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
-        isServiceWorkerReady: false,
+        isOnline,
         pendingCount: 0,
         isSyncing: false,
         lastSyncTime: null
     });
 
-    // Detectar cambios de conectividad
     useEffect(() => {
-        const handleOnline = () => {
-            console.log('[Offline] Conexión restaurada');
-            setStatus(prev => ({ ...prev, isOnline: true }));
-            // Trigger sync automático
-            syncNow();
-        };
+        setStatus((prev) => {
+            if (prev.isOnline === isOnline) {
+                return prev;
+            }
 
-        const handleOffline = () => {
-            console.log('[Offline] Conexión perdida');
-            setStatus(prev => ({ ...prev, isOnline: false }));
-        };
+            console.log(isOnline ? '[Offline] Conexion restaurada' : '[Offline] Conexion perdida');
+            return { ...prev, isOnline };
+        });
+    }, [isOnline]);
 
-        window.addEventListener('online', handleOnline);
-        window.addEventListener('offline', handleOffline);
-
-        return () => {
-            window.removeEventListener('online', handleOnline);
-            window.removeEventListener('offline', handleOffline);
-        };
-    }, []);
-
-    // Inicializar IndexedDB y cargar estado
     useEffect(() => {
         const init = async () => {
             try {
                 await initDB();
                 const pending = await getPendingSync();
-                setStatus(prev => ({ ...prev, pendingCount: pending.length }));
+                setStatus((prev) => ({ ...prev, pendingCount: pending.length }));
             } catch (error) {
                 console.error('[Offline] Error inicializando IndexedDB:', error);
             }
         };
 
-        init();
+        void init();
     }, []);
 
-    // Escuchar mensajes del Service Worker
-    useEffect(() => {
-        const handleSWMessage = (event: MessageEvent) => {
-            if (event.data?.type === 'SYNC_STATUS') {
-                if (event.data.status === 'syncing') {
-                    setStatus(prev => ({ ...prev, isSyncing: true }));
-                } else if (event.data.status === 'online') {
-                    setStatus(prev => ({
-                        ...prev,
-                        isSyncing: false,
-                        lastSyncTime: new Date()
-                    }));
-                    // Refrescar contador de pendientes
-                    updatePendingCount();
-                }
-            }
-        };
-
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.addEventListener('message', handleSWMessage);
-        }
-
-        return () => {
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.removeEventListener('message', handleSWMessage);
-            }
-        };
-    }, []);
-
-    const updatePendingCount = async () => {
-        try {
-            const pending = await getPendingSync();
-            setStatus(prev => ({ ...prev, pendingCount: pending.length }));
-        } catch (error) {
-            console.error('[Offline] Error actualizando pendientes:', error);
-        }
-    };
-
-    /**
-     * Registrar Service Worker
-     */
-    const registerServiceWorker = useCallback(async () => {
-        if (!('serviceWorker' in navigator)) {
-            console.warn('[Offline] Service Workers no soportados');
-            return;
-        }
-
-        try {
-            const registration = await navigator.serviceWorker.register('/sw.js', {
-                scope: '/'
-            });
-
-            console.log('[Offline] Service Worker registrado:', registration.scope);
-            setStatus(prev => ({ ...prev, isServiceWorkerReady: true }));
-
-            // Verificar actualizaciones
-            registration.addEventListener('updatefound', () => {
-                console.log('[Offline] Nueva versión del Service Worker encontrada');
-            });
-
-        } catch (error) {
-            console.error('[Offline] Error registrando Service Worker:', error);
-        }
-    }, []);
-
-    /**
-     * Sincronizar datos pendientes
-     */
     const syncNow = useCallback(async () => {
-        if (!status.isOnline) {
-            console.log('[Offline] No hay conexión, sync pospuesto');
+        if (!isOnline) {
+            console.log('[Offline] No hay conexion, sync pospuesto');
             return;
         }
 
-        setStatus(prev => ({ ...prev, isSyncing: true }));
-        console.log('[Offline] Iniciando sincronización...');
+        setStatus((prev) => ({ ...prev, isSyncing: true }));
+        console.log('[Offline] Iniciando sincronizacion...');
 
         try {
             const pendingItems = await getPendingSync();
@@ -176,40 +94,42 @@ export function useOfflineSync(): UseOfflineSyncReturn {
 
             console.log(`[Offline] Sync completo: ${synced} exitosos, ${failed} fallidos`);
 
-            setStatus(prev => ({
+            setStatus((prev) => ({
                 ...prev,
                 isSyncing: false,
                 pendingCount: failed,
                 lastSyncTime: new Date()
             }));
-
         } catch (error) {
-            console.error('[Offline] Error en sincronización:', error);
-            setStatus(prev => ({ ...prev, isSyncing: false }));
+            console.error('[Offline] Error en sincronizacion:', error);
+            setStatus((prev) => ({ ...prev, isSyncing: false }));
         }
-    }, [status.isOnline]);
+    }, [isOnline]);
+
+    useEffect(() => {
+        if (isOnline) {
+            void syncNow();
+        }
+    }, [isOnline, syncNow]);
 
     return {
         status,
-        syncNow,
-        registerServiceWorker
+        syncNow
     };
 }
 
 /**
- * Sincronizar un item individual al servidor
+ * Sincronizar un item individual al servidor.
  */
 async function syncItem(item: PendingSyncItem): Promise<boolean> {
-    // Limitar reintentos
     if (item.retries >= 5) {
-        console.warn('[Offline] Item excedió máximo de reintentos:', item);
+        console.warn('[Offline] Item excedio maximo de reintentos:', item);
         return false;
     }
 
     try {
         const response = await fetch(item.endpoint, {
-            method: item.action === 'create' ? 'POST' :
-                item.action === 'update' ? 'PUT' : 'DELETE',
+            method: item.action === 'create' ? 'POST' : item.action === 'update' ? 'PUT' : 'DELETE',
             headers: {
                 'Content-Type': 'application/json'
             },
@@ -228,10 +148,6 @@ async function syncItem(item: PendingSyncItem): Promise<boolean> {
     }
 }
 
-// ============================================
-// COMPONENTE DE INDICADOR OFFLINE
-// ============================================
-
 export function OfflineIndicator() {
     const { status } = useOfflineSync();
 
@@ -240,22 +156,23 @@ export function OfflineIndicator() {
     }
 
     return (
-        <div className={`fixed bottom-4 right-4 px-4 py-2 rounded-full shadow-lg text-sm font-medium flex items-center gap-2 z-50 ${status.isOnline
-                ? 'bg-amber-100 text-amber-800'
-                : 'bg-red-100 text-red-800'
-            }`}>
+        <div
+            className={`fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium shadow-lg ${
+                status.isOnline ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'
+            }`}
+        >
             {!status.isOnline && (
                 <>
-                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                    Sin conexión
+                    <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                    Sin conexion
                 </>
             )}
             {status.isOnline && status.pendingCount > 0 && (
                 <>
                     {status.isSyncing ? (
-                        <span className="w-4 h-4 border-2 border-amber-600 border-t-transparent rounded-full animate-spin"></span>
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-amber-600 border-t-transparent" />
                     ) : (
-                        <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                        <span className="h-2 w-2 rounded-full bg-amber-500" />
                     )}
                     {status.isSyncing ? 'Sincronizando...' : `${status.pendingCount} pendientes`}
                 </>
