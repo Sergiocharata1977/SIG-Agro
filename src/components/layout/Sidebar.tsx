@@ -78,6 +78,13 @@ type ModuleIndicator = {
   detail: string;
 };
 
+type ControlSection = {
+  key: string;
+  title: string;
+  icon: ComponentType<{ className?: string }>;
+  items: MenuNode[];
+};
+
 type DashboardTheme = 'green' | 'blue' | 'black';
 
 const DASHBOARD_THEME_STORAGE_KEY = 'sigagro-dashboard-theme';
@@ -461,6 +468,12 @@ export default function Sidebar() {
   const FinanceHubIcon = financeHubGroup?.icon ?? Landmark;
   const operationalGroups = filteredGroups.filter((g) => opKeys.has(g.key));
   const controlGroups = filteredGroups.filter((g) => !opKeys.has(g.key) && !megaMenuKeys.has(g.key) && !popupMenuKeys.has(g.key));
+  const controlSections: ControlSection[] = controlGroups.map((group) => ({
+    key: group.key,
+    title: group.title,
+    icon: group.icon,
+    items: group.items,
+  }));
   const controlHubGroup = controlGroups.length
     ? {
         key: 'control-hub',
@@ -635,6 +648,165 @@ export default function Sidebar() {
                   <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Lectura recomendada</div>
                   <div className="mt-3 text-base leading-8 text-slate-700">
                     {getHubInsightCopy(group.key)}
+                  </div>
+                </div>
+              </aside>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  };
+
+  const renderControlHubPanel = () => {
+    if (!controlHubOpen || !controlHubGroup) return null;
+
+    const accent = getHubAccentClasses(controlHubGroup.key);
+
+    return (
+      <>
+        <div className="fixed inset-0 z-[540] hidden backdrop-blur-[3px] md:block" style={{ background: 'var(--dashboard-overlay)' }} onClick={() => setControlHubOpen(false)} />
+        <div className="absolute left-0 right-0 top-[calc(100%+12px)] z-[550] md:fixed md:left-[calc(20rem+16px)] md:right-auto md:top-24 md:max-h-[calc(100vh-7rem)] md:w-[1040px] md:overflow-y-auto">
+          <div className="overflow-hidden rounded-[32px] shadow-[0_32px_96px_rgba(10,21,16,0.16)]" style={{ border: '1px solid var(--dashboard-sidebar-border)', background: 'var(--dashboard-popup-bg)' }}>
+            <div className={`flex items-start justify-between gap-4 bg-gradient-to-br ${accent.header} px-7 py-6`} style={{ color: 'var(--dashboard-accent-contrast)' }}>
+              <div className="max-w-3xl">
+                <div className="flex items-center gap-3" style={{ color: 'color-mix(in srgb, var(--dashboard-accent-contrast) 82%, transparent)' }}>
+                  <div className={`grid h-10 w-10 place-items-center rounded-2xl ${accent.headerChip}`}>
+                    <Settings className="h-5 w-5" />
+                  </div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.26em]">Centro de control</p>
+                </div>
+                <h3 className="mt-4 text-3xl font-semibold tracking-[-0.03em]">Configuraciones e informes</h3>
+                <p className="mt-3 max-w-3xl text-base leading-8" style={{ color: 'color-mix(in srgb, var(--dashboard-accent-contrast) 76%, transparent)' }}>
+                  Reportes, monitor ISO y configuracion reunidos en un mismo popup, pero agrupados por bloque para lectura rapida.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setControlHubOpen(false)}
+                className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border transition hover:bg-white/60"
+                style={{ borderColor: 'rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.12)' }}
+                aria-label="Cerrar panel de configuraciones e informes"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="grid md:grid-cols-[minmax(0,1.35fr)_320px]">
+              <section className="px-6 py-6 md:px-7" style={{ background: 'var(--dashboard-popup-bg)' }}>
+                <div className="mb-5">
+                  <h4 className="text-xl font-semibold tracking-[-0.02em] text-slate-950">Accesos agrupados</h4>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                    Cada bloque conserva su agrupacion original para que reportes, documentacion y configuracion no queden mezclados.
+                  </p>
+                </div>
+
+                <div className="grid gap-5 md:grid-cols-2">
+                  {controlSections.map((section) => {
+                    const SectionIcon = section.icon;
+                    return (
+                      <article
+                        key={section.key}
+                        className={`rounded-[28px] border p-5 shadow-[0_16px_34px_rgba(15,23,42,0.06)] ${
+                          section.key === 'config' ? 'md:col-span-2 md:max-w-[320px]' : ''
+                        }`}
+                        style={{ borderColor: 'var(--dashboard-sidebar-border)', background: 'white' }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`grid h-11 w-11 place-items-center rounded-2xl ${accent.cardChip}`}>
+                            <SectionIcon className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <h5 className="text-base font-semibold tracking-[-0.02em] text-slate-950">{section.title}</h5>
+                            <p className="mt-1 text-xs leading-5 text-slate-500">{describeGroup(section.key)}</p>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 space-y-2">
+                          {section.items.map((item) => {
+                            const Icon = item.icon;
+                            const content = (
+                              <>
+                                <Icon className="h-4 w-4" />
+                                <span className="flex-1">{item.label}</span>
+                                <ChevronRight className="h-4 w-4 text-slate-400" />
+                              </>
+                            );
+
+                            const cls = `flex items-center gap-3 rounded-2xl border px-3 py-3 text-sm transition ${
+                              item.active
+                                ? 'border-slate-900 bg-slate-50 shadow-sm'
+                                : 'border-slate-200 bg-white hover:-translate-y-0.5 hover:border-slate-300'
+                            }`;
+
+                            if (item.disabled || !item.href) {
+                              return (
+                                <div key={`${section.key}-${item.label}`} className={`${cls} cursor-not-allowed opacity-70`}>
+                                  {content}
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <Link
+                                key={`${section.key}-${item.href}-${item.label}`}
+                                href={item.href}
+                                onClick={() => {
+                                  setControlHubOpen(false);
+                                  setMobileOpen(false);
+                                }}
+                                className={cls}
+                              >
+                                {content}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-6 flex items-center justify-between rounded-[24px] border border-slate-200 bg-white px-5 py-4 text-sm text-slate-600">
+                  <div className="flex items-center gap-3">
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: 'var(--dashboard-accent)' }} />
+                    <span>Sistema en linea</span>
+                  </div>
+                  <div className="text-slate-500">{getHubFooterCopy(controlHubGroup.key)}</div>
+                </div>
+              </section>
+
+              <aside className={`border-l border-slate-200 px-6 py-6 md:px-7 ${accent.rail}`}>
+                <div className="mb-5">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500">Indicadores clave</p>
+                  <h4 className="mt-2 text-xl font-semibold tracking-[-0.02em] text-slate-950">Pulso del modulo</h4>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    Estado ejecutivo para ver reportes, cumplimiento documental y ajustes administrativos.
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  {getControlIndicators().map((indicator, index) => (
+                    <div key={indicator.label} className="rounded-[24px] border border-slate-200 bg-white/88 p-4 shadow-[0_14px_30px_rgba(15,23,42,0.06)] backdrop-blur-sm">
+                      <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500">{indicator.label}</div>
+                      <div className="mt-2 flex items-end justify-between gap-3">
+                        <div className="text-3xl font-semibold tracking-[-0.03em] text-slate-950">{indicator.value}</div>
+                        <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] ${accent.metricTag}`}>
+                          {getIndicatorBadge(controlHubGroup.key, index)}
+                        </span>
+                      </div>
+                      <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
+                        <div className={`h-full rounded-full ${accent.progress}`} style={{ width: getIndicatorProgress(controlHubGroup.key, index) }} />
+                      </div>
+                      <div className="mt-3 text-sm leading-6 text-slate-600">{indicator.detail}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className={`mt-5 rounded-[24px] border-l-4 bg-white/86 p-5 shadow-[0_14px_30px_rgba(15,23,42,0.05)] ${accent.callout}`}>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Lectura recomendada</div>
+                  <div className="mt-3 text-base leading-8 text-slate-700">
+                    {getHubInsightCopy(controlHubGroup.key)}
                   </div>
                 </div>
               </aside>
@@ -1207,19 +1379,7 @@ export default function Sidebar() {
                         </button>
 
                         {controlHubOpen &&
-                          renderHubPanel({
-                            open: controlHubOpen,
-                            onClose: () => setControlHubOpen(false),
-                            widthClass: 'md:w-[1040px]',
-                            group: controlHubGroup,
-                            HubIcon: Settings,
-                            eyebrow: 'Centro de control',
-                            title: 'Configuraciones e informes',
-                            description: 'Unifica reportes, documentacion ISO y ajustes operativos en una sola vista de acceso rapido.',
-                            summaryTitle: 'Gestion centralizada',
-                            summaryDescription: 'Todos los accesos de reportes, documentacion y configuracion quedaron reunidos en un unico popup, sin desplegables intermedios.',
-                            indicators: getControlIndicators(),
-                          })}
+                          renderControlHubPanel()}
                       </div>
                     ) : (
                       <button
@@ -1284,6 +1444,12 @@ function describeGroup(groupKey: string) {
       return 'Territorio, cartografia, lotes y capas satelitales operativas.';
     case 'campanias':
       return 'Planificacion productiva, cuaderno y seguimiento de rendimientos.';
+    case 'reportes':
+      return 'Indicadores economicos, metricas y reportes GIS en un mismo bloque.';
+    case 'docs':
+      return 'Documentacion ISO y auditoria agrupadas para seguimiento normativo.';
+    case 'config':
+      return 'Parametros, WhatsApp, plugins y ajustes operativos del sistema.';
     default:
       return 'Accesos principales del sistema.';
   }
@@ -1452,6 +1618,8 @@ function getHubFooterCopy(groupKey: string) {
       return 'Seguimiento logistico sincronizado';
     case 'finanzas':
       return 'Conciliacion financiera al dia';
+    case 'control-hub':
+      return 'Control documental y administrativo consolidado';
     default:
       return 'Actualizacion continua';
   }
@@ -1463,6 +1631,7 @@ function getIndicatorBadge(groupKey: string, index: number) {
     'insumos-stock': ['reposicion', 'abierto', 'balance'],
     'granos-silos': ['capacidad', 'flujo', 'transito'],
     finanzas: ['proyeccion', 'agenda', 'margen'],
+    'control-hub': ['reportes', 'iso', 'ajustes'],
   };
 
   return badges[groupKey]?.[index] ?? 'estado';
@@ -1474,6 +1643,7 @@ function getIndicatorProgress(groupKey: string, index: number) {
     'insumos-stock': ['48%', '63%', '84%'],
     'granos-silos': ['61%', '74%', '46%'],
     finanzas: ['79%', '38%', '65%'],
+    'control-hub': ['84%', '63%', '91%'],
   };
 
   return progress[groupKey]?.[index] ?? '60%';
@@ -1489,6 +1659,8 @@ function getHubInsightCopy(groupKey: string) {
       return 'El frente logistico muestra buena capacidad disponible, pero conviene acelerar entregas abiertas para evitar cuello de salida.';
     case 'finanzas':
       return 'La lectura financiera es estable; el siguiente foco deberia estar en pagos proximos y seguimiento del margen ponderado.';
+    case 'control-hub':
+      return 'La secuencia recomendada es revisar reportes, validar documentacion ISO y luego entrar en configuracion para mantener orden operativo.';
     default:
       return 'El modulo presenta informacion suficiente para una accion operativa inmediata.';
   }

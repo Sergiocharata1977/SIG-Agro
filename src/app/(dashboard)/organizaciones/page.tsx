@@ -1,10 +1,10 @@
 'use client';
 
-import { FormEvent, useMemo, useState } from 'react';
-import { Building2, Pencil, Plus, Power, RotateCcw } from 'lucide-react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { Building2, Pencil, Plus, Power, RotateCcw, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Organization } from '@/types/organization';
-import { actualizarOrganizacion } from '@/services/organizations';
+import { Organization, OrganizationMember, ROLE_CONFIG, UserRole } from '@/types/organization';
+import { actualizarOrganizacion, obtenerMiembrosOrganizacion } from '@/services/organizations';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PageShell } from '@/components/layout/PageShell';
 
@@ -26,16 +26,34 @@ const EMPTY_FORM: OrgFormState = {
   phone: '',
 };
 
+type MemberFormState = {
+  displayName: string;
+  email: string;
+  role: UserRole;
+  password: string;
+};
+
+const EMPTY_MEMBER_FORM: MemberFormState = {
+  displayName: '',
+  email: '',
+  role: 'operator',
+  password: '',
+};
+
 export default function OrganizacionesPage() {
-  const { user, organizationId, organizations, setActiveOrganization, firebaseUser } = useAuth();
+  const { user, organization, organizationId, organizations, setActiveOrganization, firebaseUser } = useAuth();
 
   const [form, setForm] = useState<OrgFormState>(EMPTY_FORM);
+  const [memberForm, setMemberForm] = useState<MemberFormState>(EMPTY_MEMBER_FORM);
   const [editing, setEditing] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(false);
+  const [membersLoading, setMembersLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [okMessage, setOkMessage] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [memberDialogOpen, setMemberDialogOpen] = useState(false);
+  const [members, setMembers] = useState<OrganizationMember[]>([]);
 
   const canManage = user?.role !== 'super_admin';
 
@@ -57,6 +75,38 @@ export default function OrganizacionesPage() {
     return { total, active, suspended };
   }, [sortedOrganizations]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!organizationId) {
+      setMembers([]);
+      return;
+    }
+
+    setMembersLoading(true);
+    obtenerMiembrosOrganizacion(organizationId)
+      .then((data) => {
+        if (!cancelled) {
+          setMembers(data.sort((a, b) => a.displayName.localeCompare(b.displayName)));
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        if (!cancelled) {
+          setMembers([]);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setMembersLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [organizationId]);
+
   if (!user) {
     return <div className="p-6 text-slate-600">Cargando usuario...</div>;
   }
@@ -75,6 +125,11 @@ export default function OrganizacionesPage() {
     setForm(EMPTY_FORM);
     setEditing(null);
     setDialogOpen(false);
+  };
+
+  const resetMemberForm = () => {
+    setMemberForm(EMPTY_MEMBER_FORM);
+    setMemberDialogOpen(false);
   };
 
   const handleCreateOrUpdate = async (e: FormEvent) => {
@@ -167,6 +222,69 @@ export default function OrganizacionesPage() {
     } catch (err) {
       console.error(err);
       setError('No se pudo cambiar el estado');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const reloadMembers = async () => {
+    if (!organizationId) return;
+    setMembersLoading(true);
+    try {
+      const data = await obtenerMiembrosOrganizacion(organizationId);
+      setMembers(data.sort((a, b) => a.displayName.localeCompare(b.displayName)));
+    } finally {
+      setMembersLoading(false);
+    }
+  };
+
+  const handleCreateMember = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setOkMessage(null);
+
+    if (!firebaseUser || !organizationId) {
+      setError('Selecciona una organizacion activa para dar de alta usuarios.');
+      return;
+    }
+
+    if (!memberForm.displayName.trim() || !memberForm.email.trim() || !memberForm.role) {
+      setError('Nombre, email y rol son obligatorios.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const token = await firebaseUser.getIdToken();
+      const response = await fetch('/api/producer/organization-members', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          organizationId,
+          displayName: memberForm.displayName.trim(),
+          email: memberForm.email.trim(),
+          role: memberForm.role,
+          password: memberForm.password.trim() || undefined,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || data.detail || 'No se pudo crear el usuario');
+      }
+
+      setOkMessage(
+        data.created
+          ? 'Usuario creado y vinculado a la organizacion.'
+          : 'Usuario existente vinculado a la organizacion.'
+      );
+      resetMemberForm();
+      await reloadMembers();
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : 'No se pudo guardar el usuario.');
     } finally {
       setLoading(false);
     }
@@ -286,6 +404,82 @@ export default function OrganizacionesPage() {
         </div>
       </section>
 
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="flex items-center gap-2 text-slate-900">
+              <Users className="h-5 w-5" />
+              <h2 className="text-xl font-semibold">Usuarios de la organizacion</h2>
+            </div>
+            <p className="mt-1 text-sm text-slate-600">
+              {organizationId
+                ? `Alta y administracion de miembros para ${organization?.name || 'la organizacion activa'}.`
+                : 'Selecciona una organizacion para administrar sus usuarios.'}
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              setMemberForm(EMPTY_MEMBER_FORM);
+              setMemberDialogOpen(true);
+            }}
+            disabled={!organizationId}
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 hover:bg-slate-50 disabled:opacity-50"
+          >
+            <Plus className="w-4 h-4" />
+            Nuevo usuario
+          </button>
+        </div>
+
+        <div className="overflow-x-auto rounded-xl border border-slate-200">
+          <table className="min-w-full text-sm">
+            <thead className="bg-slate-50 text-slate-700">
+              <tr>
+                <th className="px-4 py-3 text-left font-semibold">Nombre</th>
+                <th className="px-4 py-3 text-left font-semibold">Email</th>
+                <th className="px-4 py-3 text-left font-semibold">Rol</th>
+                <th className="px-4 py-3 text-left font-semibold">Estado</th>
+                <th className="px-4 py-3 text-left font-semibold">Alta</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 bg-white">
+              {members.map((member) => (
+                <tr key={member.userId}>
+                  <td className="px-4 py-3 font-medium text-slate-900">{member.displayName}</td>
+                  <td className="px-4 py-3 text-slate-700">{member.email}</td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${ROLE_CONFIG[member.role].color}`}>
+                      {ROLE_CONFIG[member.role].label}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${member.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'}`}>
+                      {member.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-slate-600">{member.joinedAt.toLocaleDateString('es-AR')}</td>
+                </tr>
+              ))}
+
+              {!membersLoading && members.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
+                    {organizationId ? 'Todavia no hay usuarios cargados para esta organizacion.' : 'Selecciona una organizacion para ver sus usuarios.'}
+                  </td>
+                </tr>
+              )}
+
+              {membersLoading && (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
+                    Cargando usuarios...
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -311,6 +505,55 @@ export default function OrganizacionesPage() {
                 type="button"
                 onClick={resetForm}
                 className="rounded-xl border border-slate-300 py-2.5 px-4 text-sm text-slate-700 hover:bg-slate-50"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={memberDialogOpen} onOpenChange={setMemberDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Nuevo usuario para la organizacion</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCreateMember} className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <Input label="Nombre y apellido" value={memberForm.displayName} onChange={(v) => setMemberForm((f) => ({ ...f, displayName: v }))} required />
+            <Input label="Email" type="email" value={memberForm.email} onChange={(v) => setMemberForm((f) => ({ ...f, email: v }))} required />
+            <SelectField
+              label="Rol"
+              value={memberForm.role}
+              onChange={(value) => setMemberForm((f) => ({ ...f, role: value as UserRole }))}
+              options={[
+                { value: 'admin', label: 'Administrador' },
+                { value: 'operator', label: 'Operador' },
+                { value: 'viewer', label: 'Visualizador' },
+              ]}
+            />
+            <Input
+              label="Contrasena temporal"
+              value={memberForm.password}
+              onChange={(v) => setMemberForm((f) => ({ ...f, password: v }))}
+              type="password"
+            />
+
+            <div className="md:col-span-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600">
+              Si el email ya existe, se vincula a la organizacion activa. Si es un usuario nuevo, completa una contrasena temporal de al menos 6 caracteres.
+            </div>
+
+            <div className="md:col-span-2 flex gap-2 pt-2">
+              <button
+                type="submit"
+                disabled={loading}
+                className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+              >
+                {loading ? 'Guardando...' : 'Crear usuario'}
+              </button>
+              <button
+                type="button"
+                onClick={resetMemberForm}
+                className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
               >
                 Cancelar
               </button>
@@ -344,7 +587,7 @@ function Input({
   value: string;
   onChange: (value: string) => void;
   required?: boolean;
-  type?: 'text' | 'email';
+  type?: 'text' | 'email' | 'password';
 }) {
   return (
     <label className="block space-y-1">
@@ -356,6 +599,35 @@ function Input({
         onChange={(e) => onChange(e.target.value)}
         className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-500/30 focus:border-slate-500"
       />
+    </label>
+  );
+}
+
+function SelectField({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: Array<{ value: string; label: string }>;
+}) {
+  return (
+    <label className="block space-y-1">
+      <span className="text-sm text-slate-700">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-500/30"
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
     </label>
   );
 }
