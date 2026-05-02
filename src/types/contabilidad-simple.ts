@@ -90,7 +90,14 @@ export type TipoOperacion =
     | 'entrega_acopiador'    // Entrega a acopiador sin venta
     | 'venta'                // Venta de granos
     | 'cobro'                // Cobro a cliente
-    | 'pago';                // Pago a proveedor
+    | 'pago'                 // Pago a proveedor
+    | 'gasto_general'
+    | 'anticipo_cliente'
+    | 'anticipo_proveedor'
+    | 'cuota_financiacion'
+    | 'transferencia_interna'
+    | 'nota_credito'
+    | 'nota_debito';
 
 export type TipoInsumo = 'semilla' | 'fertilizante' | 'agroquimico' | 'combustible' | 'otro';
 export type MedioPago = 'efectivo' | 'transferencia' | 'cheque';
@@ -235,6 +242,59 @@ export interface DatosPago {
     terceroId: string;
     monto: number;
     medioPago: MedioPago;
+    fecha: Date;
+    observaciones?: string;
+}
+
+export interface DatosGastoGeneral {
+    concepto: string;
+    cuentaGastoId: string;
+    cuentaGastoNombre: string;
+    monto: number;
+    medioPago: MedioPago;
+    terceroId?: string;
+    campaniaId?: string;
+    fecha: Date;
+    observaciones?: string;
+}
+
+export interface DatosAnticipo {
+    terceroId: string;
+    monto: number;
+    medioPago: MedioPago;
+    esCliente: boolean;
+    fecha: Date;
+    observaciones?: string;
+}
+
+export interface DatosCuotaFinanciacion {
+    entidadFinanciera: string;
+    numeroCuota: number;
+    totalCuotas: number;
+    capital: number;
+    interes: number;
+    monto: number;
+    medioPago: MedioPago;
+    fecha: Date;
+    observaciones?: string;
+}
+
+export interface DatosTransferenciaInterna {
+    origen: 'caja' | 'banco';
+    origenId: string;
+    origenNombre: string;
+    destino: 'caja' | 'banco';
+    destinoId: string;
+    destinoNombre: string;
+    monto: number;
+    fecha: Date;
+    observaciones?: string;
+}
+
+export interface DatosNotaCredito {
+    terceroId: string;
+    monto: number;
+    motivo: string;
     fecha: Date;
     observaciones?: string;
 }

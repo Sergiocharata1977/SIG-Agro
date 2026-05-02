@@ -4,6 +4,7 @@ import "./globals.css";
 import CapacitorProvider from "@/components/capacitor/CapacitorProvider";
 import { OfflineToast } from "@/components/capacitor/OfflineToast";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { PluginsProvider } from "@/contexts/PluginsContext";
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
 
@@ -41,8 +42,10 @@ export default async function RootLayout({
         <CapacitorProvider>
           <NextIntlClientProvider messages={messages}>
             <AuthProvider>
-              {children}
-              <OfflineToast />
+              <PluginsProvider>
+                {children}
+                <OfflineToast />
+              </PluginsProvider>
             </AuthProvider>
           </NextIntlClientProvider>
         </CapacitorProvider>

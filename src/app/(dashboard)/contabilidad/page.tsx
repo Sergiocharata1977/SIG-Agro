@@ -13,13 +13,14 @@ import {
   obtenerCuentas,
   tienePlanCuentas,
 } from '@/services/contabilidad';
+import { exportarLibroDiario } from '@/services/exportacion';
 import type { AsientoContable, CuentaContable } from '@/types';
 import { BaseButton, BaseCard, ListTable, Section } from '@/components/design-system';
 import { PageShell } from '@/components/layout/PageShell';
 
 export default function ContabilidadPage() {
   const router = useRouter();
-  const { firebaseUser, loading: authLoading } = useAuth();
+  const { firebaseUser, organization, loading: authLoading } = useAuth();
 
   const [cuentas, setCuentas] = useState<CuentaContable[]>([]);
   const [asientos, setAsientos] = useState<AsientoContable[]>([]);
@@ -72,6 +73,11 @@ export default function ContabilidadPage() {
     }
   }
 
+  function handleExportarLibroDiario() {
+    if (asientos.length === 0) return;
+    exportarLibroDiario(asientos, organization?.name ?? 'Organizacion');
+  }
+
   if (authLoading || loading) {
     return <div className="min-h-screen flex items-center justify-center text-slate-500">Cargando contabilidad...</div>;
   }
@@ -101,10 +107,15 @@ export default function ContabilidadPage() {
       subtitle="Libro diario agricola con resumen ejecutivo, balance y movimientos recientes."
       rightSlot={(
         <>
-          <button className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
+          <BaseButton
+            variant="outline"
+            className="gap-2"
+            onClick={handleExportarLibroDiario}
+            disabled={!asientos.length}
+          >
             <Download className="h-4 w-4" />
             Exportar
-          </button>
+          </BaseButton>
           <Link href="/contabilidad/asiento"><BaseButton>Nuevo asiento</BaseButton></Link>
         </>
       )}
@@ -152,6 +163,17 @@ export default function ContabilidadPage() {
               { header: 'Debe', className: 'text-right', cell: item => `$ ${item.debe.toLocaleString('es-AR')}` },
               { header: 'Haber', className: 'text-right', cell: item => `$ ${item.haber.toLocaleString('es-AR')}` },
               { header: 'Saldo', className: 'text-right', cell: item => `$ ${item.saldo.toLocaleString('es-AR')}` },
+              {
+                header: 'Acciones',
+                cell: item => (
+                  <Link
+                    href={`/contabilidad/mayor?cuenta=${item.cuentaCodigo}`}
+                    className="text-sm font-medium text-emerald-700 hover:text-emerald-800"
+                  >
+                    Ver Mayor
+                  </Link>
+                ),
+              },
             ]}
           />
         </div>

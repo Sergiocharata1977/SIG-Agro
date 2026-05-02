@@ -13,8 +13,11 @@ export type {
 } from './campania';
 export * from './contabilidad';
 export * from './contabilidad-simple';
+export * from './centros-costo';
+export * from './adjuntos';
 export * from './organization';
 export * from './domain-model';
 export * from './dss-agronomico';
 export * from './integrations';
+export * from './operaciones-comerciales';
 

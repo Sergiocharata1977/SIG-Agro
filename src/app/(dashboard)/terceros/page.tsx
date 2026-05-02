@@ -1,5 +1,6 @@
 ﻿'use client';
 
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import {
   BaseBadge,
@@ -231,11 +232,18 @@ export default function TercerosPage() {
             },
             {
               header: 'Acciones',
-              className: 'w-[120px]',
+              className: 'w-[220px]',
               cell: item => (
-                <BaseButton size="sm" variant="outline" onClick={e => { e.stopPropagation(); abrirDialog(item); }}>
-                  Editar
-                </BaseButton>
+                <div className="flex items-center gap-2">
+                  <Link href={`/terceros/${item.id}`} onClick={e => e.stopPropagation()}>
+                    <BaseButton size="sm" variant="outline">
+                      Ver CC
+                    </BaseButton>
+                  </Link>
+                  <BaseButton size="sm" variant="outline" onClick={e => { e.stopPropagation(); abrirDialog(item); }}>
+                    Editar
+                  </BaseButton>
+                </div>
               ),
             },
           ]}

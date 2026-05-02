@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import {
   LogOut,
   Palette,
+  Puzzle,
   Settings,
   ShieldCheck,
   Users2,
@@ -27,6 +28,12 @@ export default function SuperAdminSidebar() {
       label: 'Design System',
       href: '/super-admin/design-system',
       active: pathname?.startsWith('/super-admin/design-system'),
+    },
+    {
+      icon: Puzzle,
+      label: 'Plugins',
+      href: '/super-admin/plugins',
+      active: pathname?.startsWith('/super-admin/plugins'),
     },
     {
       icon: Settings,

@@ -7,12 +7,17 @@ import { addDoc, collection, Timestamp } from 'firebase/firestore';
 import { db } from '@/firebase/config';
 import {
   AsientoAutomatico,
+  DatosAnticipo,
   DatosAplicacionInsumo,
   DatosCobro,
   DatosCompraInsumo,
   DatosCosecha,
+  DatosCuotaFinanciacion,
   DatosEntregaAcopiador,
+  DatosGastoGeneral,
+  DatosNotaCredito,
   DatosPago,
+  DatosTransferenciaInterna,
   DatosVenta,
   LineaAsientoAuto,
   MedioPago,
@@ -53,7 +58,12 @@ export async function generarAsientoAutomatico(
     | DatosEntregaAcopiador
     | DatosVenta
     | DatosCobro
-    | DatosPago,
+    | DatosPago
+    | DatosGastoGeneral
+    | DatosAnticipo
+    | DatosCuotaFinanciacion
+    | DatosTransferenciaInterna
+    | DatosNotaCredito,
   operacionId: string,
   context?: {
     productorId?: string;
@@ -241,6 +251,90 @@ export async function generarAsientoAutomatico(
         montoProveedor: -d.monto,
         asientoId: operacionId,
       });
+      break;
+    }
+
+    case 'gasto_general': {
+      const d = datos as DatosGastoGeneral;
+      const cuentaCaja = CUENTA_POR_MEDIO_PAGO[d.medioPago];
+      lineas = [
+        { cuentaId: d.cuentaGastoId, cuentaNombre: d.cuentaGastoNombre, debe: d.monto, haber: 0 },
+        { cuentaId: cuentaCaja, cuentaNombre: obtenerNombreCuenta(cuentaCaja), debe: 0, haber: d.monto },
+      ];
+      descripcion = d.concepto;
+      terceroId = d.terceroId;
+      fecha = d.fecha;
+      break;
+    }
+
+    case 'anticipo_cliente': {
+      const d = datos as DatosAnticipo;
+      const cuentaCaja = CUENTA_POR_MEDIO_PAGO[d.medioPago];
+      lineas = [
+        { cuentaId: cuentaCaja, cuentaNombre: obtenerNombreCuenta(cuentaCaja), debe: d.monto, haber: 0 },
+        { cuentaId: '2.1.3', cuentaNombre: 'Anticipos clientes', debe: 0, haber: d.monto },
+      ];
+      descripcion = `Anticipo de cliente - ${d.medioPago}`;
+      terceroId = d.terceroId;
+      fecha = d.fecha;
+      break;
+    }
+
+    case 'anticipo_proveedor': {
+      const d = datos as DatosAnticipo;
+      const cuentaCaja = CUENTA_POR_MEDIO_PAGO[d.medioPago];
+      lineas = [
+        { cuentaId: '1.1.4', cuentaNombre: 'Anticipos proveedores', debe: d.monto, haber: 0 },
+        { cuentaId: cuentaCaja, cuentaNombre: obtenerNombreCuenta(cuentaCaja), debe: 0, haber: d.monto },
+      ];
+      descripcion = `Anticipo a proveedor - ${d.medioPago}`;
+      terceroId = d.terceroId;
+      fecha = d.fecha;
+      break;
+    }
+
+    case 'cuota_financiacion': {
+      const d = datos as DatosCuotaFinanciacion;
+      const cuentaCaja = CUENTA_POR_MEDIO_PAGO[d.medioPago];
+      lineas = [
+        { cuentaId: '3.1.1', cuentaNombre: 'Capital financiacion', debe: d.capital, haber: 0 },
+        { cuentaId: '5.1.4', cuentaNombre: 'Intereses de financiacion', debe: d.interes, haber: 0 },
+        { cuentaId: cuentaCaja, cuentaNombre: obtenerNombreCuenta(cuentaCaja), debe: 0, haber: d.monto },
+      ];
+      descripcion = `Cuota ${d.numeroCuota}/${d.totalCuotas} - ${d.entidadFinanciera}`;
+      fecha = d.fecha;
+      break;
+    }
+
+    case 'transferencia_interna': {
+      const d = datos as DatosTransferenciaInterna;
+      lineas = [];
+      descripcion = `Transferencia interna ${d.origenNombre} a ${d.destinoNombre}`;
+      fecha = d.fecha;
+      break;
+    }
+
+    case 'nota_credito': {
+      const d = datos as DatosNotaCredito;
+      lineas = [
+        { cuentaId: '4.1.1', cuentaNombre: 'Ventas de granos', debe: d.monto, haber: 0 },
+        { cuentaId: '1.1.3', cuentaNombre: 'Clientes', debe: 0, haber: d.monto },
+      ];
+      descripcion = d.motivo;
+      terceroId = d.terceroId;
+      fecha = d.fecha;
+      break;
+    }
+
+    case 'nota_debito': {
+      const d = datos as DatosNotaCredito;
+      lineas = [
+        { cuentaId: '2.1.1', cuentaNombre: 'Proveedores', debe: d.monto, haber: 0 },
+        { cuentaId: '5.1.1', cuentaNombre: 'Compras de insumos', debe: 0, haber: d.monto },
+      ];
+      descripcion = d.motivo;
+      terceroId = d.terceroId;
+      fecha = d.fecha;
       break;
     }
   }

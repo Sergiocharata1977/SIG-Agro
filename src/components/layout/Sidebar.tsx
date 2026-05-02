@@ -117,10 +117,11 @@ export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [megaMenuOpen, setMegaMenuOpen] = useState(false);
-  const [suppliesHubOpen, setSuppliesHubOpen] = useState(false);
-  const [operationsHubOpen, setOperationsHubOpen] = useState(false);
-  const [grainsHubOpen, setGrainsHubOpen] = useState(false);
-  const [financeHubOpen, setFinanceHubOpen] = useState(false);
+  const [gisHubOpen, setGisHubOpen] = useState(false);
+  const [planningHubOpen, setPlanningHubOpen] = useState(false);
+  const [purchasesHubOpen, setPurchasesHubOpen] = useState(false);
+  const [opsStockHubOpen, setOpsStockHubOpen] = useState(false);
+  const [salesHubOpen, setSalesHubOpen] = useState(false);
   const [controlHubOpen, setControlHubOpen] = useState(false);
   const [theme, setTheme] = useState<DashboardTheme>('green');
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
@@ -140,10 +141,11 @@ export default function Sidebar() {
 
   useEffect(() => {
     setMegaMenuOpen(false);
-    setSuppliesHubOpen(false);
-    setOperationsHubOpen(false);
-    setGrainsHubOpen(false);
-    setFinanceHubOpen(false);
+    setGisHubOpen(false);
+    setPlanningHubOpen(false);
+    setPurchasesHubOpen(false);
+    setOpsStockHubOpen(false);
+    setSalesHubOpen(false);
     setControlHubOpen(false);
   }, [pathname]);
 
@@ -244,6 +246,7 @@ export default function Sidebar() {
           pathname === '/dashboard' ||
           pathname?.startsWith('/campos') ||
           pathname?.startsWith('/lotes') ||
+          pathname?.startsWith('/analisis-ia') ||
           false,
         module: 'mapa_gis',
         feature: 'mapa_gis',
@@ -256,79 +259,60 @@ export default function Sidebar() {
         ],
       },
       {
-        key: 'campanias',
-        title: 'Campanias y Cultivos',
-        icon: Sprout,
-        active: pathname?.startsWith('/campanias') || false,
+        key: 'planificacion',
+        title: 'Planificacion de Campana',
+        icon: CalendarDays,
+        active: pathname?.startsWith('/campanias') || pathname?.startsWith('/cuaderno') || pathname?.startsWith('/rentabilidad') || false,
         module: 'campanias',
         feature: 'campanias',
         items: [
-          { icon: CalendarDays, label: 'Campanias', href: '/campanias', active: pathname?.startsWith('/campanias') || false, module: 'campanias', feature: 'campanias' },
+          { icon: CalendarDays, label: 'Campanas', href: '/campanias', active: pathname?.startsWith('/campanias') || false, module: 'campanias', feature: 'campanias' },
           { icon: Sprout, label: 'Cultivos y cuaderno', href: '/cuaderno', active: pathname?.startsWith('/cuaderno') || false, module: 'campanias', feature: 'campanias' },
           { icon: BarChart3, label: 'Rendimientos', href: '/rentabilidad', active: pathname?.startsWith('/rentabilidad') || false, module: 'contabilidad' },
+          { icon: ChartNoAxesCombined, label: 'Resultado economico', module: 'contabilidad', active: false, disabled: true, badge: 'proximamente' },
         ],
       },
       {
-        key: 'insumos-stock',
-        title: 'Insumos y Stock',
-        icon: Package,
-        active: pathname?.startsWith('/operaciones') || false,
+        key: 'compras',
+        title: 'Compras',
+        icon: Receipt,
+        active: false,
         module: 'contabilidad',
         items: [
           { icon: Package, label: 'Insumos', href: '/operaciones', active: pathname?.startsWith('/operaciones') || false, module: 'contabilidad' },
-          { icon: Warehouse, label: 'Depositos', href: '/operaciones', active: false, module: 'contabilidad' },
-          { icon: Receipt, label: 'Compras de insumos', href: '/operaciones', active: false, module: 'contabilidad' },
-          { icon: Boxes, label: 'Stock y movimientos', href: '/operaciones', active: false, module: 'contabilidad' },
+          { icon: Receipt, label: 'Ordenes de compra', href: '/operaciones', active: false, module: 'contabilidad' },
+          { icon: Building2, label: 'Proveedores', href: '/terceros', active: pathname?.startsWith('/terceros') || false, module: 'contabilidad' },
+          { icon: Landmark, label: 'Pagos', href: '/operaciones', active: false, module: 'contabilidad' },
         ],
       },
       {
-        key: 'operaciones-agro',
-        title: 'Operaciones Agricolas',
+        key: 'operaciones-stock',
+        title: 'Gestion Operaciones y Stock',
         icon: Tractor,
-        active: pathname?.startsWith('/operaciones') || false,
+        active: false,
         module: 'contabilidad',
         items: [
           { icon: Sprout, label: 'Siembra', href: '/operaciones', active: false, module: 'contabilidad' },
           { icon: Droplets, label: 'Fertilizacion', href: '/operaciones', active: false, module: 'contabilidad' },
           { icon: FlaskConical, label: 'Aplicaciones', href: '/operaciones', active: false, module: 'contabilidad' },
-          { icon: Fuel, label: 'Combustible', href: '/operaciones', active: false, module: 'contabilidad' },
-          { icon: Tractor, label: 'Mano de obra', href: '/operaciones', active: false, module: 'contabilidad' },
           { icon: Wheat, label: 'Cosecha', href: '/operaciones', active: false, module: 'contabilidad' },
-          { icon: Truck, label: 'Entrega a acopiador', href: '/operaciones', active: false, module: 'contabilidad' },
+          { icon: Warehouse, label: 'Depositos', href: '/operaciones', active: false, module: 'contabilidad' },
+          { icon: Boxes, label: 'Stock y movimientos', href: '/operaciones', active: false, module: 'contabilidad' },
+          { icon: Bot, label: 'Scouting', module: 'contabilidad', active: false, disabled: true, badge: 'proximamente' },
         ],
       },
       {
-        key: 'granos-silos',
-        title: 'Granos y Silos',
-        icon: Warehouse,
-        active: pathname?.startsWith('/operaciones') || false,
+        key: 'ventas-terceros',
+        title: 'Stock Terceros y Ventas',
+        icon: Truck,
+        active: pathname?.startsWith('/contabilidad') || false,
         module: 'contabilidad',
         items: [
-          { icon: Warehouse, label: 'Silos', href: '/operaciones', active: false, module: 'contabilidad' },
-          { icon: Boxes, label: 'Stock de granos', href: '/operaciones', active: false, module: 'contabilidad' },
+          { icon: Warehouse, label: 'Granos en acopiador', href: '/operaciones', active: false, module: 'contabilidad' },
           { icon: Truck, label: 'Entregas', href: '/operaciones', active: false, module: 'contabilidad' },
           { icon: FileText, label: 'Cartas de porte', href: '/operaciones', active: false, module: 'contabilidad' },
-        ],
-      },
-      {
-        key: 'finanzas',
-        title: 'Finanzas',
-        icon: Landmark,
-        active:
-          pathname?.startsWith('/contabilidad') ||
-          pathname?.startsWith('/terceros') ||
-          pathname?.startsWith('/operaciones') ||
-          pathname?.startsWith('/rentabilidad') ||
-          false,
-        module: 'contabilidad',
-        feature: 'contabilidad',
-        items: [
-          { icon: Receipt, label: 'Ventas', href: '/operaciones', active: false, module: 'contabilidad', feature: 'contabilidad' },
-          { icon: Receipt, label: 'Cobranzas', href: '/operaciones', active: false, module: 'contabilidad', feature: 'contabilidad' },
-          { icon: Receipt, label: 'Pagos', href: '/operaciones', active: false, module: 'contabilidad', feature: 'contabilidad' },
-          { icon: Landmark, label: 'Libro diario', href: '/contabilidad', active: pathname?.startsWith('/contabilidad') || false, module: 'contabilidad', feature: 'contabilidad' },
-          { icon: ChartNoAxesCombined, label: 'Balance y rentabilidad', href: '/rentabilidad', active: pathname?.startsWith('/rentabilidad') || false, module: 'contabilidad', feature: 'contabilidad' },
-          { icon: Building2, label: 'Terceros', href: '/terceros', active: pathname?.startsWith('/terceros') || false, module: 'contabilidad', feature: 'contabilidad' },
+          { icon: Receipt, label: 'Ventas', href: '/operaciones', active: false, module: 'contabilidad' },
+          { icon: Landmark, label: 'Cobranzas', href: '/operaciones', active: false, module: 'contabilidad' },
         ],
       },
     ];
@@ -338,11 +322,13 @@ export default function Sidebar() {
         key: 'reportes',
         title: 'Reportes',
         icon: BarChart3,
-        active: pathname?.startsWith('/metricas') || pathname?.startsWith('/rentabilidad') || false,
+        active: pathname?.startsWith('/metricas') || pathname?.startsWith('/rentabilidad') || pathname?.startsWith('/contabilidad') || false,
         module: 'metricas',
         items: [
           { icon: ChartNoAxesCombined, label: 'Rentabilidad por lote', href: '/rentabilidad', active: pathname?.startsWith('/rentabilidad') || false, module: 'contabilidad' },
           { icon: BarChart3, label: 'Panel de metricas', href: '/metricas', active: pathname?.startsWith('/metricas') || false, module: 'metricas' },
+          { icon: Landmark, label: 'Libro diario', href: '/contabilidad', active: pathname?.startsWith('/contabilidad') || false, module: 'contabilidad', feature: 'contabilidad' },
+          { icon: Building2, label: 'Terceros', href: '/terceros', active: pathname?.startsWith('/terceros') || false, module: 'contabilidad', feature: 'contabilidad' },
           { icon: Map, label: 'Reportes GIS', href: '/dashboard', active: false, module: 'mapa_gis' },
         ],
       },
@@ -455,17 +441,19 @@ export default function Sidebar() {
     'contexto-lote',
   ]);
 
-  const megaMenuKeys = new Set(['panel', 'gis', 'campanias']);
-  const popupMenuKeys = new Set(['insumos-stock', 'operaciones-agro', 'granos-silos', 'finanzas']);
+  const megaMenuKeys = new Set(['panel']);
+  const popupMenuKeys = new Set(['gis', 'planificacion', 'compras', 'operaciones-stock', 'ventas-terceros']);
   const megaMenuGroups = filteredGroups.filter((g) => megaMenuKeys.has(g.key));
-  const suppliesHubGroup = filteredGroups.find((g) => g.key === 'insumos-stock');
-  const SuppliesHubIcon = suppliesHubGroup?.icon ?? Package;
-  const operationsHubGroup = filteredGroups.find((g) => g.key === 'operaciones-agro');
-  const OperationsHubIcon = operationsHubGroup?.icon ?? Tractor;
-  const grainsHubGroup = filteredGroups.find((g) => g.key === 'granos-silos');
-  const GrainsHubIcon = grainsHubGroup?.icon ?? Warehouse;
-  const financeHubGroup = filteredGroups.find((g) => g.key === 'finanzas');
-  const FinanceHubIcon = financeHubGroup?.icon ?? Landmark;
+  const gisHubGroup = filteredGroups.find((g) => g.key === 'gis');
+  const GisHubIcon = gisHubGroup?.icon ?? Map;
+  const planningHubGroup = filteredGroups.find((g) => g.key === 'planificacion');
+  const PlanningHubIcon = planningHubGroup?.icon ?? CalendarDays;
+  const purchasesHubGroup = filteredGroups.find((g) => g.key === 'compras');
+  const PurchasesHubIcon = purchasesHubGroup?.icon ?? Receipt;
+  const opsStockHubGroup = filteredGroups.find((g) => g.key === 'operaciones-stock');
+  const OpsStockHubIcon = opsStockHubGroup?.icon ?? Tractor;
+  const salesHubGroup = filteredGroups.find((g) => g.key === 'ventas-terceros');
+  const SalesHubIcon = salesHubGroup?.icon ?? Truck;
   const operationalGroups = filteredGroups.filter((g) => opKeys.has(g.key));
   const controlGroups = filteredGroups.filter((g) => !opKeys.has(g.key) && !megaMenuKeys.has(g.key) && !popupMenuKeys.has(g.key));
   const controlSections: ControlSection[] = controlGroups.map((group) => ({
@@ -1068,43 +1056,43 @@ export default function Sidebar() {
           </div>
         )}
 
-        {hasActiveOrganization && operationsHubGroup && (
+        {hasActiveOrganization && gisHubGroup && (
           <div className="relative px-3 pt-3">
             {!collapsed ? (
               <div className="relative">
                 <button
                   type="button"
-                  onClick={() => setOperationsHubOpen((prev) => !prev)}
-                  className={`w-full rounded-[24px] border px-4 py-3 text-left transition ${operationsHubOpen || operationsHubGroup.active ? 'shadow-lg' : 'hover:-translate-y-0.5'}`}
-                  style={getHubButtonStyle(operationsHubOpen || operationsHubGroup.active)}
+                  onClick={() => setGisHubOpen((prev) => !prev)}
+                  className={`w-full rounded-[24px] border px-4 py-3 text-left transition ${gisHubOpen || gisHubGroup.active ? 'shadow-lg' : 'hover:-translate-y-0.5'}`}
+                  style={getHubButtonStyle(gisHubOpen || gisHubGroup.active)}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="grid h-10 w-10 place-items-center rounded-2xl" style={getHubChipStyle(operationsHubOpen || operationsHubGroup.active)}>
-                      <Tractor className="h-5 w-5" />
+                    <div className="grid h-10 w-10 place-items-center rounded-2xl" style={getHubChipStyle(gisHubOpen || gisHubGroup.active)}>
+                      <Map className="h-5 w-5" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-semibold">{operationsHubGroup.title}</div>
-                      <div className="mt-0.5 text-xs" style={{ color: operationsHubOpen || operationsHubGroup.active ? 'rgba(255,255,255,0.76)' : 'var(--dashboard-muted)' }}>
-                        Labores, ejecucion y trazabilidad en un solo panel
+                      <div className="text-sm font-semibold">{gisHubGroup.title}</div>
+                      <div className="mt-0.5 text-xs" style={{ color: gisHubOpen || gisHubGroup.active ? 'rgba(255,255,255,0.76)' : 'var(--dashboard-muted)' }}>
+                        Territorio, lotes y analisis satelital
                       </div>
                     </div>
-                    <ChevronRight className={`h-5 w-5 transition-transform ${operationsHubOpen ? 'rotate-90' : ''}`} />
+                    <ChevronRight className={`h-5 w-5 transition-transform ${gisHubOpen ? 'rotate-90' : ''}`} />
                   </div>
                 </button>
 
-                {operationsHubOpen &&
+                {gisHubOpen &&
                   renderHubPanel({
-                    open: operationsHubOpen,
-                    onClose: () => setOperationsHubOpen(false),
+                    open: gisHubOpen,
+                    onClose: () => setGisHubOpen(false),
                     widthClass: 'md:w-[980px]',
-                    group: operationsHubGroup,
-                    HubIcon: OperationsHubIcon,
-                    eyebrow: 'Modulo operativo',
-                    title: 'Operaciones agricolas',
-                    description: 'Registro de labores, control de ejecucion y seguimiento operativo del frente agricola.',
-                    summaryTitle: 'Resumen de operaciones',
-                    summaryDescription: 'Accesos directos a siembra, aplicaciones, cosecha, mano de obra y entregas con trazabilidad operativa.',
-                    indicators: getOperationsIndicators(),
+                    group: gisHubGroup,
+                    HubIcon: GisHubIcon,
+                    eyebrow: 'Modulo territorial',
+                    title: 'Campos y GIS',
+                    description: 'Territorio operativo, cartografia de lotes y analisis satelital del establecimiento.',
+                    summaryTitle: 'Vista territorial',
+                    summaryDescription: 'Mapa GIS, campos, lotes, imagenes satelitales y ambientes productivos en un solo panel.',
+                    indicators: getGisIndicators(),
                   })}
               </div>
             ) : (
@@ -1113,7 +1101,166 @@ export default function Sidebar() {
                 onClick={() => setCollapsed(false)}
                 className="flex w-full items-center justify-center rounded-2xl border px-3 py-2.5 transition"
                 style={{ borderColor: 'var(--dashboard-sidebar-border)', color: 'var(--dashboard-sidebar-text)', background: 'var(--dashboard-sidebar-panel)' }}
-                aria-label="Expandir operaciones agricolas"
+                aria-label="Expandir campos y GIS"
+              >
+                <Map className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        )}
+
+        {hasActiveOrganization && planningHubGroup && (
+          <div className="relative px-3 pt-3">
+            {!collapsed ? (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setPlanningHubOpen((prev) => !prev)}
+                  className={`w-full rounded-[24px] border px-4 py-3 text-left transition ${planningHubOpen || planningHubGroup.active ? 'shadow-lg' : 'hover:-translate-y-0.5'}`}
+                  style={getHubButtonStyle(planningHubOpen || planningHubGroup.active)}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="grid h-10 w-10 place-items-center rounded-2xl" style={getHubChipStyle(planningHubOpen || planningHubGroup.active)}>
+                      <CalendarDays className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-semibold">{planningHubGroup.title}</div>
+                      <div className="mt-0.5 text-xs" style={{ color: planningHubOpen || planningHubGroup.active ? 'rgba(255,255,255,0.76)' : 'var(--dashboard-muted)' }}>
+                        Campanas, cultivos y seguimiento productivo
+                      </div>
+                    </div>
+                    <ChevronRight className={`h-5 w-5 transition-transform ${planningHubOpen ? 'rotate-90' : ''}`} />
+                  </div>
+                </button>
+
+                {planningHubOpen &&
+                  renderHubPanel({
+                    open: planningHubOpen,
+                    onClose: () => setPlanningHubOpen(false),
+                    widthClass: 'md:w-[980px]',
+                    group: planningHubGroup,
+                    HubIcon: PlanningHubIcon,
+                    eyebrow: 'Modulo productivo',
+                    title: 'Planificacion de Campana',
+                    description: 'Campanas, cuaderno de campo, cultivos y seguimiento de rendimientos del establecimiento.',
+                    summaryTitle: 'Vision productiva',
+                    summaryDescription: 'Campanas, cultivos, cuaderno de registros y analisis de rendimiento reunidos en un mismo panel de planificacion.',
+                    indicators: getPlanningIndicators(),
+                  })}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setCollapsed(false)}
+                className="flex w-full items-center justify-center rounded-2xl border px-3 py-2.5 transition"
+                style={{ borderColor: 'var(--dashboard-sidebar-border)', color: 'var(--dashboard-sidebar-text)', background: 'var(--dashboard-sidebar-panel)' }}
+                aria-label="Expandir planificacion de campana"
+              >
+                <CalendarDays className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        )}
+
+        {hasActiveOrganization && purchasesHubGroup && (
+          <div className="relative px-3 pt-3">
+            {!collapsed ? (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setPurchasesHubOpen((prev) => !prev)}
+                  className={`w-full rounded-[24px] border px-4 py-3 text-left transition ${purchasesHubOpen || purchasesHubGroup.active ? 'shadow-lg' : 'hover:-translate-y-0.5'}`}
+                  style={getHubButtonStyle(purchasesHubOpen || purchasesHubGroup.active)}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="grid h-10 w-10 place-items-center rounded-2xl" style={getHubChipStyle(purchasesHubOpen || purchasesHubGroup.active)}>
+                      <Receipt className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-semibold">{purchasesHubGroup.title}</div>
+                      <div className="mt-0.5 text-xs" style={{ color: purchasesHubOpen || purchasesHubGroup.active ? 'rgba(255,255,255,0.76)' : 'var(--dashboard-muted)' }}>
+                        Insumos, ordenes de compra y proveedores
+                      </div>
+                    </div>
+                    <ChevronRight className={`h-5 w-5 transition-transform ${purchasesHubOpen ? 'rotate-90' : ''}`} />
+                  </div>
+                </button>
+
+                {purchasesHubOpen &&
+                  renderHubPanel({
+                    open: purchasesHubOpen,
+                    onClose: () => setPurchasesHubOpen(false),
+                    widthClass: 'md:w-[980px]',
+                    group: purchasesHubGroup,
+                    HubIcon: PurchasesHubIcon,
+                    eyebrow: 'Modulo de compras',
+                    title: 'Compras',
+                    description: 'Gestion de insumos, ordenes de compra, proveedores y pagos del establecimiento.',
+                    summaryTitle: 'Control de compras',
+                    summaryDescription: 'Catalogo de insumos, ordenes abiertas, proveedores vinculados y pagos programados para sostener el ciclo productivo.',
+                    indicators: getPurchasesIndicators(),
+                  })}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setCollapsed(false)}
+                className="flex w-full items-center justify-center rounded-2xl border px-3 py-2.5 transition"
+                style={{ borderColor: 'var(--dashboard-sidebar-border)', color: 'var(--dashboard-sidebar-text)', background: 'var(--dashboard-sidebar-panel)' }}
+                aria-label="Expandir compras"
+              >
+                <Receipt className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        )}
+
+        {hasActiveOrganization && opsStockHubGroup && (
+          <div className="relative px-3 pt-3">
+            {!collapsed ? (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setOpsStockHubOpen((prev) => !prev)}
+                  className={`w-full rounded-[24px] border px-4 py-3 text-left transition ${opsStockHubOpen || opsStockHubGroup.active ? 'shadow-lg' : 'hover:-translate-y-0.5'}`}
+                  style={getHubButtonStyle(opsStockHubOpen || opsStockHubGroup.active)}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="grid h-10 w-10 place-items-center rounded-2xl" style={getHubChipStyle(opsStockHubOpen || opsStockHubGroup.active)}>
+                      <Tractor className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-semibold">{opsStockHubGroup.title}</div>
+                      <div className="mt-0.5 text-xs" style={{ color: opsStockHubOpen || opsStockHubGroup.active ? 'rgba(255,255,255,0.76)' : 'var(--dashboard-muted)' }}>
+                        Labores, ejecucion, depositos y stock
+                      </div>
+                    </div>
+                    <ChevronRight className={`h-5 w-5 transition-transform ${opsStockHubOpen ? 'rotate-90' : ''}`} />
+                  </div>
+                </button>
+
+                {opsStockHubOpen &&
+                  renderHubPanel({
+                    open: opsStockHubOpen,
+                    onClose: () => setOpsStockHubOpen(false),
+                    widthClass: 'md:w-[980px]',
+                    group: opsStockHubGroup,
+                    HubIcon: OpsStockHubIcon,
+                    eyebrow: 'Modulo operativo',
+                    title: 'Gestion Operaciones y Stock',
+                    description: 'Labores agricolas, siembra, aplicaciones, cosecha y control de stock del establecimiento.',
+                    summaryTitle: 'Frente operativo',
+                    summaryDescription: 'Siembra, fertilizacion, aplicaciones, cosecha, depositos y movimientos de stock en una sola vista integrada.',
+                    indicators: getOpsStockIndicators(),
+                  })}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setCollapsed(false)}
+                className="flex w-full items-center justify-center rounded-2xl border px-3 py-2.5 transition"
+                style={{ borderColor: 'var(--dashboard-sidebar-border)', color: 'var(--dashboard-sidebar-text)', background: 'var(--dashboard-sidebar-panel)' }}
+                aria-label="Expandir gestion operaciones y stock"
               >
                 <Tractor className="h-4 w-4" />
               </button>
@@ -1121,43 +1268,43 @@ export default function Sidebar() {
           </div>
         )}
 
-        {hasActiveOrganization && suppliesHubGroup && (
+        {hasActiveOrganization && salesHubGroup && (
           <div className="relative px-3 pt-3">
             {!collapsed ? (
               <div className="relative">
                 <button
                   type="button"
-                  onClick={() => setSuppliesHubOpen((prev) => !prev)}
-                  className={`w-full rounded-[24px] border px-4 py-3 text-left transition ${suppliesHubOpen || suppliesHubGroup.active ? 'shadow-lg' : 'hover:-translate-y-0.5'}`}
-                  style={getHubButtonStyle(suppliesHubOpen || suppliesHubGroup.active)}
+                  onClick={() => setSalesHubOpen((prev) => !prev)}
+                  className={`w-full rounded-[24px] border px-4 py-3 text-left transition ${salesHubOpen || salesHubGroup.active ? 'shadow-lg' : 'hover:-translate-y-0.5'}`}
+                  style={getHubButtonStyle(salesHubOpen || salesHubGroup.active)}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="grid h-10 w-10 place-items-center rounded-2xl" style={getHubChipStyle(suppliesHubOpen || suppliesHubGroup.active)}>
-                      <Package className="h-5 w-5" />
+                    <div className="grid h-10 w-10 place-items-center rounded-2xl" style={getHubChipStyle(salesHubOpen || salesHubGroup.active)}>
+                      <Truck className="h-5 w-5" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-semibold">{suppliesHubGroup.title}</div>
-                      <div className="mt-0.5 text-xs" style={{ color: suppliesHubOpen || suppliesHubGroup.active ? 'rgba(255,255,255,0.76)' : 'var(--dashboard-muted)' }}>
-                        Insumos, depositos, compras y stock en un solo panel
+                      <div className="text-sm font-semibold">{salesHubGroup.title}</div>
+                      <div className="mt-0.5 text-xs" style={{ color: salesHubOpen || salesHubGroup.active ? 'rgba(255,255,255,0.76)' : 'var(--dashboard-muted)' }}>
+                        Granos, entregas, cartas de porte y ventas
                       </div>
                     </div>
-                    <ChevronRight className={`h-5 w-5 transition-transform ${suppliesHubOpen ? 'rotate-90' : ''}`} />
+                    <ChevronRight className={`h-5 w-5 transition-transform ${salesHubOpen ? 'rotate-90' : ''}`} />
                   </div>
                 </button>
 
-                {suppliesHubOpen &&
+                {salesHubOpen &&
                   renderHubPanel({
-                    open: suppliesHubOpen,
-                    onClose: () => setSuppliesHubOpen(false),
+                    open: salesHubOpen,
+                    onClose: () => setSalesHubOpen(false),
                     widthClass: 'md:w-[980px]',
-                    group: suppliesHubGroup,
-                    HubIcon: SuppliesHubIcon,
-                    eyebrow: 'Modulo de abastecimiento',
-                    title: 'Insumos y stock',
-                    description: 'Gestion de abastecimiento, almacenamiento, compras y movimientos de stock del establecimiento.',
-                    summaryTitle: 'Control de abastecimiento',
-                    summaryDescription: 'Vista integrada de inventario, depositos, compras y movimientos para sostener el ritmo operativo.',
-                    indicators: getSuppliesIndicators(),
+                    group: salesHubGroup,
+                    HubIcon: SalesHubIcon,
+                    eyebrow: 'Modulo comercial',
+                    title: 'Stock Terceros y Ventas',
+                    description: 'Granos en acopiador, entregas, cartas de porte, ventas y cobranzas del establecimiento.',
+                    summaryTitle: 'Frente comercial',
+                    summaryDescription: 'Granos acopiados, despachos, documentacion de transporte, facturacion y recupero de cuentas en una sola vista.',
+                    indicators: getSalesIndicators(),
                   })}
               </div>
             ) : (
@@ -1166,115 +1313,9 @@ export default function Sidebar() {
                 onClick={() => setCollapsed(false)}
                 className="flex w-full items-center justify-center rounded-2xl border px-3 py-2.5 transition"
                 style={{ borderColor: 'var(--dashboard-sidebar-border)', color: 'var(--dashboard-sidebar-text)', background: 'var(--dashboard-sidebar-panel)' }}
-                aria-label="Expandir insumos y stock"
+                aria-label="Expandir stock terceros y ventas"
               >
-                <Package className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-        )}
-
-        {hasActiveOrganization && grainsHubGroup && (
-          <div className="relative px-3 pt-3">
-            {!collapsed ? (
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setGrainsHubOpen((prev) => !prev)}
-                  className={`w-full rounded-[24px] border px-4 py-3 text-left transition ${grainsHubOpen || grainsHubGroup.active ? 'shadow-lg' : 'hover:-translate-y-0.5'}`}
-                  style={getHubButtonStyle(grainsHubOpen || grainsHubGroup.active)}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="grid h-10 w-10 place-items-center rounded-2xl" style={getHubChipStyle(grainsHubOpen || grainsHubGroup.active)}>
-                      <Warehouse className="h-5 w-5" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-semibold">{grainsHubGroup.title}</div>
-                      <div className="mt-0.5 text-xs" style={{ color: grainsHubOpen || grainsHubGroup.active ? 'rgba(255,255,255,0.76)' : 'var(--dashboard-muted)' }}>
-                        Silos, stock, entregas y cartas en un solo panel
-                      </div>
-                    </div>
-                    <ChevronRight className={`h-5 w-5 transition-transform ${grainsHubOpen ? 'rotate-90' : ''}`} />
-                  </div>
-                </button>
-
-                {grainsHubOpen &&
-                  renderHubPanel({
-                    open: grainsHubOpen,
-                    onClose: () => setGrainsHubOpen(false),
-                    widthClass: 'md:w-[980px]',
-                    group: grainsHubGroup,
-                    HubIcon: GrainsHubIcon,
-                    eyebrow: 'Modulo logistico',
-                    title: 'Granos y silos',
-                    description: 'Control de acopio, movimientos de grano y documentacion de salida.',
-                    summaryTitle: 'Frente logistico',
-                    summaryDescription: 'Silos, stock, entregas y cartas de porte reunidos en una sola vista operativa para despachos y conservacion.',
-                    indicators: getGrainsIndicators(),
-                  })}
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setCollapsed(false)}
-                className="flex w-full items-center justify-center rounded-2xl border px-3 py-2.5 transition"
-                style={{ borderColor: 'var(--dashboard-sidebar-border)', color: 'var(--dashboard-sidebar-text)', background: 'var(--dashboard-sidebar-panel)' }}
-                aria-label="Expandir granos y silos"
-              >
-                <Warehouse className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-        )}
-
-        {hasActiveOrganization && financeHubGroup && (
-          <div className="relative px-3 pt-3">
-            {!collapsed ? (
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setFinanceHubOpen((prev) => !prev)}
-                  className={`w-full rounded-[24px] border px-4 py-3 text-left transition ${financeHubOpen || financeHubGroup.active ? 'shadow-lg' : 'hover:-translate-y-0.5'}`}
-                  style={getHubButtonStyle(financeHubOpen || financeHubGroup.active)}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="grid h-10 w-10 place-items-center rounded-2xl" style={getHubChipStyle(financeHubOpen || financeHubGroup.active)}>
-                      <Landmark className="h-5 w-5" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-semibold">{financeHubGroup.title}</div>
-                      <div className="mt-0.5 text-xs" style={{ color: financeHubOpen || financeHubGroup.active ? 'rgba(255,255,255,0.76)' : 'var(--dashboard-muted)' }}>
-                        Ventas, cobranzas, pagos y control financiero unificado
-                      </div>
-                    </div>
-                    <ChevronRight className={`h-5 w-5 transition-transform ${financeHubOpen ? 'rotate-90' : ''}`} />
-                  </div>
-                </button>
-
-                {financeHubOpen &&
-                  renderHubPanel({
-                    open: financeHubOpen,
-                    onClose: () => setFinanceHubOpen(false),
-                    widthClass: 'md:w-[1040px]',
-                    group: financeHubGroup,
-                    HubIcon: FinanceHubIcon,
-                    eyebrow: 'Modulo financiero',
-                    title: 'Finanzas',
-                    description: 'Flujo comercial, libro diario, rentabilidad y relacion con terceros en un mismo panel.',
-                    summaryTitle: 'Control financiero',
-                    summaryDescription: 'Ventas, cobranzas, pagos, libro diario, balance y terceros agrupados para lectura ejecutiva y accion inmediata.',
-                    indicators: getFinanceIndicators(),
-                  })}
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setCollapsed(false)}
-                className="flex w-full items-center justify-center rounded-2xl border px-3 py-2.5 transition"
-                style={{ borderColor: 'var(--dashboard-sidebar-border)', color: 'var(--dashboard-sidebar-text)', background: 'var(--dashboard-sidebar-panel)' }}
-                aria-label="Expandir finanzas"
-              >
-                <Landmark className="h-4 w-4" />
+                <Truck className="h-4 w-4" />
               </button>
             )}
           </div>
@@ -1442,10 +1483,16 @@ function describeGroup(groupKey: string) {
       return 'Lectura ejecutiva del establecimiento, indicadores y foco inmediato.';
     case 'gis':
       return 'Territorio, cartografia, lotes y capas satelitales operativas.';
-    case 'campanias':
-      return 'Planificacion productiva, cuaderno y seguimiento de rendimientos.';
+    case 'planificacion':
+      return 'Campanas, cuaderno de campo, cultivos y seguimiento de rendimientos.';
+    case 'compras':
+      return 'Catalogo de insumos, ordenes, proveedores y pagos centralizados.';
+    case 'operaciones-stock':
+      return 'Labores agricolas, ejecucion productiva y control de inventario.';
+    case 'ventas-terceros':
+      return 'Granos en acopiador, entregas, cartas de porte, ventas y cobranzas.';
     case 'reportes':
-      return 'Indicadores economicos, metricas y reportes GIS en un mismo bloque.';
+      return 'Indicadores economicos, metricas, libro diario y reportes GIS.';
     case 'docs':
       return 'Documentacion ISO y auditoria agrupadas para seguimiento normativo.';
     case 'config':
@@ -1455,7 +1502,67 @@ function describeGroup(groupKey: string) {
   }
 }
 
-function getOperationsIndicators() {
+function getGisIndicators() {
+  return [
+    {
+      label: 'Campos activos',
+      value: '04',
+      detail: 'Establecimientos con lotes en seguimiento activo.',
+    },
+    {
+      label: 'Lotes mapeados',
+      value: '18',
+      detail: 'Lotes con cartografia cargada y datos operativos.',
+    },
+    {
+      label: 'Imagenes satelitales',
+      value: '06',
+      detail: 'Capas NDVI y satelitales disponibles para analisis.',
+    },
+  ];
+}
+
+function getPlanningIndicators() {
+  return [
+    {
+      label: 'Campanas activas',
+      value: '02',
+      detail: 'Campanas con cultivos en curso y cuaderno habilitado.',
+    },
+    {
+      label: 'Cultivos en marcha',
+      value: '05',
+      detail: 'Lotes con implantacion confirmada y seguimiento activo.',
+    },
+    {
+      label: 'Rendimiento proyectado',
+      value: '4.2 t/ha',
+      detail: 'Promedio estimado para la campana en curso.',
+    },
+  ];
+}
+
+function getPurchasesIndicators() {
+  return [
+    {
+      label: 'Ordenes abiertas',
+      value: '08',
+      detail: 'Compras pendientes de recepcion o imputacion.',
+    },
+    {
+      label: 'Insumos criticos',
+      value: '05',
+      detail: 'Productos con reposicion prioritaria para no frenar operaciones.',
+    },
+    {
+      label: 'Pagos proximos',
+      value: '$ 3.2M',
+      detail: 'Compromisos con proveedores en la proxima ventana.',
+    },
+  ];
+}
+
+function getOpsStockIndicators() {
   return [
     {
       label: 'Frentes activos',
@@ -1463,14 +1570,34 @@ function getOperationsIndicators() {
       detail: 'Siembra, aplicaciones y cosecha en seguimiento.',
     },
     {
-      label: 'Ventanas criticas',
-      value: '03',
-      detail: 'Labores con prioridad alta durante las proximas 24 h.',
+      label: 'Stock valorizado',
+      value: '$ 9.6M',
+      detail: 'Valuacion consolidada del inventario activo.',
     },
     {
-      label: 'Entregas por cerrar',
-      value: '12',
-      detail: 'Registros pendientes de consolidacion operativa.',
+      label: 'Alertas de stock',
+      value: '03',
+      detail: 'Depositos con nivel por debajo del minimo operativo.',
+    },
+  ];
+}
+
+function getSalesIndicators() {
+  return [
+    {
+      label: 'Granos acopiados',
+      value: '820 t',
+      detail: 'Stock disponible en acopiador para comercializacion.',
+    },
+    {
+      label: 'Cobros proyectados',
+      value: '$ 14.2M',
+      detail: 'Ingresos previstos para la proxima ventana operativa.',
+    },
+    {
+      label: 'Entregas abiertas',
+      value: '06',
+      detail: 'Remitos y salidas en seguimiento logistico.',
     },
   ];
 }
@@ -1517,27 +1644,27 @@ function getHubChipStyle(active: boolean) {
 
 function getHubAccentClasses(groupKey: string) {
   switch (groupKey) {
-    case 'granos-silos':
+    case 'gis':
       return {
-        header: 'from-[#082f24] via-[#0e4a33] to-[#173e33]',
-        headerChip: 'bg-lime-300/14 text-lime-100 ring-1 ring-lime-200/20',
-        cardChip: 'bg-lime-100 text-lime-800',
-        rail: 'bg-[#eef2e7]',
-        metricTag: 'bg-lime-100 text-lime-800',
-        progress: 'bg-lime-700',
-        callout: 'border-lime-700',
+        header: 'from-[#0d2b4e] via-[#103a6a] to-[#1a4a7a]',
+        headerChip: 'bg-blue-300/14 text-blue-100 ring-1 ring-blue-200/20',
+        cardChip: 'bg-blue-100 text-blue-800',
+        rail: 'bg-[#eaf0f8]',
+        metricTag: 'bg-blue-100 text-blue-800',
+        progress: 'bg-blue-700',
+        callout: 'border-blue-700',
       };
-    case 'finanzas':
+    case 'planificacion':
       return {
-        header: 'from-[#0a3b2c] via-[#0c4631] to-[#16493a]',
+        header: 'from-[#0a3529] via-[#104633] to-[#1c5740]',
         headerChip: 'bg-emerald-200/14 text-emerald-50 ring-1 ring-emerald-100/20',
         cardChip: 'bg-emerald-50 text-emerald-800',
-        rail: 'bg-[#f1f3ed]',
+        rail: 'bg-[#eef4ee]',
         metricTag: 'bg-emerald-100 text-emerald-800',
         progress: 'bg-emerald-700',
         callout: 'border-emerald-800',
       };
-    case 'insumos-stock':
+    case 'compras':
       return {
         header: 'from-[#0b3d30] via-[#11513c] to-[#1d5d46]',
         headerChip: 'bg-teal-200/14 text-teal-50 ring-1 ring-teal-100/20',
@@ -1546,6 +1673,16 @@ function getHubAccentClasses(groupKey: string) {
         metricTag: 'bg-teal-100 text-teal-800',
         progress: 'bg-teal-700',
         callout: 'border-teal-800',
+      };
+    case 'ventas-terceros':
+      return {
+        header: 'from-[#082f24] via-[#0e4a33] to-[#173e33]',
+        headerChip: 'bg-lime-300/14 text-lime-100 ring-1 ring-lime-200/20',
+        cardChip: 'bg-lime-100 text-lime-800',
+        rail: 'bg-[#eef2e7]',
+        metricTag: 'bg-lime-100 text-lime-800',
+        progress: 'bg-lime-700',
+        callout: 'border-lime-700',
       };
     default:
       return {
@@ -1562,38 +1699,46 @@ function getHubAccentClasses(groupKey: string) {
 
 function describeModuleItem(groupKey: string, itemLabel: string) {
   const descriptions: Record<string, Record<string, string>> = {
-    'operaciones-agro': {
+    gis: {
+      'Mapa GIS': 'Vista cartografica interactiva del establecimiento con lotes y capas operativas.',
+      'Campos': 'Gestion de establecimientos, superficies y atributos catastrales.',
+      'Lotes': 'Parcelas, ambientes y unidades de produccion con historia operativa.',
+      'Mapas satelitales': 'Imagenes NDVI y analisis de cobertura vegetal por periodos.',
+      'Ambientes productivos': 'Zonificacion por aptitud y seguimiento ambiental del suelo.',
+    },
+    planificacion: {
+      'Campanas': 'Planificacion de ciclos productivos, cultivos y calendarios de campana.',
+      'Cultivos y cuaderno': 'Registros de labores, tratamientos y evoluciones por cultivo.',
+      'Rendimientos': 'Analisis de cosecha, rinde por lote y comparativa interanual.',
+      'Resultado economico': 'Margen por campana y desglose economico productivo completo.',
+    },
+    compras: {
+      'Insumos': 'Catalogo operativo de semillas, fitosanitarios y consumibles criticos.',
+      'Ordenes de compra': 'Solicitudes, aprobaciones y seguimiento de compras abiertas.',
+      'Proveedores': 'Maestro de proveedores, condiciones y historial de operaciones.',
+      'Pagos': 'Vencimientos, agenda de pagos y compromisos con proveedores.',
+    },
+    'operaciones-stock': {
       'Siembra': 'Gestion de implantacion, densidades y arranque operativo por lote.',
       'Fertilizacion': 'Control de aplicaciones de nutrientes, dosis y ventanas de uso.',
       'Aplicaciones': 'Fitosanitarios, recetas y ordenes de pulverizacion con seguimiento.',
-      'Combustible': 'Despachos, consumo y control por unidad o frente operativo.',
-      'Mano de obra': 'Partes diarios, cuadrillas y asignacion de tareas de campo.',
       'Cosecha': 'Rendimiento, logistica de tolvas y cierre de jornada productiva.',
-      'Entrega a acopiador': 'Despachos, cartas y trazabilidad de salida hacia destino.',
-    },
-    'insumos-stock': {
-      'Insumos': 'Catalogo operativo de semillas, fitosanitarios y consumibles criticos.',
       'Depositos': 'Ubicaciones, disponibilidad y control fisico del inventario activo.',
-      'Compras de insumos': 'Ordenes, proveedores y recepcion pendiente de imputacion.',
       'Stock y movimientos': 'Entradas, salidas y trazabilidad completa del inventario.',
+      'Scouting': 'Monitoreo de plagas, enfermedades y estado sanitario del cultivo.',
     },
-    'granos-silos': {
-      'Silos': 'Gestion de almacenamiento, conservacion y disponibilidad por unidad.',
-      'Stock de granos': 'Inventario consolidado por calidad, variedad y ubicacion.',
-      'Entregas': 'Despachos y recepciones logisticas en seguimiento operativo.',
+    'ventas-terceros': {
+      'Granos en acopiador': 'Stock disponible en acopiador por calidad, especie y ubicacion.',
+      'Entregas': 'Despachos, recepciones logisticas y seguimiento de salidas.',
       'Cartas de porte': 'Emision y control documental para transporte y salida oficial.',
-    },
-    finanzas: {
-      'Ventas': 'Facturacion, notas de credito y seguimiento de pedidos comerciales.',
+      'Ventas': 'Facturacion, contratos y seguimiento de pedidos comerciales.',
       'Cobranzas': 'Control de ingresos, cuentas a cobrar y recupero programado.',
-      'Pagos': 'Proveedores, vencimientos y agenda financiera de corto plazo.',
-      'Libro diario': 'Registro cronologico, asientos y exportacion contable operativa.',
-      'Balance y rentabilidad': 'Margen, costos directos e informes ejecutivos del negocio.',
-      'Terceros': 'Maestro de clientes, proveedores, socios y contratistas vinculados.',
     },
     'control-hub': {
       'Rentabilidad por lote': 'Lectura rapida del margen por lote para seguimiento economico productivo.',
       'Panel de metricas': 'Indicadores consolidados para monitorear desvio, avance y performance.',
+      'Libro diario': 'Registro cronologico, asientos y exportacion contable operativa.',
+      'Terceros': 'Maestro de clientes, proveedores, socios y contratistas vinculados.',
       'Reportes GIS': 'Consultas geograficas y salidas cartograficas desde una sola entrada.',
       'Documentos ISO': 'Repositorio principal de documentacion ISO para consulta operativa.',
       'Auditoria': 'Accesos de control y seguimiento para revisiones internas y externas.',
@@ -1610,14 +1755,16 @@ function describeModuleItem(groupKey: string, itemLabel: string) {
 
 function getHubFooterCopy(groupKey: string) {
   switch (groupKey) {
-    case 'operaciones-agro':
+    case 'gis':
+      return 'Cartografia actualizada con ultima sincronizacion';
+    case 'planificacion':
       return 'Ultima actualizacion: hace 2 min';
-    case 'insumos-stock':
-      return 'Inventario conciliado al cierre de hoy';
-    case 'granos-silos':
-      return 'Seguimiento logistico sincronizado';
-    case 'finanzas':
-      return 'Conciliacion financiera al dia';
+    case 'compras':
+      return 'Inventario y ordenes conciliados al cierre de hoy';
+    case 'operaciones-stock':
+      return 'Frente operativo sincronizado en tiempo real';
+    case 'ventas-terceros':
+      return 'Seguimiento comercial y logistico al dia';
     case 'control-hub':
       return 'Control documental y administrativo consolidado';
     default:
@@ -1627,10 +1774,11 @@ function getHubFooterCopy(groupKey: string) {
 
 function getIndicatorBadge(groupKey: string, index: number) {
   const badges: Record<string, string[]> = {
-    'operaciones-agro': ['activo', 'alerta', 'seguimiento'],
-    'insumos-stock': ['reposicion', 'abierto', 'balance'],
-    'granos-silos': ['capacidad', 'flujo', 'transito'],
-    finanzas: ['proyeccion', 'agenda', 'margen'],
+    gis: ['activo', 'mapeado', 'ndvi'],
+    planificacion: ['activo', 'implantado', 'proyeccion'],
+    compras: ['abierto', 'critico', 'agenda'],
+    'operaciones-stock': ['activo', 'balance', 'alerta'],
+    'ventas-terceros': ['disponible', 'proyeccion', 'transito'],
     'control-hub': ['reportes', 'iso', 'ajustes'],
   };
 
@@ -1639,10 +1787,11 @@ function getIndicatorBadge(groupKey: string, index: number) {
 
 function getIndicatorProgress(groupKey: string, index: number) {
   const progress: Record<string, string[]> = {
-    'operaciones-agro': ['72%', '34%', '68%'],
-    'insumos-stock': ['48%', '63%', '84%'],
-    'granos-silos': ['61%', '74%', '46%'],
-    finanzas: ['79%', '38%', '65%'],
+    gis: ['80%', '72%', '45%'],
+    planificacion: ['60%', '55%', '70%'],
+    compras: ['63%', '48%', '40%'],
+    'operaciones-stock': ['72%', '84%', '34%'],
+    'ventas-terceros': ['61%', '79%', '46%'],
     'control-hub': ['84%', '63%', '91%'],
   };
 
@@ -1651,14 +1800,16 @@ function getIndicatorProgress(groupKey: string, index: number) {
 
 function getHubInsightCopy(groupKey: string) {
   switch (groupKey) {
-    case 'operaciones-agro':
-      return 'Conviene priorizar labores con mayor sensibilidad climatica y cerrar entregas abiertas antes del cambio de ventana.';
-    case 'insumos-stock':
-      return 'Hay margen para reordenar compras abiertas y adelantar reposicion de insumos criticos sin tensionar el inventario.';
-    case 'granos-silos':
-      return 'El frente logistico muestra buena capacidad disponible, pero conviene acelerar entregas abiertas para evitar cuello de salida.';
-    case 'finanzas':
-      return 'La lectura financiera es estable; el siguiente foco deberia estar en pagos proximos y seguimiento del margen ponderado.';
+    case 'gis':
+      return 'Revisar la cartografia de lotes antes de asignar labores permite detectar superposiciones y optimizar la logistica de maquinaria.';
+    case 'planificacion':
+      return 'Cerrar el cuaderno de campana antes de cada nueva labor asegura trazabilidad completa y facilita el analisis de rendimiento al cierre.';
+    case 'compras':
+      return 'Hay margen para reordenar compras abiertas y adelantar reposicion de insumos criticos sin tensionar el inventario operativo.';
+    case 'operaciones-stock':
+      return 'Conviene priorizar labores con mayor sensibilidad climatica y cerrar movimientos de stock pendientes antes del cambio de ventana.';
+    case 'ventas-terceros':
+      return 'El frente comercial muestra buena capacidad; conviene acelerar entregas abiertas y confirmar cobranzas proximas para mantener flujo.';
     case 'control-hub':
       return 'La secuencia recomendada es revisar reportes, validar documentacion ISO y luego entrar en configuracion para mantener orden operativo.';
     default:
@@ -1666,62 +1817,3 @@ function getHubInsightCopy(groupKey: string) {
   }
 }
 
-function getSuppliesIndicators() {
-  return [
-    {
-      label: 'Items criticos',
-      value: '05',
-      detail: 'Insumos con reposicion prioritaria para no frenar operaciones.',
-    },
-    {
-      label: 'Compras abiertas',
-      value: '08',
-      detail: 'Ordenes y adquisiciones pendientes de recepcion o imputacion.',
-    },
-    {
-      label: 'Stock valorizado',
-      value: '$ 9.6M',
-      detail: 'Valuacion consolidada del inventario activo del modulo.',
-    },
-  ];
-}
-
-function getGrainsIndicators() {
-  return [
-    {
-      label: 'Silos operativos',
-      value: '04',
-      detail: 'Capacidad activa para recepcion y despacho de granos.',
-    },
-    {
-      label: 'Stock consolidado',
-      value: '820 t',
-      detail: 'Volumen disponible entre silo bolsa y almacenamiento fijo.',
-    },
-    {
-      label: 'Entregas abiertas',
-      value: '06',
-      detail: 'Remitos y salidas en seguimiento logistico.',
-    },
-  ];
-}
-
-function getFinanceIndicators() {
-  return [
-    {
-      label: 'Cobros proyectados',
-      value: '$ 14.2M',
-      detail: 'Ingresos previstos para la proxima ventana operativa.',
-    },
-    {
-      label: 'Pagos en agenda',
-      value: '09',
-      detail: 'Compromisos por ejecutar con proveedores y servicios.',
-    },
-    {
-      label: 'Margen bajo control',
-      value: '18.4%',
-      detail: 'Balance preliminar del modulo financiero activo.',
-    },
-  ];
-}
