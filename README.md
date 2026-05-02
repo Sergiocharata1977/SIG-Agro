@@ -1,4 +1,4 @@
-# SIG Agro
+# Don Juan GIS
 
 Sistema de gestion agro con arquitectura multi-tenant por organizacion, modulos operativos, plugins, analisis satelital, IA y notificaciones.
 

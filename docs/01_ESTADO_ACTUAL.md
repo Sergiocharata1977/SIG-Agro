@@ -1,11 +1,11 @@
-# Estado Actual SIG Agro
+# Estado Actual Don Juan GIS
 
 Fecha: 2026-05-01
 Estado general: operativo en desarrollo
 
 ## Resumen ejecutivo
 
-SIG Agro es una aplicacion Next.js 16 con Firebase, orientada a gestion operativa agro, multi-tenant por organizacion, con plugins funcionales, paneles operativos, modulos productivos y una capa de IA conversacional e integraciones de comunicaciones en expansion.
+Don Juan GIS es una aplicacion Next.js 16 con Firebase, orientada a gestion operativa agro, multi-tenant por organizacion, con plugins funcionales, paneles operativos, modulos productivos y una capa de IA conversacional e integraciones de comunicaciones en expansion.
 
 ## Cambios implementados confirmados
 
@@ -21,7 +21,7 @@ SIG Agro es una aplicacion Next.js 16 con Firebase, orientada a gestion operativ
 - Notificaciones push FCM reales.
 - WhatsApp Meta bidireccional con webhook publico y conversaciones persistidas.
 - Alertas por email, SMS y WhatsApp salientes desde backend.
-- Text-to-Speech de Don Candido via ElevenLabs.
+- Text-to-Speech de Don Juan GIS via ElevenLabs.
 - PWA/offline y service worker presentes.
 
 ## Cambio reciente de navegacion
@@ -66,7 +66,7 @@ Cambio aplicado:
 - Chat IA y recomendaciones: implementado.
 - Router LLM con fallback: implementado.
 - UnifiedConverseService con persistencia de conversaciones: implementado.
-- TTS de Don Candido: implementado.
+- TTS de Don Juan GIS: implementado.
 
 ### Comunicaciones
 

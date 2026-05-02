@@ -42,7 +42,7 @@ Permitir continuidad operativa y tecnica sin reanalizar el historial del proyect
 - Probar `POST /api/public/whatsapp/webhook` con payload valido y firma `X-Hub-Signature-256`.
 - Validar `GET /api/configuracion/whatsapp` y `PUT /api/configuracion/whatsapp` con organizacion activa.
 
-### Don Candido TTS
+### Don Juan GIS TTS
 
 - Endpoint: `POST /api/elevenlabs/speech`
 - Debe devolver `audio/mpeg` cuando `ELEVENLABS_API_KEY` esta configurada.

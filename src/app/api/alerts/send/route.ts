@@ -77,7 +77,7 @@ async function sendSmsAlert(alerta: AlertData, telefono: string) {
     }
 
     const toPhone = normalizePhoneNumber(telefono);
-    const body = `[SIG-Agro] ${alerta.titulo}: ${alerta.descripcion}`;
+    const body = `[Don Juan GIS] ${alerta.titulo}: ${alerta.descripcion}`;
     const result = await sendTwilioMessage(toPhone, normalizePhoneNumber(fromPhone), body);
 
     return {
@@ -94,7 +94,7 @@ async function sendWhatsAppAlert(alerta: AlertData, telefono: string) {
 
     const toWhatsApp = toWhatsAppAddress(telefono);
     const fromAddress = toWhatsAppAddress(fromWhatsApp);
-    const body = `[SIG-Agro] ${alerta.titulo}\n${alerta.descripcion}`;
+    const body = `[Don Juan GIS] ${alerta.titulo}\n${alerta.descripcion}`;
     const result = await sendTwilioMessage(toWhatsApp, fromAddress, body);
 
     return {
@@ -181,7 +181,7 @@ async function sendPushAlert(alertId: string, alerta: AlertData, targetUserId: s
 
 async function sendEmailAlert(alerta: AlertData, email: string) {
     const apiKey = process.env.RESEND_API_KEY;
-    const from = process.env.ALERTS_EMAIL_FROM || 'SIG Agro <alerts@sig-agro.local>';
+    const from = process.env.ALERTS_EMAIL_FROM || 'Don Juan GIS <alerts@donjuangis.local>';
 
     if (!apiKey) {
         throw new Error('RESEND_API_KEY is not configured');
@@ -196,7 +196,7 @@ async function sendEmailAlert(alerta: AlertData, email: string) {
         body: JSON.stringify({
             from,
             to: [email],
-            subject: `[SIG-Agro] ${alerta.titulo}`,
+            subject: `[Don Juan GIS] ${alerta.titulo}`,
             html: generarEmailHTML(alerta),
         }),
     });
@@ -366,7 +366,7 @@ function generarEmailHTML(alerta: AlertData): string {
                 </div>
                 ` : ''}
                 <div class="footer">
-                    <p>Este es un mensaje automatico de SIG-Agro.</p>
+                    <p>Este es un mensaje automatico de Don Juan GIS.</p>
                     <p>Ingresa a la plataforma para mas detalles.</p>
                 </div>
             </div>

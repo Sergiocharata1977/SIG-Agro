@@ -167,7 +167,7 @@ function DesktopWorkspaceBar({
                         }}
                     >
                         <div className="overflow-hidden rounded-2xl border border-white/80 bg-white p-2 shadow-sm">
-                            <Image src="/logo-sig-agro.png" alt="SIG Agro" width={42} height={42} className="rounded-xl" />
+                            <Image src="/logo-sig-agro.png" alt="Don Juan GIS" width={42} height={42} className="rounded-xl" />
                         </div>
                         <div className="min-w-0">
                             <div className="text-[10px] font-semibold uppercase tracking-[0.28em]" style={{ color: 'var(--dashboard-accent)' }}>
@@ -289,7 +289,7 @@ function MobileWorkspaceBar({
 
                     <div className="min-w-0 flex-1">
                         <p className="text-[11px] font-semibold uppercase tracking-[0.24em]" style={{ color: 'var(--dashboard-accent)' }}>
-                            SIG Agro
+                            Don Juan GIS
                         </p>
                         <p className="truncate text-sm font-semibold" style={{ color: 'var(--dashboard-text)' }}>
                             {organizationName}
@@ -461,7 +461,7 @@ function HeaderSearchBar({
                 list={listId}
                 placeholder="Buscar modulo, lote o accion..."
                 className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-                aria-label="Buscar en SIG Agro"
+                aria-label="Buscar en Don Juan GIS"
             />
             <datalist id={listId}>
                 {suggestions.map((item) => (
@@ -571,7 +571,7 @@ function getDesktopSection(pathname: string) {
         };
     }
     return {
-        title: 'Panel SIG Agro',
+        title: 'Panel Don Juan GIS',
         subtitle: 'Workspace operativo con accesos y contexto unificado.',
         badge: 'Vista ejecutiva',
     };

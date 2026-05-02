@@ -18,8 +18,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SIG Agro",
-  description: "Sistema de Información Geográfica Agrícola para productores del Chaco",
+  title: "Don Juan GIS",
+  description: "Plataforma agricola con GIS, operacion e inteligencia para productores",
   icons: {
     icon: "/favicon.ico",
   },
@@ -50,4 +50,3 @@ export default async function RootLayout({
     </html>
   );
 }
-

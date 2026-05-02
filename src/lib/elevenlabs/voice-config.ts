@@ -12,8 +12,8 @@ export interface ElevenLabsVoiceConfig {
     languageCode: string;
 }
 
-// Configuracion de voz Don Candido (masculino, calido, argentino)
-export const DON_CANDIDO_VOICE: ElevenLabsVoiceConfig = {
+// Configuracion de voz Don Juan GIS (masculino, calido, argentino)
+export const DON_JUAN_GIS_VOICE: ElevenLabsVoiceConfig = {
     voiceId: process.env.ELEVENLABS_VOICE_ID ?? 'pNInz6obpgDQGcFmaJgB',
     modelId: 'eleven_multilingual_v2',
     settings: {

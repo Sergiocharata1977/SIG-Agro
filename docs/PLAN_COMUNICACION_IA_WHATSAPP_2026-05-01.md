@@ -16,7 +16,7 @@
 | LLM Router (Groq + Claude fallback) | ✅ LLMRouter.ts | ❌ Solo Groq directo | ALTO |
 | Anthropic/Claude SDK | ✅ claude/client.ts | ❌ No instalado | ALTO |
 | IA multi-canal (chat+whatsapp+voice) | ✅ UnifiedConverseService | ❌ Solo chat web | ALTO |
-| ElevenLabs TTS (Don Cándido) | ✅ elevenlabs/client.ts | ❌ No existe | MEDIO |
+| ElevenLabs TTS (Don Juan GIS) | ✅ elevenlabs/client.ts | ❌ No existe | MEDIO |
 | Conversaciones persistidas | ✅ conversationStore | ❌ Solo en memoria | MEDIO |
 | Config WhatsApp por organización | ✅ channels_whatsapp | ❌ No existe | MEDIO |
 | MediaHandler (imagen/audio/video) | ✅ MediaHandler.ts | ❌ No existe | BAJO |
@@ -304,16 +304,16 @@ GROQ_MODEL             # default: llama-3.3-70b-versatile
 
 ---
 
-### Agente C — ElevenLabs TTS (Don Cándido)
+### Agente C — ElevenLabs TTS (Don Juan GIS)
 
 **Puede ejecutarse en paralelo con:** Agente A, Agente B
 **Depende de:** nada — es la primera ola
 
 #### Objetivo
-Crear el cliente ElevenLabs, la configuración de voz de Don Cándido, y el endpoint API `/api/elevenlabs/speech` para text-to-speech.
+Crear el cliente ElevenLabs, la configuración de voz de Don Juan GIS, y el endpoint API `/api/elevenlabs/speech` para text-to-speech.
 
 #### Archivos a crear
-- `src/lib/elevenlabs/voice-config.ts` — configuración de voz de Don Cándido
+- `src/lib/elevenlabs/voice-config.ts` — configuración de voz de Don Juan GIS
 - `src/lib/elevenlabs/client.ts` — ElevenLabsService (TTS)
 - `src/app/api/elevenlabs/speech/route.ts` — endpoint POST para convertir texto a audio
 
@@ -324,7 +324,7 @@ Crear el cliente ElevenLabs, la configuración de voz de Don Cándido, y el endp
 
 Estás trabajando en SIG-Agro, Next.js 16 + React 19 + TypeScript. Proyecto en `c:\Users\Usuario\Documents\Proyectos\ISO -conjunto\SIG-Agro`.
 
-El asistente IA del proyecto es "Don Cándido", personaje agrícola del Chaco argentino. Ya existe `src/lib/ia/IAAgricolaService.ts` con su prompt de personalidad. ElevenLabs será la voz de ese personaje.
+El asistente IA del proyecto es "Don Juan GIS", asistente agrícola del sistema. Ya existe `src/lib/ia/IAAgricolaService.ts` con su prompt de personalidad. ElevenLabs será la voz de ese asistente.
 
 **No hay dependencia npm necesaria** — ElevenLabs usa REST API con fetch nativo.
 
@@ -345,7 +345,7 @@ export interface ElevenLabsVoiceConfig {
   languageCode: string
 }
 
-// Configuración de voz Don Cándido (masculino, cálido, argentino)
+// Configuración de voz Don Juan GIS (masculino, cálido, argentino)
 export const DON_CANDIDO_VOICE: ElevenLabsVoiceConfig = {
   voiceId: process.env.ELEVENLABS_VOICE_ID ?? 'pNInz6obpgDQGcFmaJgB',
   modelId: 'eleven_multilingual_v2',
@@ -514,7 +514,7 @@ Crear el `UnifiedConverseService` que enruta cualquier mensaje (chat web, WhatsA
 Estás en SIG-Agro, Next.js 16 + TypeScript + Firebase. Proyecto en `c:\Users\Usuario\Documents\Proyectos\ISO -conjunto\SIG-Agro`.
 
 Archivos existentes relevantes:
-- `src/app/api/ia/chat/route.ts` — endpoint actual, llama Groq directamente, tiene el system prompt de Don Cándido
+- `src/app/api/ia/chat/route.ts` — endpoint actual, llama Groq directamente, tiene el system prompt de Don Juan GIS
 - `src/lib/groq/GroqAgroService.ts` — servicio Groq existente (NO modificar)
 - `src/ai/services/LLMRouter.ts` — creado en Ola 1
 - `src/lib/firebase-admin.ts` — exports: `adminDb`
@@ -577,7 +577,7 @@ interface ConverseOutput {
 // converse(input: ConverseInput): Promise<ConverseOutput>
 // 1. conversationStore.getOrCreate(channel, externalId, orgId)
 // 2. conversationStore.getHistory(conversationId, 20) → últimos 20 mensajes
-// 3. Construir systemPrompt Don Cándido (extraer del route.ts actual)
+// 3. Construir systemPrompt Don Juan GIS (extraer del route.ts actual)
 // 4. llmRouter.chat('chat_agro', [...history, {role:'user', content: message}], systemPrompt)
 // 5. conversationStore.addMessage() para mensaje usuario y respuesta
 // 6. Retornar ConverseOutput
@@ -617,7 +617,7 @@ Cambiar para que use `UnifiedConverseService.converse()` en lugar de llamar Groq
 **Depende de:** Ola 1 completa (necesita `src/app/api/elevenlabs/speech/route.ts`)
 
 #### Objetivo
-Agregar botón de reproducción de voz al componente `ChatAgro.tsx` que convierte la respuesta de Don Cándido a audio via el endpoint TTS creado en Ola 1.
+Agregar botón de reproducción de voz al componente `ChatAgro.tsx` que convierte la respuesta de Don Juan GIS a audio via el endpoint TTS creado en Ola 1.
 
 #### Archivos a modificar
 - `src/components/ia/ChatAgro.tsx` — agregar botón de audio en cada respuesta del asistente
@@ -631,7 +631,7 @@ Lee el archivo `src/components/ia/ChatAgro.tsx` completo antes de modificar.
 El archivo usa:
 - Chat flotante en esquina inferior derecha
 - Mensajes con `role: 'user' | 'assistant'`
-- El asistente se llama "Don Cándido"
+- El asistente se llama "Don Juan GIS"
 
 Ya existe el endpoint `POST /api/elevenlabs/speech` que recibe `{ text: string }` y devuelve `audio/mpeg`.
 
@@ -719,7 +719,7 @@ Estás en SIG-Agro. Lee el archivo `docs/SIG_AGRO_BASELINE_TECNICA_2026-02-14.md
    - Capabilities: chat_agro, analisis_lote, recomendacion, doc_gen
    - UnifiedConverseService: canal único para chat web y WhatsApp
    - Conversaciones persistidas en Firestore: `ai_conversations`
-4. Nueva sección **## Text-to-Speech (Don Cándido)** con:
+4. Nueva sección **## Text-to-Speech (Don Juan GIS)** con:
    - Proveedor: ElevenLabs
    - Endpoint: `POST /api/elevenlabs/speech`
    - Modelo: `eleven_multilingual_v2`
@@ -733,7 +733,7 @@ Estás en SIG-Agro. Lee el archivo `docs/SIG_AGRO_BASELINE_TECNICA_2026-02-14.md
 | `WHATSAPP_APP_SECRET` | Validación HMAC webhook | Sí (si usa WhatsApp Meta) |
 | `WHATSAPP_ACCESS_TOKEN` | Meta Graph API | Sí (si usa WhatsApp Meta) |
 | `WHATSAPP_PHONE_NUMBER_ID` | Meta Phone Number | Sí (si usa WhatsApp Meta) |
-| `ELEVENLABS_API_KEY` | TTS Don Cándido | No (sin TTS si falta) |
+| `ELEVENLABS_API_KEY` | TTS Don Juan GIS | No (sin TTS si falta) |
 | `ELEVENLABS_VOICE_ID` | Voz personalizada | No (usa Adam por defecto) |
 
 Actualizar la fecha del documento a 2026-05-01.

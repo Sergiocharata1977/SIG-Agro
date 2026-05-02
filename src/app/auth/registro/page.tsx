@@ -73,9 +73,9 @@ export default function RegistroPage() {
       <div className="absolute inset-x-0 top-0 h-[34rem] bg-[radial-gradient(circle_at_top_right,rgba(178,247,70,0.18),transparent_28%),linear-gradient(135deg,#012d1d,#174531)]" />
       <div className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
         <Link href="/" className="inline-flex items-center gap-3 text-white">
-          <img src="/logo-sig-agro.png" alt="SIG Agro" className="h-11 w-11 rounded-xl object-cover" />
+          <img src="/logo-sig-agro.png" alt="Don Juan GIS" className="h-11 w-11 rounded-xl object-cover" />
           <div>
-            <div className="text-sm font-semibold uppercase tracking-[0.2em] text-lime-300">SIG Agro</div>
+            <div className="text-sm font-semibold uppercase tracking-[0.2em] text-lime-300">Don Juan GIS</div>
             <div className="text-xs text-white/60">Alta de cuenta productiva</div>
           </div>
         </Link>
@@ -86,7 +86,7 @@ export default function RegistroPage() {
               Paso {step} de 2
             </div>
             <h1 className="mt-6 text-4xl font-semibold leading-tight">
-              Configura tu espacio productivo con la misma linea visual de SIG Agro.
+              Configura tu espacio productivo con la misma linea visual de Don Juan GIS.
             </h1>
             <p className="mt-5 text-base leading-7 text-white/72">
               Registramos usuario y organizacion para dejar lista la operacion desde el primer ingreso.

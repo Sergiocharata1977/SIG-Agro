@@ -120,7 +120,7 @@ Proveedor:
 
 Observaciones:
 
-- La voz de Don Candido se expone por backend.
+- La voz de Don Juan GIS se expone por backend.
 - Si falta `ELEVENLABS_API_KEY`, el endpoint responde `503` y la aplicacion sigue sin TTS.
 
 ### Satelital y VRA

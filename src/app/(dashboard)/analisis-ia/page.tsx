@@ -188,7 +188,7 @@ export default function DashboardIAPage() {
                   <article className="rounded-[30px] border border-slate-200 bg-[#123524] p-6 text-white shadow-sm">
                     <div className="inline-flex items-center gap-2 rounded-full border border-lime-300/20 bg-lime-300/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-lime-200">
                       <Bot className="h-4 w-4" />
-                      Don Candido IA
+                      Don Juan GIS IA
                     </div>
                     <h2 className="mt-6 text-2xl font-semibold">Lectura ejecutiva del sistema</h2>
                     <p className="mt-4 text-sm leading-7 text-white/75">

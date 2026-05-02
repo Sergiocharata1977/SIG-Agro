@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Componente de Chat con Don Cándido Agro
+ * Componente de Chat con Don Juan GIS IA
  * Chat flotante para consultas agrícolas
  */
 
@@ -109,7 +109,7 @@ export default function ChatAgro({ contexto }: ChatAgroProps) {
                 {
                     id: 'welcome',
                     role: 'assistant',
-                    content: `¡Hola! Soy **Don Cándido** 🌾, tu asistente agrícola inteligente.
+                    content: `¡Hola! Soy **Don Juan GIS** 🌾, tu asistente agrícola inteligente.
 
 Puedo ayudarte con:
 - 📊 Análisis de lotes y campañas
@@ -265,7 +265,7 @@ Puedo ayudarte con:
                             <span className="text-2xl">🌾</span>
                         </div>
                         <div>
-                            <h3 className="font-semibold text-white">Don Cándido IA</h3>
+                            <h3 className="font-semibold text-white">Don Juan GIS IA</h3>
                             <p className="text-xs text-white/80">Asistente Agrícola</p>
                         </div>
                     </div>

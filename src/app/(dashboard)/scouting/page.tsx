@@ -92,7 +92,7 @@ export default function ScoutingPage() {
                 <Bot className="h-6 w-6" />
               </div>
               <div>
-                <div className="text-lg font-semibold text-slate-950">Don Candido IA</div>
+                <div className="text-lg font-semibold text-slate-950">Don Juan GIS IA</div>
                 <div className="text-sm text-slate-500">Interpretacion rapida de observaciones</div>
               </div>
             </div>

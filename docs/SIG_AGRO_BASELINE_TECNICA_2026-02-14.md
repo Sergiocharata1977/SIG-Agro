@@ -23,7 +23,7 @@ Estado: verificado (tsc limpio, 10/10 tests)
 | IndexedDB | persistencia offline (sin cambios) |
 | Leaflet + react-leaflet | 1.9.4 + 5.0.0 (mapas GIS) |
 | `@anthropic-ai/sdk` | 0.67.x (Claude fallback LLM) |
-| ElevenLabs REST API | v1 (TTS Don Candido) |
+| ElevenLabs REST API | v1 (TTS Don Juan GIS) |
 | Vitest | 3.x (tests unitarios y de API) |
 | Playwright | 1.x (tests E2E) |
 
@@ -38,7 +38,7 @@ Estado: verificado (tsc limpio, 10/10 tests)
 - Push nativo Android (FCM) con `@capacitor/push-notifications` + backend
 - WhatsApp bidireccional via Meta Graph API v19.0
 - IA conversacional multi-proveedor (Groq + Claude)
-- TTS voz Don Candido (ElevenLabs)
+- TTS voz Don Juan GIS (ElevenLabs)
 
 ---
 
@@ -75,7 +75,7 @@ Estado: verificado (tsc limpio, 10/10 tests)
 
 ---
 
-## Text-to-Speech - Don Candido
+## Text-to-Speech - Don Juan GIS
 
 - **Proveedor:** ElevenLabs REST API v1
 - **Endpoint:** `POST /api/elevenlabs/speech` - recibe `{text}`, retorna `audio/mpeg`

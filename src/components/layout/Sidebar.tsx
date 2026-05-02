@@ -660,10 +660,10 @@ export default function Sidebar() {
       >
         <div className="relative border-b p-4" style={{ borderColor: 'var(--dashboard-sidebar-border)' }}>
           <div className="flex items-center gap-3">
-            <Image src="/logo-sig-agro.png" alt="SIG Agro" width={40} height={40} className="rounded-lg" />
+            <Image src="/logo-sig-agro.png" alt="Don Juan GIS" width={40} height={40} className="rounded-lg" />
             {!collapsed && (
               <div>
-                <div className="font-semibold" style={{ color: 'var(--dashboard-text)' }}>SIG Agro</div>
+                <div className="font-semibold" style={{ color: 'var(--dashboard-text)' }}>Don Juan GIS</div>
                 <div className="text-xs uppercase tracking-[0.2em]" style={{ color: 'var(--dashboard-muted)' }}>Suite operativa</div>
               </div>
             )}
@@ -1247,7 +1247,7 @@ export default function Sidebar() {
                   <Palette className="h-4 w-4" />
                 </div>
                 <div>
-                  <div className="text-sm font-semibold" style={{ color: 'var(--dashboard-text)' }}>Temas SIG Agro</div>
+                  <div className="text-sm font-semibold" style={{ color: 'var(--dashboard-text)' }}>Temas Don Juan GIS</div>
                   <div className="text-xs" style={{ color: 'var(--dashboard-muted)' }}>Verde, azul y negro</div>
                 </div>
               </div>
@@ -1433,7 +1433,7 @@ function describeModuleItem(groupKey: string, itemLabel: string) {
       'Auditoria': 'Accesos de control y seguimiento para revisiones internas y externas.',
       'Parametros': 'Ajustes generales de organizaciones y reglas maestras del sistema.',
       'WhatsApp': 'Configuracion del canal WhatsApp y sus automatizaciones asociadas.',
-      'Plugins': 'Habilitacion y administracion de extensiones activas en SIG Agro.',
+      'Plugins': 'Habilitacion y administracion de extensiones activas en Don Juan GIS.',
       'Tipos de insumos': 'Catalogos base para estandarizar insumos y su clasificacion.',
       'Parametros GIS': 'Variables de mapa, capas y ajustes espaciales operativos.',
     },

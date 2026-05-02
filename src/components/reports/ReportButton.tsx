@@ -35,7 +35,7 @@ export function ReportButton({
             const config: ReportConfig = {
                 title,
                 subtitle,
-                organizationName: organization?.name || 'SIG Agro',
+                organizationName: organization?.name || 'Don Juan GIS',
                 generatedBy: user?.displayName || user?.email || 'Usuario',
                 generatedAt: new Date(),
             };
@@ -91,7 +91,7 @@ export function ReportMenu({ availableReports }: ReportMenuProps) {
             const data = await report.getData();
             const config: ReportConfig = {
                 title: `Reporte de ${report.label}`,
-                organizationName: organization?.name || 'SIG Agro',
+                organizationName: organization?.name || 'Don Juan GIS',
                 generatedBy: user?.displayName || user?.email || 'Usuario',
                 generatedAt: new Date(),
             };

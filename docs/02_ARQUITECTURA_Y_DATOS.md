@@ -109,7 +109,7 @@ Dominios relevantes confirmados en repo:
 
 - Proveedor: ElevenLabs.
 - Endpoint operativo: `POST /api/elevenlabs/speech`.
-- Voz de Don Candido resuelta desde `src/lib/elevenlabs/voice-config`.
+- Voz de Don Juan GIS resuelta desde `src/lib/elevenlabs/voice-config`.
 
 ## Invariantes recomendados
 

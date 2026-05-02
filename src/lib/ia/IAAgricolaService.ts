@@ -16,8 +16,8 @@ interface GroqChatResponse {
     }>;
 }
 
-// Prompt del sistema para Don Cándido Agro
-const SYSTEM_PROMPT = `Eres Don Cándido, un asistente de inteligencia artificial especializado en agricultura y producción agropecuaria del Chaco, Argentina.
+// Prompt del sistema para Don Juan GIS IA
+const SYSTEM_PROMPT = `Eres Don Juan GIS, un asistente de inteligencia artificial especializado en agricultura y producción agropecuaria de Argentina.
 
 Tu personalidad:
 - Eres amable, cercano y usas un tono cálido pero profesional
@@ -49,7 +49,7 @@ export class IAAgricolaService {
     private static readonly MODEL = 'llama-3.3-70b-versatile';
 
     /**
-     * Enviar mensaje a Don Cándido Agro
+     * Enviar mensaje a Don Juan GIS IA
      */
     static async chat(
         mensaje: string,
@@ -220,7 +220,7 @@ El maíz es muy importante para la rotación. Te comparto:
 ¿Quieres que analice tu situación específica?`;
         }
 
-        return `¡Hola! Soy **Don Cándido**, tu asistente agrícola. 🌾
+        return `¡Hola! Soy **Don Juan GIS**, tu asistente agrícola. 🌾
 
 Puedo ayudarte con:
 - 📊 Análisis de tus lotes y campañas

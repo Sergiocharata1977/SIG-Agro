@@ -36,9 +36,9 @@ export default function LoginPage() {
       <div className="relative mx-auto grid min-h-screen max-w-7xl items-center gap-12 px-4 py-12 sm:px-6 lg:grid-cols-[1fr_0.92fr] lg:px-8">
         <section className="max-w-2xl">
           <Link href="/" className="inline-flex items-center gap-3">
-            <img src="/logo-sig-agro.png" alt="SIG Agro" className="h-11 w-11 rounded-xl object-cover" />
+            <img src="/logo-sig-agro.png" alt="Don Juan GIS" className="h-11 w-11 rounded-xl object-cover" />
             <div>
-              <div className="text-sm font-semibold uppercase tracking-[0.2em] text-lime-300">SIG Agro</div>
+              <div className="text-sm font-semibold uppercase tracking-[0.2em] text-lime-300">Don Juan GIS</div>
               <div className="text-xs text-white/60">Plataforma agro operativa enterprise</div>
             </div>
           </Link>

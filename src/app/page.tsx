@@ -50,10 +50,10 @@ function HeaderNav() {
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-3 text-white">
-          <img src="/logo-sig-agro.png" alt="SIG Agro" className="h-10 w-10 rounded-xl object-cover shadow-lg shadow-lime-300/10" />
+          <img src="/logo-sig-agro.png" alt="Don Juan GIS" className="h-10 w-10 rounded-xl object-cover shadow-lg shadow-lime-300/10" />
           <div>
-            <div className="text-sm font-semibold uppercase tracking-[0.22em] text-lime-300">SIG Agro</div>
-            <div className="text-xs text-white/65">Don Candido IA + GIS</div>
+            <div className="text-sm font-semibold uppercase tracking-[0.22em] text-lime-300">Don Juan GIS</div>
+            <div className="text-xs text-white/65">GIS agricola + IA operativa</div>
           </div>
         </Link>
 
@@ -268,12 +268,12 @@ function AiSection() {
         <div>
           <div className="inline-flex items-center gap-2 rounded-full border border-lime-300/20 bg-lime-300/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-lime-200">
             <Bot className="h-4 w-4" />
-            Powered by Don Candido IA
+            Powered by Don Juan GIS IA
           </div>
 
           <h2 className="mt-6 text-3xl font-semibold sm:text-4xl">Asistencia agronomica integrada a tu flujo diario.</h2>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-white/72">
-            Don Candido cruza clima, lote, historial y operacion para entregar recomendaciones accionables sin salir del sistema.
+            Don Juan GIS cruza clima, lote, historial y operacion para entregar recomendaciones accionables sin salir del sistema.
           </p>
 
           <div className="mt-8 space-y-4">
@@ -294,14 +294,14 @@ function AiSection() {
               <Bot className="h-6 w-6" />
             </div>
             <div>
-              <div className="font-semibold">Don Candido</div>
+              <div className="font-semibold">Don Juan GIS</div>
               <div className="text-sm text-white/50">Analizando contexto del lote...</div>
             </div>
           </div>
 
           <div className="mt-5 space-y-4">
             <div className="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm leading-6 text-white/70">
-              "Don Candido, que me recomendas para el lote Norte con pronostico de helada y baja amplitud termica?"
+              "Don Juan GIS, que me recomendas para el lote Norte con pronostico de helada y baja amplitud termica?"
             </div>
             <div className="rounded-2xl border border-lime-300/20 bg-lime-300/10 p-4 text-sm leading-6 text-white/88">
               "Para el lote Norte conviene pausar aplicaciones foliares hoy, revisar humedad superficial y priorizar monitoreo temprano. El lote tiene buena reserva y menor riesgo de dano si mantenes esa secuencia."
@@ -464,7 +464,7 @@ function FooterSection() {
     <footer className="border-t border-white/8 bg-[#091710] py-12 text-white/72">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 md:grid-cols-4 lg:px-8">
         <div>
-          <div className="text-lg font-semibold text-white">SIG Agro</div>
+          <div className="text-lg font-semibold text-white">Don Juan GIS</div>
           <p className="mt-3 max-w-xs text-sm leading-6 text-white/52">
             Plataforma de gestion agricola con GIS, IA y control operativo para equipos tecnicos y productores.
           </p>
@@ -521,7 +521,7 @@ export default function LandingPage() {
       <div className="flex min-h-screen items-center justify-center bg-[#071a13]">
         <div className="flex items-center gap-3 rounded-full border border-lime-300/20 bg-lime-300/10 px-5 py-3 text-sm font-medium text-lime-200">
           <div className="h-2.5 w-2.5 animate-pulse rounded-full bg-lime-300" />
-          Cargando experiencia SIG Agro...
+          Cargando experiencia Don Juan GIS...
         </div>
       </div>
     );

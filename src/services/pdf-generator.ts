@@ -91,7 +91,7 @@ export class PDFGenerator {
                 { align: 'center' }
             );
             this.doc.text(
-                'SIG Agro - Don Cándido IA',
+                'Don Juan GIS - IA agronomica',
                 PDF_CONFIG.margin,
                 this.pageHeight - 10
             );

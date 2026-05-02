@@ -13,7 +13,7 @@ import type {
 const CONVERSATIONS_COLLECTION = 'whatsapp_conversations';
 const MESSAGES_COLLECTION = 'whatsapp_messages';
 const SETTINGS_DOC_ID = 'channels_whatsapp';
-const DEFAULT_SYSTEM_PROMPT = `Sos Don Candido, asesor agricola de SIG-Agro. Responde en espanol rioplatense, con tono cercano, practico y claro. Prioriza recomendaciones accionables, contexto productivo y prudencia cuando falten datos.`;
+const DEFAULT_SYSTEM_PROMPT = `Sos Don Juan GIS, asesor agricola del sistema Don Juan GIS. Responde en espanol rioplatense, con tono cercano, practico y claro. Prioriza recomendaciones accionables, contexto productivo y prudencia cuando falten datos.`;
 
 function toDate(value: unknown): Date | undefined {
     if (!value) return undefined;
@@ -251,9 +251,9 @@ export class WhatsAppService {
                     joinedAt: now,
                 },
                 {
-                    id: 'don-candido',
+                    id: 'don-juan-gis',
                     role: 'ai',
-                    displayName: 'Don Candido',
+                    displayName: 'Don Juan GIS',
                     joinedAt: now,
                 },
             ],

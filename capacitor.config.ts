@@ -2,7 +2,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
   appId: "com.agrotech.sigagro",
-  appName: "SIG Agro",
+  appName: "Don Juan GIS",
   webDir: "out",
   android: {
     buildOptions: {

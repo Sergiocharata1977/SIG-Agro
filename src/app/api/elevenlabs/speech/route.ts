@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ElevenLabsService } from '@/lib/elevenlabs/client';
-import { DON_CANDIDO_VOICE } from '@/lib/elevenlabs/voice-config';
+import { DON_JUAN_GIS_VOICE } from '@/lib/elevenlabs/voice-config';
 
 const MAX_TEXT_LENGTH = 2500;
 
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
         }
 
         const service = ElevenLabsService.fromEnv();
-        const audioBuffer = await service.textToSpeech(text, DON_CANDIDO_VOICE);
+        const audioBuffer = await service.textToSpeech(text, DON_JUAN_GIS_VOICE);
 
         return new Response(audioBuffer, {
             headers: {
