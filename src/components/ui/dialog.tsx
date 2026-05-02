@@ -11,12 +11,13 @@ const DialogOverlay = React.forwardRef<
     React.ElementRef<typeof DialogPrimitive.Overlay>,
     React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
 >(({ className, ...props }, ref) => (
-    <DialogPrimitive.Overlay
-        ref={ref}
-        className={cn(
-            'fixed inset-0 z-50 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
+        <DialogPrimitive.Overlay
+            ref={ref}
+            className={cn(
+            'fixed inset-0 z-50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
             className
         )}
+        style={{ background: 'var(--dashboard-overlay)' }}
         {...props}
     />
 ));
@@ -31,9 +32,13 @@ const DialogContent = React.forwardRef<
         <DialogPrimitive.Content
             ref={ref}
             className={cn(
-                'fixed left-[50%] top-[50%] z-50 grid max-h-[88vh] w-[calc(100%-24px)] max-w-3xl translate-x-[-50%] translate-y-[-50%] gap-4 overflow-y-auto rounded-[32px] border border-[rgba(193,200,194,0.9)] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,249,255,0.98))] p-6 shadow-[0_24px_80px_rgba(15,23,42,0.16)] duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:w-full sm:p-8',
+                'fixed left-[50%] top-[50%] z-50 grid max-h-[88vh] w-[calc(100%-24px)] max-w-3xl translate-x-[-50%] translate-y-[-50%] gap-4 overflow-y-auto rounded-[32px] p-6 shadow-[0_24px_80px_rgba(15,23,42,0.16)] duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:w-full sm:p-8',
                 className
             )}
+            style={{
+                border: '1px solid var(--dashboard-sidebar-border)',
+                background: 'linear-gradient(180deg, var(--dashboard-sidebar-panel), var(--dashboard-popup-panel))',
+            }}
             {...props}
         >
             {children}

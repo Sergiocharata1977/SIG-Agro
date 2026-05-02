@@ -54,24 +54,41 @@ export default function DashboardLayout({
     }
 
     return (
-        <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(178,247,70,0.16),transparent_18%),linear-gradient(180deg,#f8f9ff_0%,#eef4ff_44%,#f8f9ff_100%)] md:flex">
+        <div
+            className="min-h-screen md:flex"
+            style={{
+                background:
+                    'radial-gradient(circle at top left, var(--dashboard-bg-accent), transparent 18%), linear-gradient(180deg, var(--dashboard-bg) 0%, color-mix(in srgb, var(--dashboard-bg) 72%, white 28%) 44%, var(--dashboard-bg) 100%)',
+            }}
+        >
             <Sidebar />
 
             <div className="min-w-0 flex-1">
-                <header className="sticky top-0 z-30 border-b border-[rgba(193,200,194,0.7)] bg-[rgba(248,249,255,0.92)] px-4 py-3 backdrop-blur-xl md:hidden">
+                <header
+                    className="sticky top-0 z-30 px-4 py-3 backdrop-blur-xl md:hidden"
+                    style={{
+                        borderBottom: '1px solid var(--dashboard-border)',
+                        background: 'var(--dashboard-surface)',
+                    }}
+                >
                     <div className="flex items-center justify-between gap-3">
                         <button
                             type="button"
                             onClick={() => toggleMobileSidebar()}
-                            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm"
+                            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl shadow-sm"
+                            style={{
+                                border: '1px solid var(--dashboard-sidebar-border)',
+                                background: 'var(--dashboard-sidebar-panel)',
+                                color: 'var(--dashboard-sidebar-text)',
+                            }}
                             aria-label="Abrir menu lateral"
                         >
                             <Menu className="h-5 w-5" />
                         </button>
 
                         <div className="min-w-0 flex-1">
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#446900]">SIG Agro</p>
-                            <p className="truncate text-sm font-semibold text-[#0b1c30]">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em]" style={{ color: 'var(--dashboard-accent)' }}>SIG Agro</p>
+                            <p className="truncate text-sm font-semibold" style={{ color: 'var(--dashboard-text)' }}>
                                 {organization?.name || user?.displayName || getMobileTitle(user?.organizationId)}
                             </p>
                         </div>

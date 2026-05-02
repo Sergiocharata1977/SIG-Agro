@@ -1,6 +1,6 @@
 'use client';
 
-import { ComponentType, useEffect, useMemo, useState } from 'react';
+import { type CSSProperties, ComponentType, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
@@ -23,6 +23,7 @@ import {
   LayoutDashboard,
   Map,
   MapPin,
+  Palette,
   Package,
   Pin,
   Receipt,
@@ -77,6 +78,20 @@ type ModuleIndicator = {
   detail: string;
 };
 
+type DashboardTheme = 'green' | 'blue' | 'black';
+
+const DASHBOARD_THEME_STORAGE_KEY = 'sigagro-dashboard-theme';
+
+const DASHBOARD_THEME_OPTIONS: Array<{
+  value: DashboardTheme;
+  label: string;
+  accent: string;
+}> = [
+  { value: 'green', label: 'Verde', accent: '#0d7a52' },
+  { value: 'blue', label: 'Azul', accent: '#2563eb' },
+  { value: 'black', label: 'Negro', accent: '#111827' },
+];
+
 export default function Sidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -99,6 +114,8 @@ export default function Sidebar() {
   const [operationsHubOpen, setOperationsHubOpen] = useState(false);
   const [grainsHubOpen, setGrainsHubOpen] = useState(false);
   const [financeHubOpen, setFinanceHubOpen] = useState(false);
+  const [controlHubOpen, setControlHubOpen] = useState(false);
+  const [theme, setTheme] = useState<DashboardTheme>('green');
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const contextualPlotId = searchParams.get('plotId');
   const hasActiveOrganization = Boolean(
@@ -120,7 +137,22 @@ export default function Sidebar() {
     setOperationsHubOpen(false);
     setGrainsHubOpen(false);
     setFinanceHubOpen(false);
+    setControlHubOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const storedTheme = window.localStorage.getItem(DASHBOARD_THEME_STORAGE_KEY) as DashboardTheme | null;
+    if (storedTheme === 'green' || storedTheme === 'blue' || storedTheme === 'black') {
+      setTheme(storedTheme);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof document === 'undefined' || typeof window === 'undefined') return;
+    document.documentElement.dataset.dashboardTheme = theme;
+    window.localStorage.setItem(DASHBOARD_THEME_STORAGE_KEY, theme);
+  }, [theme]);
 
   const pluginSlugs = useMemo(
     () => new Set(AGRO_PLUGINS.map((plugin) => plugin.identity.slug)),
@@ -429,6 +461,21 @@ export default function Sidebar() {
   const FinanceHubIcon = financeHubGroup?.icon ?? Landmark;
   const operationalGroups = filteredGroups.filter((g) => opKeys.has(g.key));
   const controlGroups = filteredGroups.filter((g) => !opKeys.has(g.key) && !megaMenuKeys.has(g.key) && !popupMenuKeys.has(g.key));
+  const controlHubGroup = controlGroups.length
+    ? {
+        key: 'control-hub',
+        title: 'Configuraciones e informes',
+        icon: Settings,
+        active: controlGroups.some((group) => group.active),
+        module: 'admin',
+        items: controlGroups.flatMap((group) =>
+          group.items.map((item) => ({
+            ...item,
+            badge: group.title,
+          }))
+        ),
+      }
+    : null;
 
   const renderHubPanel = ({
     open,
@@ -461,24 +508,25 @@ export default function Sidebar() {
 
     return (
       <>
-        <div className="fixed inset-0 z-[540] hidden bg-slate-950/18 backdrop-blur-[2px] md:block" onClick={onClose} />
+        <div className="fixed inset-0 z-[540] hidden backdrop-blur-[3px] md:block" style={{ background: 'var(--dashboard-overlay)' }} onClick={onClose} />
         <div className={`absolute left-0 right-0 top-[calc(100%+12px)] z-[550] md:fixed md:left-[calc(20rem+16px)] md:right-auto md:top-24 md:max-h-[calc(100vh-7rem)] md:overflow-y-auto ${widthClass}`}>
-          <div className="overflow-hidden rounded-[32px] border border-emerald-950/10 bg-[#f6f8f4] shadow-[0_32px_96px_rgba(10,21,16,0.28)]">
-            <div className={`flex items-start justify-between gap-4 bg-gradient-to-br ${accent.header} px-7 py-6 text-white`}>
+          <div className="overflow-hidden rounded-[32px] shadow-[0_32px_96px_rgba(10,21,16,0.16)]" style={{ border: '1px solid var(--dashboard-sidebar-border)', background: 'var(--dashboard-popup-bg)' }}>
+            <div className={`flex items-start justify-between gap-4 bg-gradient-to-br ${accent.header} px-7 py-6`} style={{ color: 'var(--dashboard-accent-contrast)' }}>
               <div className="max-w-3xl">
-                <div className="flex items-center gap-3 text-emerald-100/88">
+                <div className="flex items-center gap-3" style={{ color: 'color-mix(in srgb, var(--dashboard-accent-contrast) 82%, transparent)' }}>
                   <div className={`grid h-10 w-10 place-items-center rounded-2xl ${accent.headerChip}`}>
                     <HubIcon className="h-5 w-5" />
                   </div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.26em]">{eyebrow}</p>
                 </div>
-                <h3 className="mt-4 text-3xl font-semibold tracking-[-0.03em] text-white">{title}</h3>
-                <p className="mt-3 max-w-3xl text-base leading-8 text-emerald-50/76">{description}</p>
+                <h3 className="mt-4 text-3xl font-semibold tracking-[-0.03em]">{title}</h3>
+                <p className="mt-3 max-w-3xl text-base leading-8" style={{ color: 'color-mix(in srgb, var(--dashboard-accent-contrast) 76%, transparent)' }}>{description}</p>
               </div>
               <button
                 type="button"
                 onClick={onClose}
-                className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-white/15 bg-white/5 text-white transition hover:bg-white/10"
+                className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border transition hover:bg-white/60"
+                style={{ borderColor: 'rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.12)' }}
                 aria-label={`Cerrar panel de ${title.toLowerCase()}`}
               >
                 <X className="h-5 w-5" />
@@ -486,7 +534,7 @@ export default function Sidebar() {
             </div>
 
             <div className="grid md:grid-cols-[minmax(0,1.35fr)_320px]">
-              <section className="bg-[#f8faf7] px-6 py-6 md:px-7">
+              <section className="px-6 py-6 md:px-7" style={{ background: 'var(--dashboard-popup-bg)' }}>
                 <div className="mb-5">
                   <h4 className="text-xl font-semibold tracking-[-0.02em] text-slate-950">{summaryTitle}</h4>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{summaryDescription}</p>
@@ -549,7 +597,7 @@ export default function Sidebar() {
 
                 <div className="mt-6 flex items-center justify-between rounded-[24px] border border-slate-200 bg-white px-5 py-4 text-sm text-slate-600">
                   <div className="flex items-center gap-3">
-                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: 'var(--dashboard-accent)' }} />
                     <span>Sistema en linea</span>
                   </div>
                   <div className="text-slate-500">{getHubFooterCopy(group.key)}</div>
@@ -599,44 +647,67 @@ export default function Sidebar() {
 
   return (
     <>
-      {mobileOpen && <div className="fixed inset-0 bg-slate-950/60 z-40 md:hidden" onClick={() => setMobileOpen(false)} />}
+      {mobileOpen && <div className="fixed inset-0 z-40 md:hidden" style={{ background: 'var(--dashboard-overlay)' }} onClick={() => setMobileOpen(false)} />}
 
-      <aside className={`fixed md:relative z-[360] h-screen bg-emerald-950 text-emerald-50 flex flex-col transition-all duration-300 border-r border-emerald-900 ${collapsed ? 'md:w-20' : 'md:w-80'} w-80 ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
-        <div className="p-4 border-b border-emerald-900 relative">
+      <aside
+        className={`fixed md:relative z-[360] flex h-screen flex-col transition-all duration-300 ${collapsed ? 'md:w-20' : 'md:w-80'} w-80 ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
+        style={{
+          background: 'var(--dashboard-sidebar-bg)',
+          color: 'var(--dashboard-sidebar-text)',
+          borderRight: '1px solid var(--dashboard-sidebar-border)',
+          boxShadow: 'inset -1px 0 0 rgba(255,255,255,0.4)',
+        }}
+      >
+        <div className="relative border-b p-4" style={{ borderColor: 'var(--dashboard-sidebar-border)' }}>
           <div className="flex items-center gap-3">
             <Image src="/logo-sig-agro.png" alt="SIG Agro" width={40} height={40} className="rounded-lg" />
             {!collapsed && (
               <div>
-                <div className="font-semibold text-emerald-50">Don Candido IA</div>
-                <div className="text-xs text-emerald-300/70">SIG Agro</div>
+                <div className="font-semibold" style={{ color: 'var(--dashboard-text)' }}>SIG Agro</div>
+                <div className="text-xs uppercase tracking-[0.2em]" style={{ color: 'var(--dashboard-muted)' }}>Suite operativa</div>
               </div>
             )}
           </div>
 
-          <button onClick={() => setMobileOpen(false)} className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center text-emerald-300 hover:text-emerald-50 md:hidden" aria-label="Cerrar menu">
+          <button onClick={() => setMobileOpen(false)} className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center md:hidden" style={{ color: 'var(--dashboard-muted)' }} aria-label="Cerrar menu">
             <X className="w-4 h-4" />
           </button>
 
-          <button onClick={() => setCollapsed((prev) => !prev)} className="hidden md:flex absolute top-1/2 -translate-y-1/2 -right-3 w-7 h-7 bg-emerald-900 rounded-full items-center justify-center text-emerald-200 hover:text-emerald-50 border border-emerald-700 z-10" aria-label={collapsed ? 'Expandir' : 'Colapsar'}>
+          <button
+            onClick={() => setCollapsed((prev) => !prev)}
+            className="absolute -right-3 top-1/2 z-10 hidden h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border md:flex"
+            style={{
+              background: 'var(--dashboard-sidebar-panel)',
+              color: 'var(--dashboard-sidebar-text)',
+              borderColor: 'var(--dashboard-sidebar-border)',
+              boxShadow: '0 8px 20px rgba(15,23,42,0.12)',
+            }}
+            aria-label={collapsed ? 'Expandir' : 'Colapsar'}
+          >
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
         </div>
 
         {!collapsed && (
-          <div className="px-4 py-3 bg-emerald-900/30 space-y-2">
-            <div className="text-[11px] uppercase tracking-[0.16em] text-emerald-300/70">Organizacion activa</div>
+          <div className="space-y-2 px-4 py-3">
+            <div className="text-[11px] uppercase tracking-[0.16em]" style={{ color: 'var(--dashboard-muted)' }}>Organizacion activa</div>
 
-            <div className="rounded-xl bg-emerald-900/60 p-2.5 space-y-2">
+            <div className="space-y-2 rounded-[24px] p-3 shadow-[0_16px_36px_rgba(15,23,42,0.07)]" style={{ background: 'var(--dashboard-sidebar-panel)', border: '1px solid var(--dashboard-sidebar-border)' }}>
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-md bg-sky-700 text-white grid place-items-center text-xs font-bold">{(organization?.name || 'O').charAt(0).toUpperCase()}</div>
-                <div className="text-sm font-medium text-emerald-50 truncate">{organization?.name || 'Sin organizacion'}</div>
+                <div className="grid h-8 w-8 place-items-center rounded-xl text-xs font-bold" style={{ background: 'var(--dashboard-accent-soft)', color: 'var(--dashboard-accent-strong)' }}>{(organization?.name || 'O').charAt(0).toUpperCase()}</div>
+                <div className="truncate text-sm font-medium" style={{ color: 'var(--dashboard-text)' }}>{organization?.name || 'Sin organizacion'}</div>
               </div>
 
               {organizations.length > 1 && (
                 <select
                   value={organizationId || ''}
                   onChange={(e) => void setActiveOrganization(e.target.value)}
-                  className="w-full text-sm rounded-lg bg-emerald-950/70 text-emerald-50 px-2.5 py-2 outline-none focus:ring-2 focus:ring-emerald-500/40 border border-emerald-800"
+                  className="w-full rounded-xl px-3 py-2 text-sm outline-none"
+                  style={{
+                    background: 'white',
+                    color: 'var(--dashboard-text)',
+                    border: '1px solid var(--dashboard-sidebar-border)',
+                  }}
                 >
                   {organizations.map((org) => (
                     <option key={org.id} value={org.id}>{org.name}</option>
@@ -645,7 +716,7 @@ export default function Sidebar() {
               )}
 
               {organizations.length <= 1 && (
-                <div className="text-xs text-emerald-200/70 px-1">
+                <div className="px-1 text-xs" style={{ color: 'var(--dashboard-muted)' }}>
                   {organizations.length === 0 ? 'Todavia no tenes organizaciones creadas.' : 'Tenes 1 organizacion vinculada.'}
                 </div>
               )}
@@ -653,7 +724,8 @@ export default function Sidebar() {
               <Link
                 href="/organizaciones"
                 onClick={() => setMobileOpen(false)}
-                className="inline-flex items-center justify-center w-full rounded-lg bg-emerald-600/30 px-2.5 py-2 text-xs font-medium text-emerald-100 hover:bg-emerald-600/40"
+                className="inline-flex w-full items-center justify-center rounded-xl px-3 py-2 text-xs font-semibold transition"
+                style={{ background: 'var(--dashboard-accent-soft)', color: 'var(--dashboard-accent-strong)' }}
               >
                 ABM Organizaciones
               </Link>
@@ -668,19 +740,31 @@ export default function Sidebar() {
                 <button
                   type="button"
                   onClick={() => setMegaMenuOpen((prev) => !prev)}
-                  className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
+                  className={`w-full rounded-[24px] border px-4 py-3 text-left transition ${
                     megaMenuOpen || megaMenuGroups.some((group) => group.active)
-                      ? 'border-emerald-500/70 bg-gradient-to-r from-emerald-800 to-emerald-700 text-white shadow-lg shadow-emerald-950/20'
-                      : 'border-emerald-800 bg-emerald-900/45 text-emerald-50 hover:border-emerald-700 hover:bg-emerald-900/70'
+                      ? 'shadow-lg'
+                      : 'hover:-translate-y-0.5'
                   }`}
+                  style={{
+                    borderColor: megaMenuOpen || megaMenuGroups.some((group) => group.active) ? 'var(--dashboard-accent)' : 'var(--dashboard-sidebar-border)',
+                    background: megaMenuOpen || megaMenuGroups.some((group) => group.active)
+                      ? 'linear-gradient(135deg, var(--dashboard-accent-strong), var(--dashboard-accent))'
+                      : 'var(--dashboard-sidebar-panel)',
+                    color: megaMenuOpen || megaMenuGroups.some((group) => group.active)
+                      ? 'var(--dashboard-accent-contrast)'
+                      : 'var(--dashboard-sidebar-text)',
+                    boxShadow: megaMenuOpen || megaMenuGroups.some((group) => group.active)
+                      ? '0 18px 32px rgba(15,23,42,0.16)'
+                      : '0 10px 24px rgba(15,23,42,0.05)',
+                  }}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white/10 ring-1 ring-white/10">
+                    <div className="grid h-10 w-10 place-items-center rounded-2xl" style={{ background: megaMenuOpen || megaMenuGroups.some((group) => group.active) ? 'rgba(255,255,255,0.14)' : 'var(--dashboard-accent-soft)', color: megaMenuOpen || megaMenuGroups.some((group) => group.active) ? 'white' : 'var(--dashboard-accent-strong)' }}>
                       <LayoutDashboard className="h-5 w-5" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-semibold">Explorar sistema</div>
-                      <div className="mt-0.5 text-xs text-emerald-100/75">
+                      <div className="mt-0.5 text-xs" style={{ color: megaMenuOpen || megaMenuGroups.some((group) => group.active) ? 'rgba(255,255,255,0.76)' : 'var(--dashboard-muted)' }}>
                         Inicio, campos y campanias en un solo panel
                       </div>
                     </div>
@@ -692,19 +776,20 @@ export default function Sidebar() {
                   <>
                     <div className="fixed inset-0 z-[540] hidden md:block" onClick={() => setMegaMenuOpen(false)} />
                     <div className="absolute left-0 right-0 top-[calc(100%+12px)] z-[550] md:fixed md:left-[calc(20rem+16px)] md:right-auto md:top-24 md:max-h-[calc(100vh-7rem)] md:w-[780px] md:overflow-y-auto">
-                      <div className="overflow-hidden rounded-[28px] border border-emerald-700/60 bg-[linear-gradient(160deg,rgba(1,53,39,0.98),rgba(4,79,57,0.96))] shadow-[0_28px_80px_rgba(2,12,9,0.45)] backdrop-blur-xl">
-                        <div className="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-5">
+                      <div className="overflow-hidden rounded-[28px] shadow-[0_28px_80px_rgba(2,12,9,0.16)] backdrop-blur-xl" style={{ border: '1px solid var(--dashboard-sidebar-border)', background: 'linear-gradient(180deg, var(--dashboard-sidebar-panel), var(--dashboard-popup-bg))' }}>
+                        <div className="flex items-start justify-between gap-4 border-b px-6 py-5" style={{ borderColor: 'var(--dashboard-sidebar-border)' }}>
                           <div>
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-300/80">Mega menu</p>
-                            <h3 className="mt-1 text-2xl font-semibold text-white">Exploracion central</h3>
-                            <p className="mt-2 max-w-2xl text-sm leading-6 text-emerald-100/75">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em]" style={{ color: 'var(--dashboard-accent)' }}>Mega menu</p>
+                            <h3 className="mt-1 text-2xl font-semibold" style={{ color: 'var(--dashboard-text)' }}>Exploracion central</h3>
+                            <p className="mt-2 max-w-2xl text-sm leading-6" style={{ color: 'var(--dashboard-muted)' }}>
                               Accesos principales para tablero, territorio operativo y seguimiento productivo.
                             </p>
                           </div>
                           <button
                             type="button"
                             onClick={() => setMegaMenuOpen(false)}
-                            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-emerald-50 transition hover:bg-white/10"
+                            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border transition hover:bg-slate-50"
+                            style={{ borderColor: 'var(--dashboard-sidebar-border)', color: 'var(--dashboard-sidebar-text)' }}
                             aria-label="Cerrar panel de exploracion"
                           >
                             <X className="h-4 w-4" />
@@ -719,17 +804,21 @@ export default function Sidebar() {
                                 key={group.key}
                                 className={`rounded-[24px] border p-4 ${
                                   group.active
-                                    ? 'border-emerald-400/60 bg-white/10'
-                                    : 'border-white/10 bg-white/[0.04]'
+                                    ? 'shadow-[0_14px_30px_rgba(15,23,42,0.08)]'
+                                    : ''
                                 }`}
+                                style={{
+                                  borderColor: group.active ? 'var(--dashboard-accent)' : 'var(--dashboard-sidebar-border)',
+                                  background: 'var(--dashboard-sidebar-panel)',
+                                }}
                               >
                                 <div className="flex items-start gap-3">
-                                  <div className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-400/10 text-emerald-200 ring-1 ring-emerald-300/15">
+                                  <div className="grid h-11 w-11 place-items-center rounded-2xl" style={{ background: 'var(--dashboard-accent-soft)', color: 'var(--dashboard-accent-strong)' }}>
                                     <GroupIcon className="h-5 w-5" />
                                   </div>
                                   <div className="min-w-0">
-                                    <h4 className="text-base font-semibold text-white">{group.title}</h4>
-                                    <p className="mt-1 text-xs leading-5 text-emerald-100/70">
+                                    <h4 className="text-base font-semibold" style={{ color: 'var(--dashboard-text)' }}>{group.title}</h4>
+                                    <p className="mt-1 text-xs leading-5" style={{ color: 'var(--dashboard-muted)' }}>
                                       {describeGroup(group.key)}
                                     </p>
                                   </div>
@@ -740,16 +829,24 @@ export default function Sidebar() {
                                     const Icon = item.icon;
                                     const cls = `flex items-center gap-3 rounded-2xl border px-3 py-3 text-sm transition ${
                                       item.active
-                                        ? 'border-emerald-300/40 bg-emerald-300/12 text-white'
-                                        : 'border-white/8 bg-black/10 text-emerald-50/88 hover:border-emerald-300/25 hover:bg-white/8'
+                                        ? 'shadow-sm'
+                                        : 'hover:-translate-y-0.5'
                                     }`;
 
                                     if (item.disabled || !item.href) {
                                       return (
-                                        <div key={`${group.key}-${item.label}`} className={`${cls} cursor-not-allowed opacity-70`}>
+                                        <div
+                                          key={`${group.key}-${item.label}`}
+                                          className={`${cls} cursor-not-allowed opacity-70`}
+                                          style={{
+                                            borderColor: 'var(--dashboard-sidebar-border)',
+                                            background: 'white',
+                                            color: 'var(--dashboard-sidebar-text)',
+                                          }}
+                                        >
                                           <Icon className="h-4 w-4" />
                                           <span className="flex-1">{item.label}</span>
-                                          {item.badge && <span className="text-[10px] uppercase tracking-[0.18em] text-emerald-300/75">{item.badge}</span>}
+                                          {item.badge && <span className="text-[10px] uppercase tracking-[0.18em]" style={{ color: 'var(--dashboard-muted)' }}>{item.badge}</span>}
                                         </div>
                                       );
                                     }
@@ -763,10 +860,15 @@ export default function Sidebar() {
                                           setMobileOpen(false);
                                         }}
                                         className={cls}
+                                        style={{
+                                          borderColor: item.active ? 'var(--dashboard-accent)' : 'var(--dashboard-sidebar-border)',
+                                          background: item.active ? 'var(--dashboard-accent-soft)' : 'white',
+                                          color: 'var(--dashboard-sidebar-text)',
+                                        }}
                                       >
                                         <Icon className="h-4 w-4" />
                                         <span className="flex-1">{item.label}</span>
-                                        {item.badge && <span className="text-[10px] uppercase tracking-[0.18em] text-emerald-300/75">{item.badge}</span>}
+                                        {item.badge && <span className="text-[10px] uppercase tracking-[0.18em]" style={{ color: 'var(--dashboard-muted)' }}>{item.badge}</span>}
                                       </Link>
                                     );
                                   })}
@@ -784,7 +886,8 @@ export default function Sidebar() {
               <button
                 type="button"
                 onClick={() => setCollapsed(false)}
-                className="flex w-full items-center justify-center rounded-md border border-transparent px-3 py-2.5 text-emerald-100/80 transition hover:border-emerald-800 hover:bg-emerald-900/50 hover:text-emerald-50"
+                className="flex w-full items-center justify-center rounded-2xl border px-3 py-2.5 transition"
+                style={{ borderColor: 'var(--dashboard-sidebar-border)', color: 'var(--dashboard-sidebar-text)', background: 'var(--dashboard-sidebar-panel)' }}
                 aria-label="Expandir exploracion"
               >
                 <LayoutDashboard className="h-4 w-4" />
@@ -800,19 +903,16 @@ export default function Sidebar() {
                 <button
                   type="button"
                   onClick={() => setOperationsHubOpen((prev) => !prev)}
-                  className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
-                    operationsHubOpen || operationsHubGroup.active
-                      ? 'border-emerald-500/70 bg-gradient-to-r from-emerald-800 to-emerald-700 text-white shadow-lg shadow-emerald-950/20'
-                      : 'border-emerald-800 bg-emerald-900/45 text-emerald-50 hover:border-emerald-700 hover:bg-emerald-900/70'
-                  }`}
+                  className={`w-full rounded-[24px] border px-4 py-3 text-left transition ${operationsHubOpen || operationsHubGroup.active ? 'shadow-lg' : 'hover:-translate-y-0.5'}`}
+                  style={getHubButtonStyle(operationsHubOpen || operationsHubGroup.active)}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white/10 ring-1 ring-white/10">
+                    <div className="grid h-10 w-10 place-items-center rounded-2xl" style={getHubChipStyle(operationsHubOpen || operationsHubGroup.active)}>
                       <Tractor className="h-5 w-5" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-semibold">{operationsHubGroup.title}</div>
-                      <div className="mt-0.5 text-xs text-emerald-100/75">
+                      <div className="mt-0.5 text-xs" style={{ color: operationsHubOpen || operationsHubGroup.active ? 'rgba(255,255,255,0.76)' : 'var(--dashboard-muted)' }}>
                         Labores, ejecucion y trazabilidad en un solo panel
                       </div>
                     </div>
@@ -839,7 +939,8 @@ export default function Sidebar() {
               <button
                 type="button"
                 onClick={() => setCollapsed(false)}
-                className="flex w-full items-center justify-center rounded-md border border-transparent px-3 py-2.5 text-emerald-100/80 transition hover:border-emerald-800 hover:bg-emerald-900/50 hover:text-emerald-50"
+                className="flex w-full items-center justify-center rounded-2xl border px-3 py-2.5 transition"
+                style={{ borderColor: 'var(--dashboard-sidebar-border)', color: 'var(--dashboard-sidebar-text)', background: 'var(--dashboard-sidebar-panel)' }}
                 aria-label="Expandir operaciones agricolas"
               >
                 <Tractor className="h-4 w-4" />
@@ -855,19 +956,16 @@ export default function Sidebar() {
                 <button
                   type="button"
                   onClick={() => setSuppliesHubOpen((prev) => !prev)}
-                  className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
-                    suppliesHubOpen || suppliesHubGroup.active
-                      ? 'border-emerald-500/70 bg-gradient-to-r from-emerald-800 to-emerald-700 text-white shadow-lg shadow-emerald-950/20'
-                      : 'border-emerald-800 bg-emerald-900/45 text-emerald-50 hover:border-emerald-700 hover:bg-emerald-900/70'
-                  }`}
+                  className={`w-full rounded-[24px] border px-4 py-3 text-left transition ${suppliesHubOpen || suppliesHubGroup.active ? 'shadow-lg' : 'hover:-translate-y-0.5'}`}
+                  style={getHubButtonStyle(suppliesHubOpen || suppliesHubGroup.active)}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white/10 ring-1 ring-white/10">
+                    <div className="grid h-10 w-10 place-items-center rounded-2xl" style={getHubChipStyle(suppliesHubOpen || suppliesHubGroup.active)}>
                       <Package className="h-5 w-5" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-semibold">{suppliesHubGroup.title}</div>
-                      <div className="mt-0.5 text-xs text-emerald-100/75">
+                      <div className="mt-0.5 text-xs" style={{ color: suppliesHubOpen || suppliesHubGroup.active ? 'rgba(255,255,255,0.76)' : 'var(--dashboard-muted)' }}>
                         Insumos, depositos, compras y stock en un solo panel
                       </div>
                     </div>
@@ -894,7 +992,8 @@ export default function Sidebar() {
               <button
                 type="button"
                 onClick={() => setCollapsed(false)}
-                className="flex w-full items-center justify-center rounded-md border border-transparent px-3 py-2.5 text-emerald-100/80 transition hover:border-emerald-800 hover:bg-emerald-900/50 hover:text-emerald-50"
+                className="flex w-full items-center justify-center rounded-2xl border px-3 py-2.5 transition"
+                style={{ borderColor: 'var(--dashboard-sidebar-border)', color: 'var(--dashboard-sidebar-text)', background: 'var(--dashboard-sidebar-panel)' }}
                 aria-label="Expandir insumos y stock"
               >
                 <Package className="h-4 w-4" />
@@ -910,19 +1009,16 @@ export default function Sidebar() {
                 <button
                   type="button"
                   onClick={() => setGrainsHubOpen((prev) => !prev)}
-                  className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
-                    grainsHubOpen || grainsHubGroup.active
-                      ? 'border-emerald-500/70 bg-gradient-to-r from-emerald-800 to-emerald-700 text-white shadow-lg shadow-emerald-950/20'
-                      : 'border-emerald-800 bg-emerald-900/45 text-emerald-50 hover:border-emerald-700 hover:bg-emerald-900/70'
-                  }`}
+                  className={`w-full rounded-[24px] border px-4 py-3 text-left transition ${grainsHubOpen || grainsHubGroup.active ? 'shadow-lg' : 'hover:-translate-y-0.5'}`}
+                  style={getHubButtonStyle(grainsHubOpen || grainsHubGroup.active)}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white/10 ring-1 ring-white/10">
+                    <div className="grid h-10 w-10 place-items-center rounded-2xl" style={getHubChipStyle(grainsHubOpen || grainsHubGroup.active)}>
                       <Warehouse className="h-5 w-5" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-semibold">{grainsHubGroup.title}</div>
-                      <div className="mt-0.5 text-xs text-emerald-100/75">
+                      <div className="mt-0.5 text-xs" style={{ color: grainsHubOpen || grainsHubGroup.active ? 'rgba(255,255,255,0.76)' : 'var(--dashboard-muted)' }}>
                         Silos, stock, entregas y cartas en un solo panel
                       </div>
                     </div>
@@ -949,7 +1045,8 @@ export default function Sidebar() {
               <button
                 type="button"
                 onClick={() => setCollapsed(false)}
-                className="flex w-full items-center justify-center rounded-md border border-transparent px-3 py-2.5 text-emerald-100/80 transition hover:border-emerald-800 hover:bg-emerald-900/50 hover:text-emerald-50"
+                className="flex w-full items-center justify-center rounded-2xl border px-3 py-2.5 transition"
+                style={{ borderColor: 'var(--dashboard-sidebar-border)', color: 'var(--dashboard-sidebar-text)', background: 'var(--dashboard-sidebar-panel)' }}
                 aria-label="Expandir granos y silos"
               >
                 <Warehouse className="h-4 w-4" />
@@ -965,19 +1062,16 @@ export default function Sidebar() {
                 <button
                   type="button"
                   onClick={() => setFinanceHubOpen((prev) => !prev)}
-                  className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
-                    financeHubOpen || financeHubGroup.active
-                      ? 'border-emerald-500/70 bg-gradient-to-r from-emerald-800 to-emerald-700 text-white shadow-lg shadow-emerald-950/20'
-                      : 'border-emerald-800 bg-emerald-900/45 text-emerald-50 hover:border-emerald-700 hover:bg-emerald-900/70'
-                  }`}
+                  className={`w-full rounded-[24px] border px-4 py-3 text-left transition ${financeHubOpen || financeHubGroup.active ? 'shadow-lg' : 'hover:-translate-y-0.5'}`}
+                  style={getHubButtonStyle(financeHubOpen || financeHubGroup.active)}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white/10 ring-1 ring-white/10">
+                    <div className="grid h-10 w-10 place-items-center rounded-2xl" style={getHubChipStyle(financeHubOpen || financeHubGroup.active)}>
                       <Landmark className="h-5 w-5" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-semibold">{financeHubGroup.title}</div>
-                      <div className="mt-0.5 text-xs text-emerald-100/75">
+                      <div className="mt-0.5 text-xs" style={{ color: financeHubOpen || financeHubGroup.active ? 'rgba(255,255,255,0.76)' : 'var(--dashboard-muted)' }}>
                         Ventas, cobranzas, pagos y control financiero unificado
                       </div>
                     </div>
@@ -1004,7 +1098,8 @@ export default function Sidebar() {
               <button
                 type="button"
                 onClick={() => setCollapsed(false)}
-                className="flex w-full items-center justify-center rounded-md border border-transparent px-3 py-2.5 text-emerald-100/80 transition hover:border-emerald-800 hover:bg-emerald-900/50 hover:text-emerald-50"
+                className="flex w-full items-center justify-center rounded-2xl border px-3 py-2.5 transition"
+                style={{ borderColor: 'var(--dashboard-sidebar-border)', color: 'var(--dashboard-sidebar-text)', background: 'var(--dashboard-sidebar-panel)' }}
                 aria-label="Expandir finanzas"
               >
                 <Landmark className="h-4 w-4" />
@@ -1013,16 +1108,16 @@ export default function Sidebar() {
           </div>
         )}
 
-        <nav className="flex-1 p-3 overflow-y-auto space-y-4">
+        <nav className="flex-1 space-y-4 overflow-y-auto p-3">
           {!hasActiveOrganization && !collapsed && (
-            <div className="rounded-xl bg-emerald-900/40 p-3 text-xs text-emerald-100/80 border border-emerald-800">
+            <div className="rounded-[20px] border p-3 text-xs" style={{ background: 'var(--dashboard-sidebar-panel)', borderColor: 'var(--dashboard-sidebar-border)', color: 'var(--dashboard-muted)' }}>
               Crea o selecciona una organizacion para habilitar campos, lotes y operaciones.
             </div>
           )}
           {hasActiveOrganization && (
             <>
               <div className="space-y-1.5">
-                {!collapsed && <p className="px-2 text-[10px] uppercase tracking-[0.18em] text-emerald-300/70">Operacion</p>}
+                {!collapsed && <p className="px-2 text-[10px] uppercase tracking-[0.18em]" style={{ color: 'var(--dashboard-muted)' }}>Operacion</p>}
                 {operationalGroups.map((group) => {
                   const GroupIcon = group.icon;
                   const open = !!expandedGroups[group.key];
@@ -1030,7 +1125,12 @@ export default function Sidebar() {
                     <div key={group.key} className="space-y-1">
                       <button
                         onClick={() => setExpandedGroups((prev) => ({ ...prev, [group.key]: !prev[group.key] }))}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md border transition ${group.active ? 'bg-emerald-800/70 border-emerald-600 text-emerald-100' : 'border-transparent text-emerald-100/80 hover:bg-emerald-900/50 hover:border-emerald-800 hover:text-emerald-50'}`}
+                        className="flex w-full items-center gap-3 rounded-[18px] border px-3 py-3 transition hover:-translate-y-0.5"
+                        style={{
+                          background: group.active ? 'var(--dashboard-accent-soft)' : 'transparent',
+                          borderColor: group.active ? 'var(--dashboard-accent)' : 'transparent',
+                          color: group.active ? 'var(--dashboard-accent-strong)' : 'var(--dashboard-sidebar-text)',
+                        }}
                       >
                         <GroupIcon className="w-4 h-4" />
                         {!collapsed && (
@@ -1042,24 +1142,34 @@ export default function Sidebar() {
                       </button>
 
                       {open && !collapsed && (
-                        <div className="ml-4 pl-3 border-l border-emerald-800 space-y-1">
+                        <div className="ml-4 space-y-1 border-l pl-3" style={{ borderColor: 'var(--dashboard-sidebar-border)' }}>
                           {group.items.map((item) => {
                             const Icon = item.icon;
-                            const cls = `flex items-center gap-2 px-3 py-2 rounded-md text-sm border transition ${item.active ? 'bg-emerald-800/70 border-emerald-600 text-emerald-100' : 'border-transparent text-emerald-100/80 hover:bg-emerald-900/50 hover:border-emerald-800 hover:text-emerald-50'}`;
+                            const cls = 'flex items-center gap-2 rounded-[16px] border px-3 py-2 text-sm transition hover:-translate-y-0.5';
                             if (item.disabled || !item.href) {
                               return (
-                                <div key={`${group.key}-${item.label}`} className={`${cls} opacity-70 cursor-not-allowed`}>
+                                <div key={`${group.key}-${item.label}`} className={`${cls} opacity-70 cursor-not-allowed`} style={{ borderColor: 'transparent', color: 'var(--dashboard-muted)' }}>
                                   <Icon className="w-3.5 h-3.5" />
                                   <span className="flex-1">{item.label}</span>
-                                  {item.badge && <span className="text-[10px] uppercase tracking-wide text-emerald-300/70">{item.badge}</span>}
+                                  {item.badge && <span className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--dashboard-muted)' }}>{item.badge}</span>}
                                 </div>
                               );
                             }
                             return (
-                              <Link key={`${group.key}-${item.href}-${item.label}`} href={item.href} onClick={() => setMobileOpen(false)} className={cls}>
+                              <Link
+                                key={`${group.key}-${item.href}-${item.label}`}
+                                href={item.href}
+                                onClick={() => setMobileOpen(false)}
+                                className={cls}
+                                style={{
+                                  background: item.active ? 'white' : 'transparent',
+                                  borderColor: item.active ? 'var(--dashboard-sidebar-border)' : 'transparent',
+                                  color: item.active ? 'var(--dashboard-accent-strong)' : 'var(--dashboard-sidebar-text)',
+                                }}
+                              >
                                 <Icon className="w-3.5 h-3.5" />
                                 <span className="flex-1">{item.label}</span>
-                                {item.badge && <span className="text-[10px] uppercase tracking-wide text-emerald-300/70">{item.badge}</span>}
+                                {item.badge && <span className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--dashboard-muted)' }}>{item.badge}</span>}
                               </Link>
                             );
                           })}
@@ -1071,56 +1181,96 @@ export default function Sidebar() {
               </div>
 
               <div className="space-y-1.5">
-                {!collapsed && <p className="px-2 text-[10px] uppercase tracking-[0.18em] text-emerald-300/70">Control</p>}
-                {controlGroups.map((group) => {
-                  const GroupIcon = group.icon;
-                  const open = !!expandedGroups[group.key];
-                  return (
-                    <div key={group.key} className="space-y-1">
-                      <button
-                        onClick={() => setExpandedGroups((prev) => ({ ...prev, [group.key]: !prev[group.key] }))}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md border transition ${group.active ? 'bg-emerald-800/70 border-emerald-600 text-emerald-100' : 'border-transparent text-emerald-100/80 hover:bg-emerald-900/50 hover:border-emerald-800 hover:text-emerald-50'}`}
-                      >
-                        <GroupIcon className="w-4 h-4" />
-                        {!collapsed && (
-                          <>
-                            <span className="text-sm font-medium flex-1 text-left">{group.title}</span>
-                            <ChevronDown className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} />
-                          </>
-                        )}
-                      </button>
+                {!collapsed && <p className="px-2 text-[10px] uppercase tracking-[0.18em]" style={{ color: 'var(--dashboard-muted)' }}>Control</p>}
+                {controlHubGroup && (
+                  <div className="relative space-y-1">
+                    {!collapsed ? (
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setControlHubOpen((prev) => !prev)}
+                          className={`w-full rounded-[24px] border px-4 py-3 text-left transition ${controlHubOpen || controlHubGroup.active ? 'shadow-lg' : 'hover:-translate-y-0.5'}`}
+                          style={getHubButtonStyle(controlHubOpen || controlHubGroup.active)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="grid h-10 w-10 place-items-center rounded-2xl" style={getHubChipStyle(controlHubOpen || controlHubGroup.active)}>
+                              <Settings className="h-5 w-5" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-semibold">{controlHubGroup.title}</div>
+                              <div className="mt-0.5 text-xs" style={{ color: controlHubOpen || controlHubGroup.active ? 'rgba(255,255,255,0.76)' : 'var(--dashboard-muted)' }}>
+                                Reportes, documentacion y configuracion dentro de un mismo popup
+                              </div>
+                            </div>
+                            <ChevronRight className={`h-5 w-5 transition-transform ${controlHubOpen ? 'rotate-90' : ''}`} />
+                          </div>
+                        </button>
 
-                      {open && !collapsed && (
-                        <div className="ml-4 pl-3 border-l border-emerald-800 space-y-1">
-                          {group.items.map((item) => {
-                            const Icon = item.icon;
-                            const cls = `flex items-center gap-2 px-3 py-2 rounded-md text-sm border transition ${item.active ? 'bg-emerald-800/70 border-emerald-600 text-emerald-100' : 'border-transparent text-emerald-100/80 hover:bg-emerald-900/50 hover:border-emerald-800 hover:text-emerald-50'}`;
-                            if (item.disabled || !item.href) {
-                              return (
-                                <div key={`${group.key}-${item.label}`} className={`${cls} opacity-70 cursor-not-allowed`}>
-                                  <Icon className="w-3.5 h-3.5" />
-                                  <span className="flex-1">{item.label}</span>
-                                  {item.badge && <span className="text-[10px] uppercase tracking-wide text-emerald-300/70">{item.badge}</span>}
-                                </div>
-                              );
-                            }
-                            return (
-                              <Link key={`${group.key}-${item.href}-${item.label}`} href={item.href} onClick={() => setMobileOpen(false)} className={cls}>
-                                <Icon className="w-3.5 h-3.5" />
-                                <span className="flex-1">{item.label}</span>
-                                {item.badge && <span className="text-[10px] uppercase tracking-wide text-emerald-300/70">{item.badge}</span>}
-                              </Link>
-                            );
+                        {controlHubOpen &&
+                          renderHubPanel({
+                            open: controlHubOpen,
+                            onClose: () => setControlHubOpen(false),
+                            widthClass: 'md:w-[1040px]',
+                            group: controlHubGroup,
+                            HubIcon: Settings,
+                            eyebrow: 'Centro de control',
+                            title: 'Configuraciones e informes',
+                            description: 'Unifica reportes, documentacion ISO y ajustes operativos en una sola vista de acceso rapido.',
+                            summaryTitle: 'Gestion centralizada',
+                            summaryDescription: 'Todos los accesos de reportes, documentacion y configuracion quedaron reunidos en un unico popup, sin desplegables intermedios.',
+                            indicators: getControlIndicators(),
                           })}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setCollapsed(false)}
+                        className="flex w-full items-center justify-center rounded-2xl border px-3 py-2.5 transition"
+                        style={{ borderColor: 'var(--dashboard-sidebar-border)', color: 'var(--dashboard-sidebar-text)', background: 'var(--dashboard-sidebar-panel)' }}
+                        aria-label="Expandir configuraciones e informes"
+                      >
+                        <Settings className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </>
           )}
         </nav>
+
+        {!collapsed && (
+          <div className="border-t px-4 py-4" style={{ borderColor: 'var(--dashboard-sidebar-border)' }}>
+            <div className="rounded-[24px] p-3 shadow-[0_12px_28px_rgba(15,23,42,0.06)]" style={{ background: 'var(--dashboard-sidebar-panel)', border: '1px solid var(--dashboard-sidebar-border)' }}>
+              <div className="mb-3 flex items-center gap-2">
+                <div className="grid h-9 w-9 place-items-center rounded-2xl" style={{ background: 'var(--dashboard-accent-soft)', color: 'var(--dashboard-accent-strong)' }}>
+                  <Palette className="h-4 w-4" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold" style={{ color: 'var(--dashboard-text)' }}>Temas SIG Agro</div>
+                  <div className="text-xs" style={{ color: 'var(--dashboard-muted)' }}>Verde, azul y negro</div>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {DASHBOARD_THEME_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setTheme(option.value)}
+                    className="rounded-2xl border px-2 py-2 text-xs font-semibold transition hover:-translate-y-0.5"
+                    style={{
+                      borderColor: theme === option.value ? option.accent : 'var(--dashboard-sidebar-border)',
+                      background: theme === option.value ? option.accent : 'white',
+                      color: theme === option.value ? '#ffffff' : 'var(--dashboard-sidebar-text)',
+                    }}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </aside>
     </>
   );
@@ -1157,6 +1307,46 @@ function getOperationsIndicators() {
       detail: 'Registros pendientes de consolidacion operativa.',
     },
   ];
+}
+
+function getControlIndicators() {
+  return [
+    {
+      label: 'Reportes',
+      value: '03',
+      detail: 'Accesos ejecutivos y analiticos consolidados en un solo panel.',
+    },
+    {
+      label: 'Documentos ISO',
+      value: '02',
+      detail: 'Documentacion y auditoria disponibles sin cambiar de menu.',
+    },
+    {
+      label: 'Configuraciones',
+      value: '05',
+      detail: 'Parametros, WhatsApp, plugins y ajustes operativos centralizados.',
+    },
+  ];
+}
+
+function getHubButtonStyle(active: boolean) {
+  return {
+    borderColor: active ? 'var(--dashboard-accent)' : 'var(--dashboard-sidebar-border)',
+    background: active
+      ? 'linear-gradient(135deg, var(--dashboard-accent-strong), var(--dashboard-accent))'
+      : 'var(--dashboard-sidebar-panel)',
+    color: active ? 'var(--dashboard-accent-contrast)' : 'var(--dashboard-sidebar-text)',
+    boxShadow: active
+      ? '0 18px 32px rgba(15,23,42,0.16)'
+      : '0 10px 24px rgba(15,23,42,0.05)',
+  } satisfies CSSProperties;
+}
+
+function getHubChipStyle(active: boolean) {
+  return {
+    background: active ? 'rgba(255,255,255,0.14)' : 'var(--dashboard-accent-soft)',
+    color: active ? '#ffffff' : 'var(--dashboard-accent-strong)',
+  } satisfies CSSProperties;
 }
 
 function getHubAccentClasses(groupKey: string) {
@@ -1234,6 +1424,18 @@ function describeModuleItem(groupKey: string, itemLabel: string) {
       'Libro diario': 'Registro cronologico, asientos y exportacion contable operativa.',
       'Balance y rentabilidad': 'Margen, costos directos e informes ejecutivos del negocio.',
       'Terceros': 'Maestro de clientes, proveedores, socios y contratistas vinculados.',
+    },
+    'control-hub': {
+      'Rentabilidad por lote': 'Lectura rapida del margen por lote para seguimiento economico productivo.',
+      'Panel de metricas': 'Indicadores consolidados para monitorear desvio, avance y performance.',
+      'Reportes GIS': 'Consultas geograficas y salidas cartograficas desde una sola entrada.',
+      'Documentos ISO': 'Repositorio principal de documentacion ISO para consulta operativa.',
+      'Auditoria': 'Accesos de control y seguimiento para revisiones internas y externas.',
+      'Parametros': 'Ajustes generales de organizaciones y reglas maestras del sistema.',
+      'WhatsApp': 'Configuracion del canal WhatsApp y sus automatizaciones asociadas.',
+      'Plugins': 'Habilitacion y administracion de extensiones activas en SIG Agro.',
+      'Tipos de insumos': 'Catalogos base para estandarizar insumos y su clasificacion.',
+      'Parametros GIS': 'Variables de mapa, capas y ajustes espaciales operativos.',
     },
   };
 
