@@ -1,23 +1,37 @@
 # Modulos e Integraciones
 
-Fecha: 2026-05-01
+Fecha: 2026-05-03
 
 ## Modulos funcionales presentes
 
-| Modulo | Estado | Evidencia principal |
-|---|---|---|
-| Dashboard | Implementado | `src/app/dashboard/page.tsx`, `src/app/(dashboard)/layout.tsx` |
-| Campos | Implementado | `src/app/campos/*` |
-| Lotes | Implementado base | `src/app/(dashboard)/lotes/page.tsx` |
-| Campanias | Implementado | `src/app/campanias/*` |
-| Operaciones | Implementado base | `src/app/(dashboard)/operaciones/page.tsx` |
-| Riego | Implementado base | `src/app/(dashboard)/riego/page.tsx` |
-| Scouting | Implementado | `src/app/(dashboard)/scouting/page.tsx` |
-| Rentabilidad | Implementado base | `src/app/(dashboard)/rentabilidad/page.tsx` |
-| Contabilidad | Implementado base | `src/app/contabilidad/*` y `src/app/(dashboard)/terceros/page.tsx` |
-| Organizaciones | Implementado | `src/app/(dashboard)/organizaciones/page.tsx` |
-| Plugins | Implementado base | `src/app/(dashboard)/configuracion/plugins/page.tsx` |
-| Analisis IA | Implementado | `src/app/(dashboard)/analisis-ia/page.tsx` |
+| Modulo | Estado | Ruta principal | Plugin requerido |
+|---|---|---|---|
+| Dashboard | Implementado | `/dashboard` | — |
+| Metricas | Implementado | `/metricas` | — |
+| Campos y GIS | Implementado | `/campos`, `/lotes`, `/dashboard` | `mapa_gis` |
+| Analisis IA satelital | Implementado | `/analisis-ia` | `analisis_ia` |
+| Campanias | Implementado | `/campanias` | `campanias` |
+| Cuaderno de campo | Implementado | `/cuaderno` | `campanias` |
+| Rentabilidad | Implementado | `/rentabilidad` | — |
+| Operaciones | Implementado | `/operaciones` | — |
+| Riego | Implementado | `/riego` | — |
+| Scouting | Implementado | `/scouting` | — |
+| Contabilidad | Implementado | `/contabilidad` | — |
+| Terceros | Implementado | `/terceros` | — |
+| Mayor contable | Implementado | `/contabilidad/mayor` | `contabilidad_avanzada` |
+| Cuenta corriente tercero | Implementado | `/terceros/[id]` | `contabilidad_avanzada` |
+| Operaciones comerciales | Implementado | `/operaciones/comerciales` | `operaciones_comerciales` |
+| Resultado por campana | Implementado | `/campanas/resultado` | `agro_gestion` |
+| Centros de costo | Implementado | `/centros-costo` | `presupuesto_control` |
+| Presupuesto vs real | Implementado | `/presupuesto` | `presupuesto_control` |
+| Auditoria de cambios | Implementado | `/auditoria` | `iso_control_interno` |
+| Aprobaciones | Implementado | `/aprobaciones` | `iso_control_interno` |
+| Plugins (config) | Implementado | `/configuracion/plugins` | — |
+| Organizaciones | Implementado | `/organizaciones` | — |
+| Documentos / Manual | Implementado | `/documentos` | — |
+| Tesoreria | **Pendiente** | `/tesoreria`, `/cheques`, `/flujo-caja` | `tesoreria` |
+
+---
 
 ## Integraciones reales confirmadas
 
@@ -26,137 +40,72 @@ Fecha: 2026-05-01
 Estado: implementado
 
 Archivos:
-
 - `src/services/fcm.ts`
 - `src/app/api/notifications/send/route.ts`
 - `src/app/api/notifications/token/route.ts`
 
-Observaciones:
+### WhatsApp Meta API
 
-- Envio real por Firebase Admin Messaging.
-- Limpieza de tokens invalidos implementada.
-- Falta la route `/api/notifications/preferences`.
+Estado: implementado (bidireccional)
 
-### Email de alertas
+Archivos:
+- `src/app/api/whatsapp/webhook/route.ts`
+- `src/services/whatsapp.ts`
+
+Conversaciones persistidas en Firestore.
+
+### LLM Router multi-proveedor
 
 Estado: implementado
 
-Archivo:
+Proveedores: Groq (primario), Claude Anthropic (fallback).
+Archivo: `src/services/llm-router.ts`
 
-- `src/app/api/alerts/send/route.ts`
-
-Proveedor:
-
-- Resend via `fetch`.
-
-### SMS y WhatsApp
-
-Estado: mixto; Twilio sigue en alertas salientes y Meta WhatsApp ya es bidireccional
-
-Archivos:
-
-- `src/app/api/alerts/send/route.ts`
-- `src/app/api/public/whatsapp/webhook/route.ts`
-- `src/app/api/configuracion/whatsapp/route.ts`
-- `src/services/whatsapp/WhatsAppService.ts`
-- `src/lib/whatsapp/WhatsAppClient.ts`
-- `src/types/whatsapp.ts`
-
-Proveedor:
-
-- Twilio via REST API para SMS y WhatsApp legacy saliente.
-- Meta Graph API v19.0 para WhatsApp bidireccional.
-
-Observaciones:
-
-- El webhook entrante de Meta valida `verify_token` y firma HMAC.
-- Las conversaciones se persisten en Firestore (`whatsapp_conversations`, `whatsapp_messages`).
-- La configuracion del canal ya es multi-tenant a nivel backend.
-- Falta madurar la capa de inbox operativa en UI.
-
-### IA
-
-Estado: implementado con capa nueva unificada y piezas legacy aun presentes
-
-Archivos:
-
-- `src/app/api/ia/chat/route.ts`
-- `src/app/api/ia/analizar-lote/route.ts`
-- `src/app/api/ia/recomendacion/route.ts`
-- `src/ai/services/LLMRouter.ts`
-- `src/ai/config/llmRouting.ts`
-- `src/services/ai-core/UnifiedConverseService.ts`
-- `src/services/ai-core/conversationStore.ts`
-- `src/lib/ia/IAAgricolaService.ts`
-- `src/lib/groq/GroqAgroService.ts`
-- `src/lib/claude/client.ts`
-
-Proveedor real detectado en codigo:
-
-- Groq (`GROQ_API_KEY`) como primario.
-- Claude via Anthropic (`ANTHROPIC_API_KEY`) como fallback.
-
-Observaciones:
-
-- La documentacion historica hablaba de Gemini, pero el codigo activo usa Groq.
-- `LLMRouter` enruta por capability: `chat_agro`, `analisis_lote`, `recomendacion`, `doc_gen`.
-- `UnifiedConverseService` unifica chat web y WhatsApp con persistencia en `ai_conversations`.
-- Existen servicios IA previos con responsabilidades superpuestas que aun conviven.
-
-### Text-to-Speech
+### ElevenLabs Text-to-Speech
 
 Estado: implementado
 
-Archivos:
+Archivo: `src/services/elevenlabs.ts`
 
-- `src/app/api/elevenlabs/speech/route.ts`
-- `src/lib/elevenlabs/client.ts`
-- `src/lib/elevenlabs/voice-config.ts`
-- `src/components/ia/ChatAgro.tsx`
-
-Proveedor:
-
-- ElevenLabs.
-
-Observaciones:
-
-- La voz de Don Juan GIS se expone por backend.
-- Si falta `ELEVENLABS_API_KEY`, el endpoint responde `503` y la aplicacion sigue sin TTS.
-
-### Satelital y VRA
+### Email de alertas (Resend)
 
 Estado: implementado
 
-Archivos:
+Archivo: `src/app/api/alerts/send/route.ts`
 
-- `src/services/satellite-analysis.ts`
-- `src/services/copernicus.ts`
-- `src/services/copernicus-extended.ts`
-- `src/services/vra.ts`
-- `src/app/api/satellite/analyze/route.ts`
-- `src/app/api/satellite/prescription/route.ts`
-
-### Clima
+### Firebase Storage (adjuntos)
 
 Estado: implementado
 
-Archivo:
+Archivo: `src/services/adjuntos.ts`
+Path: `organizations/{orgId}/adjuntos/{entidadTipo}/{entidadId}/{file}`
 
-- `src/services/weather.ts`
+---
 
-### PWA y Offline
+## Sistema de plugins
 
-Estado: implementado base
+Estado: implementado
 
-Archivos:
+Catalogo de plugins activos:
 
-- `src/components/pwa/PWAProvider.tsx`
-- `src/hooks/useOfflineSync.tsx`
-- `src/lib/indexed-db.ts`
-- `public/sw.js`
+| ID | Nombre comercial |
+|---|---|
+| `contabilidad_avanzada` | Contabilidad Avanzada |
+| `tesoreria` | Tesoreria |
+| `cuentas_corrientes` | Cuentas Corrientes |
+| `operaciones_comerciales` | Operaciones Comerciales |
+| `agro_gestion` | Agro Gestion |
+| `presupuesto_control` | Presupuesto y Control |
+| `iso_control_interno` | ISO y Control Interno |
+| `exportacion` | Exportacion Excel/PDF |
 
-## Conclusiones tecnicas
+Activacion: por organizacion en Firestore `organizations/{orgId}/settings/plugins`.
+Control de acceso en UI: `PluginGate` y `usePlugins().isActive(pluginId)`.
 
-- Las integraciones actuales son utiles para operaciones puntuales.
-- La base de comunicaciones e IA ya dio el salto a webhook, persistencia y fallback entre proveedores.
-- El siguiente frente tecnico es consolidar UI operativa, observabilidad y cierre de piezas legacy.
+---
+
+## Integraciones pendientes
+
+- Twilio SMS: extraer a capa de proveedor propia, persistir resultados.
+- WhatsApp webhook inbound: validacion de firma, historial de conversaciones.
+- `/api/notifications/preferences`: ruta faltante.
