@@ -3,10 +3,12 @@
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { Eye, Map, Plus, Ruler, Search, Share2, Sparkles } from 'lucide-react';
+import { Eye, Map, Pencil, Plus, Ruler, Search, Share2, Sparkles } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Campo } from '@/types/agro';
-import { obtenerCampos } from '@/services/campos';
+import { actualizarCampo, crearCampo, obtenerCampos } from '@/services/campos';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { PageShell } from '@/components/layout/PageShell';
 
 const MapaGeneral = dynamic(() => import('@/components/mapa/MapaGeneral'), {
@@ -18,26 +20,94 @@ const MapaGeneral = dynamic(() => import('@/components/mapa/MapaGeneral'), {
   ),
 });
 
+const EMPTY_FORM = {
+  nombre: '',
+  departamento: '',
+  localidad: '',
+  provincia: 'Chaco',
+  superficieTotal: 0,
+};
+
 export default function CamposPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { organizationId, loading: authLoading } = useAuth();
   const [campos, setCampos] = useState<Campo[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editando, setEditando] = useState<Campo | null>(null);
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [formData, setFormData] = useState(EMPTY_FORM);
 
   useEffect(() => {
-    if (!authLoading && user?.organizationId) {
+    if (!authLoading && organizationId) {
       void loadCampos();
     }
-  }, [authLoading, user?.organizationId]);
+  }, [authLoading, organizationId]);
 
   async function loadCampos() {
-    if (!user?.organizationId) return;
+    if (!organizationId) return;
     try {
       setLoading(true);
-      const data = await obtenerCampos(user.organizationId);
+      const data = await obtenerCampos(organizationId);
       setCampos(data);
     } finally {
       setLoading(false);
+    }
+  }
+
+  function abrirDialog(campo?: Campo) {
+    if (campo) {
+      setEditando(campo);
+      setFormData({
+        nombre: campo.nombre,
+        departamento: campo.departamento,
+        localidad: campo.localidad || '',
+        provincia: campo.provincia || 'Chaco',
+        superficieTotal: campo.superficieTotal || 0,
+      });
+    } else {
+      setEditando(null);
+      setFormData(EMPTY_FORM);
+    }
+    setError(null);
+    setDialogOpen(true);
+  }
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!organizationId || !formData.nombre.trim() || !formData.departamento.trim()) {
+      setError('Completa nombre y departamento');
+      return;
+    }
+
+    setGuardando(true);
+    setError(null);
+    try {
+      const payload = {
+        productorId: editando?.productorId || organizationId,
+        nombre: formData.nombre.trim(),
+        provincia: formData.provincia.trim() || 'Chaco',
+        departamento: formData.departamento.trim(),
+        localidad: formData.localidad.trim() || undefined,
+        superficieTotal: Number(formData.superficieTotal || 0),
+        activo: true,
+      };
+
+      if (editando) {
+        await actualizarCampo(organizationId, editando.id, payload);
+      } else {
+        await crearCampo(organizationId, payload);
+      }
+
+      setDialogOpen(false);
+      setEditando(null);
+      setFormData(EMPTY_FORM);
+      await loadCampos();
+    } catch {
+      setError(`Error al ${editando ? 'actualizar' : 'crear'} el campo`);
+    } finally {
+      setGuardando(false);
     }
   }
 
@@ -80,7 +150,7 @@ export default function CamposPage() {
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Buscar lote o campaña..."
+                placeholder="Buscar lote o campana..."
                 className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-700 outline-none"
               />
             </label>
@@ -102,9 +172,22 @@ export default function CamposPage() {
                           <div className="mt-2 text-sm text-slate-500">
                             {campo.departamento}, {campo.provincia}
                           </div>
+                          <div className="mt-1 text-xs text-slate-400">
+                            {campo.superficieTotal?.toLocaleString('es-AR')} ha
+                          </div>
                         </div>
                       </div>
                       <Eye className="mt-1 h-5 w-5 text-emerald-700" />
+                    </div>
+                    <div className="mt-4 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => abrirDialog(campo)}
+                        className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 px-3 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50"
+                      >
+                        <Pencil className="h-4 w-4" />
+                        Editar
+                      </button>
                     </div>
                   </div>
                 ))
@@ -115,13 +198,14 @@ export default function CamposPage() {
               )}
             </div>
 
-            <Link
-              href="/campos/nuevo"
+            <button
+              type="button"
+              onClick={() => abrirDialog()}
               className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-lime-300 px-4 py-3 text-sm font-semibold text-[#0c2418] transition hover:bg-lime-200"
             >
               <Plus className="h-4 w-4" />
               Nuevo campo
-            </Link>
+            </button>
           </div>
         </aside>
 
@@ -197,6 +281,54 @@ export default function CamposPage() {
           </article>
         </aside>
       </div>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>{editando ? 'Editar campo' : 'Nuevo campo'}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error ? <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
+            <Field label="Nombre" required>
+              <input value={formData.nombre} onChange={(e) => setFormData((prev) => ({ ...prev, nombre: e.target.value }))} className={fieldClassName} required />
+            </Field>
+            <Field label="Departamento" required>
+              <input value={formData.departamento} onChange={(e) => setFormData((prev) => ({ ...prev, departamento: e.target.value }))} className={fieldClassName} required />
+            </Field>
+            <Field label="Localidad">
+              <input value={formData.localidad} onChange={(e) => setFormData((prev) => ({ ...prev, localidad: e.target.value }))} className={fieldClassName} />
+            </Field>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Provincia">
+                <input value={formData.provincia} onChange={(e) => setFormData((prev) => ({ ...prev, provincia: e.target.value }))} className={fieldClassName} />
+              </Field>
+              <Field label="Superficie total (ha)">
+                <input type="number" min={0} step="0.01" value={formData.superficieTotal} onChange={(e) => setFormData((prev) => ({ ...prev, superficieTotal: Number(e.target.value) }))} className={fieldClassName} />
+              </Field>
+            </div>
+            <div className="flex justify-end gap-3">
+              <button type="button" onClick={() => setDialogOpen(false)} className="rounded-2xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                Cancelar
+              </button>
+              <button type="submit" disabled={guardando} className="rounded-2xl bg-lime-300 px-5 py-3 text-sm font-semibold text-[#0c2418] transition hover:bg-lime-200 disabled:opacity-60">
+                {guardando ? 'Guardando...' : editando ? 'Guardar cambios' : 'Crear campo'}
+              </button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </PageShell>
+  );
+}
+
+const fieldClassName =
+  'w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-500 focus:bg-white';
+
+function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-sm font-medium text-slate-700">{label}{required ? ' *' : ''}</Label>
+      {children}
+    </div>
   );
 }

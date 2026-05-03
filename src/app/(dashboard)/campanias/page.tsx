@@ -3,18 +3,27 @@
 import Link from 'next/link';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CalendarDays, Plus, Search } from 'lucide-react';
+import { CalendarDays, Pencil, Plus, Search } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { crearCampania, obtenerCampanias } from '@/services/campanias';
+import { actualizarCampania, crearCampania, obtenerCampanias } from '@/services/campanias';
 import { obtenerCampos } from '@/services/campos';
 import { obtenerLotes } from '@/services/lotes';
 import type { Campania, Campo, Lote } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { PageShell } from '@/components/layout/PageShell';
 
 const CULTIVOS = ['Soja', 'Maiz', 'Algodon', 'Girasol', 'Sorgo', 'Trigo', 'Arroz', 'Poroto', 'Otro'];
 
-const EMPTY_FORM = {
+type FormState = {
+  campoId: string;
+  loteId: string;
+  cultivo: string;
+  fechaInicio: string;
+  nombre: string;
+};
+
+const EMPTY_FORM: FormState = {
   campoId: '',
   loteId: '',
   cultivo: '',
@@ -30,13 +39,14 @@ function badgeClass(estado: string) {
 
 export default function CampaniasPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, organizationId } = useAuth();
   const [campanias, setCampanias] = useState<Campania[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState<'todas' | 'en_curso' | 'finalizadas'>('todas');
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [form, setForm] = useState(EMPTY_FORM);
+  const [editando, setEditando] = useState<Campania | null>(null);
+  const [formData, setFormData] = useState<FormState>(EMPTY_FORM);
   const [campos, setCampos] = useState<Campo[]>([]);
   const [lotes, setLotes] = useState<Lote[]>([]);
   const [saving, setSaving] = useState(false);
@@ -47,69 +57,93 @@ export default function CampaniasPage() {
       router.push('/auth/login');
       return;
     }
-    if (user) void cargarCampanias();
-  }, [user, authLoading, router]);
+    if (organizationId) void cargarCampanias();
+  }, [user, authLoading, router, organizationId]);
 
   useEffect(() => {
-    if (!dialogOpen || !user) return;
-    obtenerCampos(user.id).then(setCampos).catch(() => setCampos([]));
-  }, [dialogOpen, user]);
+    if (!dialogOpen || !organizationId) return;
+    obtenerCampos(organizationId).then(setCampos).catch(() => setCampos([]));
+  }, [dialogOpen, organizationId]);
 
   useEffect(() => {
-    if (!user || !form.campoId) {
+    if (!organizationId || !formData.campoId) {
       setLotes([]);
       return;
     }
-    obtenerLotes(user.id, form.campoId).then(setLotes).catch(() => setLotes([]));
-  }, [user, form.campoId]);
+    obtenerLotes(organizationId, formData.campoId).then(setLotes).catch(() => setLotes([]));
+  }, [organizationId, formData.campoId]);
 
   useEffect(() => {
-    if (form.cultivo && form.loteId) {
-      const lote = lotes.find((item) => item.id === form.loteId);
-      const anio = new Date(form.fechaInicio).getFullYear();
-      setForm((prev) => ({
-        ...prev,
-        nombre: `${prev.cultivo} ${lote?.nombre || ''} ${anio}/${anio + 1}`,
-      }));
-    }
-  }, [form.cultivo, form.loteId, form.fechaInicio, lotes]);
+    if (!formData.cultivo || !formData.loteId) return;
+    const lote = lotes.find((item) => item.id === formData.loteId);
+    const anio = new Date(formData.fechaInicio).getFullYear();
+    setFormData((prev) => {
+      const suggested = `${prev.cultivo} ${lote?.nombre || ''} ${anio}/${anio + 1}`.trim();
+      return prev.nombre === suggested || !prev.nombre ? { ...prev, nombre: suggested } : prev;
+    });
+  }, [formData.cultivo, formData.loteId, formData.fechaInicio, lotes]);
 
   async function cargarCampanias() {
-    if (!user) return;
+    if (!organizationId) return;
     try {
       setLoading(true);
-      const data = await obtenerCampanias(user.id);
+      const data = await obtenerCampanias(organizationId);
       setCampanias(data);
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleCreate(event: FormEvent) {
+  function abrirDialog(item?: Campania) {
+    if (item) {
+      setEditando(item);
+      setFormData({
+        campoId: item.campoId,
+        loteId: item.loteId,
+        cultivo: item.cultivo,
+        fechaInicio: new Date(item.fechaInicio).toISOString().split('T')[0],
+        nombre: item.nombre,
+      });
+    } else {
+      setEditando(null);
+      setFormData(EMPTY_FORM);
+    }
+    setError(null);
+    setDialogOpen(true);
+  }
+
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!user) return;
-    if (!form.campoId || !form.loteId || !form.cultivo) {
+    if (!organizationId) return;
+    if (!formData.campoId || !formData.loteId || !formData.cultivo) {
       setError('Completa campo, lote y cultivo');
       return;
     }
 
     setSaving(true);
     setError(null);
-
     try {
-      const nueva = await crearCampania(user.id, {
-        campoId: form.campoId,
-        loteId: form.loteId,
-        nombre: form.nombre,
-        cultivo: form.cultivo,
-        fechaInicio: new Date(form.fechaInicio),
-        estado: 'planificada',
-      });
-      setCampanias((prev) => [...prev, nueva]);
+      const payload = {
+        campoId: formData.campoId,
+        loteId: formData.loteId,
+        nombre: formData.nombre.trim(),
+        cultivo: formData.cultivo,
+        fechaInicio: new Date(formData.fechaInicio),
+        estado: editando?.estado ?? 'planificada',
+      } as const;
+
+      if (editando) {
+        await actualizarCampania(organizationId, editando.id, payload);
+      } else {
+        await crearCampania(organizationId, payload);
+      }
+
       setDialogOpen(false);
-      setForm(EMPTY_FORM);
+      setEditando(null);
+      setFormData(EMPTY_FORM);
+      await cargarCampanias();
     } catch {
-      setError('Error al crear la campana');
+      setError(`Error al ${editando ? 'actualizar' : 'crear'} la campana`);
     } finally {
       setSaving(false);
     }
@@ -124,7 +158,9 @@ export default function CampaniasPage() {
 
     const query = search.toLowerCase().trim();
     if (!query) return byEstado;
-    return byEstado.filter((campania) => `${campania.nombre} ${campania.cultivo} ${campania.estado}`.toLowerCase().includes(query));
+    return byEstado.filter((campania) =>
+      `${campania.nombre} ${campania.cultivo} ${campania.estado}`.toLowerCase().includes(query)
+    );
   }, [campanias, filtro, search]);
 
   if (authLoading || loading) {
@@ -138,11 +174,7 @@ export default function CampaniasPage() {
       rightSlot={
         <button
           type="button"
-          onClick={() => {
-            setForm(EMPTY_FORM);
-            setError(null);
-            setDialogOpen(true);
-          }}
+          onClick={() => abrirDialog()}
           className="inline-flex items-center gap-2 rounded-2xl bg-[#0f2e21] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#174531]"
         >
           <Plus className="h-4 w-4" />
@@ -182,26 +214,40 @@ export default function CampaniasPage() {
         <section className="grid gap-5 lg:grid-cols-3">
           {filtered.length > 0 ? (
             filtered.map((campania) => (
-              <Link key={campania.id} href={`/campanias/${campania.id}`}>
-                <article className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                        <CalendarDays className="h-4 w-4" />
-                        Campana activa
-                      </div>
-                      <h3 className="mt-4 text-2xl font-semibold text-slate-950">{campania.nombre}</h3>
-                      <p className="mt-2 text-sm text-slate-600">{campania.cultivo}</p>
+              <article key={campania.id} className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                      <CalendarDays className="h-4 w-4" />
+                      Campana activa
                     </div>
-                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${badgeClass(campania.estado)}`}>
-                      {campania.estado}
-                    </span>
+                    <h3 className="mt-4 text-2xl font-semibold text-slate-950">{campania.nombre}</h3>
+                    <p className="mt-2 text-sm text-slate-600">{campania.cultivo}</p>
                   </div>
-                  <div className="mt-6 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-500">
-                    Inicio: {new Date(campania.fechaInicio).toLocaleDateString('es-AR')}
-                  </div>
-                </article>
-              </Link>
+                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${badgeClass(campania.estado)}`}>
+                    {campania.estado}
+                  </span>
+                </div>
+                <div className="mt-6 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                  Inicio: {new Date(campania.fechaInicio).toLocaleDateString('es-AR')}
+                </div>
+                <div className="mt-5 flex items-center gap-3">
+                  <Link
+                    href={`/campanias/${campania.id}`}
+                    className="rounded-2xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  >
+                    Ver detalle
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => abrirDialog(campania)}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50"
+                  >
+                    <Pencil className="h-4 w-4" />
+                    Editar
+                  </button>
+                </div>
+              </article>
             ))
           ) : (
             <div className="rounded-[28px] border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-slate-500 lg:col-span-3">
@@ -214,9 +260,9 @@ export default function CampaniasPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Nueva campana</DialogTitle>
+            <DialogTitle>{editando ? 'Editar campana' : 'Nueva campana'}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleCreate} className="space-y-5 pt-2">
+          <form onSubmit={handleSubmit} className="space-y-5 pt-2">
             {error ? (
               <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
                 {error}
@@ -225,8 +271,8 @@ export default function CampaniasPage() {
 
             <FormField label="Campo *">
               <select
-                value={form.campoId}
-                onChange={(event) => setForm((prev) => ({ ...prev, campoId: event.target.value, loteId: '' }))}
+                value={formData.campoId}
+                onChange={(event) => setFormData((prev) => ({ ...prev, campoId: event.target.value, loteId: '' }))}
                 className={fieldClassName}
               >
                 <option value="">Seleccionar campo</option>
@@ -238,11 +284,11 @@ export default function CampaniasPage() {
 
             <FormField label="Lote *">
               <select
-                value={form.loteId}
-                onChange={(event) => setForm((prev) => ({ ...prev, loteId: event.target.value }))}
+                value={formData.loteId}
+                onChange={(event) => setFormData((prev) => ({ ...prev, loteId: event.target.value }))}
                 className={fieldClassName}
               >
-                <option value="">{form.campoId ? 'Seleccionar lote' : 'Primero elige un campo'}</option>
+                <option value="">{formData.campoId ? 'Seleccionar lote' : 'Primero elige un campo'}</option>
                 {lotes.map((lote) => (
                   <option key={lote.id} value={lote.id}>{lote.nombre}</option>
                 ))}
@@ -251,8 +297,8 @@ export default function CampaniasPage() {
 
             <FormField label="Cultivo *">
               <select
-                value={form.cultivo}
-                onChange={(event) => setForm((prev) => ({ ...prev, cultivo: event.target.value }))}
+                value={formData.cultivo}
+                onChange={(event) => setFormData((prev) => ({ ...prev, cultivo: event.target.value }))}
                 className={fieldClassName}
               >
                 <option value="">Seleccionar cultivo</option>
@@ -266,16 +312,16 @@ export default function CampaniasPage() {
               <FormField label="Fecha inicio *">
                 <input
                   type="date"
-                  value={form.fechaInicio}
-                  onChange={(event) => setForm((prev) => ({ ...prev, fechaInicio: event.target.value }))}
+                  value={formData.fechaInicio}
+                  onChange={(event) => setFormData((prev) => ({ ...prev, fechaInicio: event.target.value }))}
                   className={fieldClassName}
                   required
                 />
               </FormField>
               <FormField label="Nombre sugerido">
                 <input
-                  value={form.nombre}
-                  onChange={(event) => setForm((prev) => ({ ...prev, nombre: event.target.value }))}
+                  value={formData.nombre}
+                  onChange={(event) => setFormData((prev) => ({ ...prev, nombre: event.target.value }))}
                   className={fieldClassName}
                   placeholder="Nombre de la campana"
                 />
@@ -287,7 +333,7 @@ export default function CampaniasPage() {
                 Cancelar
               </button>
               <button type="submit" disabled={saving} className="rounded-2xl bg-lime-300 px-5 py-3 text-sm font-semibold text-[#0c2418] transition hover:bg-lime-200 disabled:cursor-not-allowed disabled:opacity-60">
-                {saving ? 'Creando...' : 'Crear campana'}
+                {saving ? 'Guardando...' : editando ? 'Guardar cambios' : 'Crear campana'}
               </button>
             </div>
           </form>
@@ -302,9 +348,9 @@ const fieldClassName =
 
 function FormField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label className="block space-y-2">
-      <span className="text-sm font-medium text-slate-700">{label}</span>
+    <div className="space-y-2">
+      <Label className="text-sm font-medium text-slate-700">{label}</Label>
       {children}
-    </label>
+    </div>
   );
 }

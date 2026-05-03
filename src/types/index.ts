@@ -20,4 +20,13 @@ export * from './domain-model';
 export * from './dss-agronomico';
 export * from './integrations';
 export * from './operaciones-comerciales';
+export type {
+    CuentaBancaria,
+    CajaChica,
+    MovimientoTesoreria,
+    ResumenTesoreria,
+    EstadoTesoreria,
+    TipoMovimientoTesoreria,
+} from './tesoreria';
+export type { ChequeEmitido, ChequeRecibido, ResumenCheques, EstadoChequeEmitido, EstadoChequeRecibido, TipoCheque } from './cheques';
 

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useMemo, useState } from 'react';
 import { Download, PlusCircle } from 'lucide-react';
@@ -10,10 +10,25 @@ import { obtenerFields } from '@/services/fields';
 import { obtenerPlots } from '@/services/plots';
 import { crearRegistroCuaderno, obtenerRegistrosCuaderno } from '@/services/field-logbooks';
 import { crearTratamiento, exportTratamientosCsv, obtenerTratamientos } from '@/services/treatments';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 
 type Tab = 'cuaderno' | 'tratamientos';
 
 const DEFAULT_CAMPAIGN = '2025-2026';
+const EMPTY_CUADERNO_FORM = {
+  activityType: 'siembra' as FieldLogbookEntry['activityType'],
+  description: '',
+  fecha: new Date().toISOString().split('T')[0],
+};
+const EMPTY_TRATAMIENTO_FORM = {
+  issueType: 'maleza' as TreatmentApplication['issueType'],
+  mode: 'manual' as TreatmentApplication['mode'],
+  productName: '',
+  dosagePerHa: 1,
+  dosageUnit: 'l_ha' as TreatmentApplication['dosageUnit'],
+  appliedAreaHa: 1,
+};
 
 export default function CuadernoPage() {
   const { user, organizationId } = useAuth();
@@ -28,15 +43,14 @@ export default function CuadernoPage() {
   const [fieldId, setFieldId] = useState('');
   const [plotId, setPlotId] = useState('');
 
-  const [activityType, setActivityType] = useState<FieldLogbookEntry['activityType']>('siembra');
-  const [description, setDescription] = useState('');
-
-  const [issueType, setIssueType] = useState<TreatmentApplication['issueType']>('maleza');
-  const [mode, setMode] = useState<TreatmentApplication['mode']>('manual');
-  const [productName, setProductName] = useState('');
-  const [dosagePerHa, setDosagePerHa] = useState(1);
-  const [dosageUnit, setDosageUnit] = useState<TreatmentApplication['dosageUnit']>('l_ha');
-  const [appliedAreaHa, setAppliedAreaHa] = useState(1);
+  const [cuadernoDialogOpen, setCuadernoDialogOpen] = useState(false);
+  const [tratamientoDialogOpen, setTratamientoDialogOpen] = useState(false);
+  const [guardandoCuaderno, setGuardandoCuaderno] = useState(false);
+  const [guardandoTratamiento, setGuardandoTratamiento] = useState(false);
+  const [cuadernoError, setCuadernoError] = useState<string | null>(null);
+  const [tratamientoError, setTratamientoError] = useState<string | null>(null);
+  const [cuadernoForm, setCuadernoForm] = useState(EMPTY_CUADERNO_FORM);
+  const [tratamientoForm, setTratamientoForm] = useState(EMPTY_TRATAMIENTO_FORM);
 
   const availablePlots = useMemo(
     () => plots.filter((plot) => !fieldId || plot.fieldId === fieldId),
@@ -69,55 +83,75 @@ export default function CuadernoPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizationId, campaignId]);
 
-  const handleCreateEntry = async () => {
-    if (!organizationId || !user || !fieldId || !description.trim()) return;
+  async function handleCreateEntry() {
+    if (!organizationId || !user || !fieldId || !cuadernoForm.description.trim()) {
+      setCuadernoError('Selecciona campo y completa la descripcion');
+      return;
+    }
 
-    await crearRegistroCuaderno(organizationId, {
-      organizationId,
-      campaignId,
-      fieldId,
-      plotId: plotId || undefined,
-      activityType,
-      startDate: new Date(),
-      description: description.trim(),
-      operatorIds: [user.id],
-      source: 'manual',
-      cost: {
-        directCostsARS: 0,
-        indirectCostsARS: 0,
-        laborCostsARS: 0,
-        machineryCostsARS: 0,
-        logisticsCostsARS: 0,
-      },
-      createdBy: user.id,
-    });
+    setGuardandoCuaderno(true);
+    setCuadernoError(null);
+    try {
+      await crearRegistroCuaderno(organizationId, {
+        organizationId,
+        campaignId,
+        fieldId,
+        plotId: plotId || undefined,
+        activityType: cuadernoForm.activityType,
+        startDate: new Date(cuadernoForm.fecha),
+        description: cuadernoForm.description.trim(),
+        operatorIds: [user.id],
+        source: 'manual',
+        cost: {
+          directCostsARS: 0,
+          indirectCostsARS: 0,
+          laborCostsARS: 0,
+          machineryCostsARS: 0,
+          logisticsCostsARS: 0,
+        },
+        createdBy: user.id,
+      });
 
-    setDescription('');
-    await loadAll();
-  };
+      setCuadernoDialogOpen(false);
+      setCuadernoForm(EMPTY_CUADERNO_FORM);
+      await loadAll();
+    } finally {
+      setGuardandoCuaderno(false);
+    }
+  }
 
-  const handleCreateTreatment = async () => {
-    if (!organizationId || !user || !fieldId || !plotId || !productName.trim()) return;
+  async function handleCreateTreatment() {
+    if (!organizationId || !user || !fieldId || !plotId || !tratamientoForm.productName.trim()) {
+      setTratamientoError('Selecciona campo, lote y producto');
+      return;
+    }
 
-    await crearTratamiento(organizationId, {
-      organizationId,
-      campaignId,
-      fieldId,
-      plotId,
-      mode,
-      issueType,
-      productName: productName.trim(),
-      dosagePerHa,
-      dosageUnit,
-      appliedAreaHa,
-      applicationDate: new Date(),
-      operatorIds: [user.id],
-      createdBy: user.id,
-    });
+    setGuardandoTratamiento(true);
+    setTratamientoError(null);
+    try {
+      await crearTratamiento(organizationId, {
+        organizationId,
+        campaignId,
+        fieldId,
+        plotId,
+        mode: tratamientoForm.mode,
+        issueType: tratamientoForm.issueType,
+        productName: tratamientoForm.productName.trim(),
+        dosagePerHa: tratamientoForm.dosagePerHa,
+        dosageUnit: tratamientoForm.dosageUnit,
+        appliedAreaHa: tratamientoForm.appliedAreaHa,
+        applicationDate: new Date(),
+        operatorIds: [user.id],
+        createdBy: user.id,
+      });
 
-    setProductName('');
-    await loadAll();
-  };
+      setTratamientoDialogOpen(false);
+      setTratamientoForm(EMPTY_TRATAMIENTO_FORM);
+      await loadAll();
+    } finally {
+      setGuardandoTratamiento(false);
+    }
+  }
 
   const downloadCsv = () => {
     const csv = exportTratamientosCsv(treatments);
@@ -130,6 +164,15 @@ export default function CuadernoPage() {
     URL.revokeObjectURL(url);
   };
 
+  const filteredEntries = useMemo(
+    () => entries.filter((entry) => (!fieldId || entry.fieldId === fieldId) && (!plotId || entry.plotId === plotId)),
+    [entries, fieldId, plotId]
+  );
+  const filteredTreatments = useMemo(
+    () => treatments.filter((item) => (!fieldId || item.fieldId === fieldId) && (!plotId || item.plotId === plotId)),
+    [treatments, fieldId, plotId]
+  );
+
   if (!organizationId) return <div className="p-6">Selecciona una organizacion para continuar.</div>;
 
   return (
@@ -137,7 +180,6 @@ export default function CuadernoPage() {
       title="Cuaderno de Campo"
       subtitle="Flujo operativo de actividades y tratamientos por campana."
     >
-
       <section className="rounded-xl border border-slate-200 bg-white p-4 flex flex-wrap items-center gap-3">
         <label className="text-sm">Campana</label>
         <input
@@ -165,30 +207,17 @@ export default function CuadernoPage() {
       </section>
 
       {tab === 'cuaderno' ? (
-        <section className="grid grid-cols-1 xl:grid-cols-[370px_1fr] gap-4">
-          <article className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
-            <h2 className="font-medium">Nueva actividad</h2>
-            <select value={activityType} onChange={(e) => setActivityType(e.target.value as FieldLogbookEntry['activityType'])} className="w-full border rounded-lg px-3 py-2 text-sm">
-              <option value="siembra">Siembra</option>
-              <option value="fertilizacion">Fertilizacion</option>
-              <option value="riego">Riego</option>
-              <option value="aplicacion">Aplicacion</option>
-              <option value="scouting">Scouting</option>
-              <option value="cosecha">Cosecha</option>
-              <option value="mantenimiento">Mantenimiento</option>
-              <option value="otro">Otro</option>
-            </select>
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} placeholder="Detalle operativo" className="w-full border rounded-lg px-3 py-2 text-sm" />
-            <button onClick={() => void handleCreateEntry()} className="w-full rounded-lg bg-emerald-600 text-white px-3 py-2 text-sm inline-flex items-center justify-center gap-2">
-              <PlusCircle className="w-4 h-4" /> Guardar registro
+        <section className="space-y-4">
+          <div className="flex justify-end">
+            <button onClick={() => { setCuadernoError(null); setCuadernoDialogOpen(true); }} className="rounded-lg bg-emerald-600 text-white px-4 py-2 text-sm inline-flex items-center gap-2">
+              <PlusCircle className="w-4 h-4" /> Nuevo registro
             </button>
-          </article>
-
+          </div>
           <article className="rounded-xl border border-slate-200 bg-white p-4">
             <h2 className="font-medium mb-3">Registros de cuaderno</h2>
             {loading ? <p className="text-sm text-slate-500">Cargando...</p> : (
               <div className="space-y-2 max-h-[520px] overflow-auto">
-                {entries.filter((entry) => !plotId || entry.plotId === plotId).map((entry) => (
+                {filteredEntries.map((entry) => (
                   <div key={entry.id} className="border border-slate-200 rounded-lg p-3">
                     <div className="flex items-center justify-between text-xs text-slate-500">
                       <span>{entry.activityType}</span>
@@ -197,52 +226,26 @@ export default function CuadernoPage() {
                     <p className="text-sm text-slate-800 mt-1">{entry.description}</p>
                   </div>
                 ))}
-                {entries.length === 0 && <p className="text-sm text-slate-500">Sin registros.</p>}
+                {filteredEntries.length === 0 && <p className="text-sm text-slate-500">Sin registros.</p>}
               </div>
             )}
           </article>
         </section>
       ) : (
-        <section className="grid grid-cols-1 xl:grid-cols-[370px_1fr] gap-4">
-          <article className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
-            <h2 className="font-medium">Nuevo tratamiento</h2>
-            <select value={mode} onChange={(e) => setMode(e.target.value as TreatmentApplication['mode'])} className="w-full border rounded-lg px-3 py-2 text-sm">
-              <option value="manual">Manual</option>
-              <option value="bulk">Masivo</option>
-            </select>
-            <select value={issueType} onChange={(e) => setIssueType(e.target.value as TreatmentApplication['issueType'])} className="w-full border rounded-lg px-3 py-2 text-sm">
-              <option value="maleza">Maleza</option>
-              <option value="plaga">Plaga</option>
-              <option value="enfermedad">Enfermedad</option>
-              <option value="nutricion">Nutricion</option>
-              <option value="otro">Otro</option>
-            </select>
-            <input value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="Producto" className="w-full border rounded-lg px-3 py-2 text-sm" />
-            <div className="grid grid-cols-2 gap-2">
-              <input type="number" min={0} step="0.1" value={dosagePerHa} onChange={(e) => setDosagePerHa(Number(e.target.value))} placeholder="Dosis" className="w-full border rounded-lg px-3 py-2 text-sm" />
-              <select value={dosageUnit} onChange={(e) => setDosageUnit(e.target.value as TreatmentApplication['dosageUnit'])} className="w-full border rounded-lg px-3 py-2 text-sm">
-                <option value="l_ha">l/ha</option>
-                <option value="kg_ha">kg/ha</option>
-                <option value="cc_ha">cc/ha</option>
-                <option value="g_ha">g/ha</option>
-              </select>
-            </div>
-            <input type="number" min={0} step="0.1" value={appliedAreaHa} onChange={(e) => setAppliedAreaHa(Number(e.target.value))} placeholder="Area aplicada (ha)" className="w-full border rounded-lg px-3 py-2 text-sm" />
-            <button onClick={() => void handleCreateTreatment()} className="w-full rounded-lg bg-emerald-600 text-white px-3 py-2 text-sm inline-flex items-center justify-center gap-2">
-              <PlusCircle className="w-4 h-4" /> Guardar tratamiento
+        <section className="space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <button onClick={() => { setTratamientoError(null); setTratamientoDialogOpen(true); }} className="rounded-lg bg-emerald-600 text-white px-4 py-2 text-sm inline-flex items-center gap-2">
+              <PlusCircle className="w-4 h-4" /> Nuevo tratamiento
             </button>
-          </article>
-
+            <button onClick={downloadCsv} className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs inline-flex items-center gap-1 bg-white">
+              <Download className="w-3.5 h-3.5" /> Exportar CSV
+            </button>
+          </div>
           <article className="rounded-xl border border-slate-200 bg-white p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-medium">Tratamientos registrados</h2>
-              <button onClick={downloadCsv} className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs inline-flex items-center gap-1">
-                <Download className="w-3.5 h-3.5" /> Exportar CSV
-              </button>
-            </div>
+            <h2 className="font-medium mb-3">Tratamientos registrados</h2>
             {loading ? <p className="text-sm text-slate-500">Cargando...</p> : (
               <div className="space-y-2 max-h-[520px] overflow-auto">
-                {treatments.filter((t) => !plotId || t.plotId === plotId).map((treatment) => (
+                {filteredTreatments.map((treatment) => (
                   <div key={treatment.id} className="border border-slate-200 rounded-lg p-3">
                     <div className="flex items-center justify-between text-xs text-slate-500">
                       <span>{treatment.issueType}</span>
@@ -252,12 +255,109 @@ export default function CuadernoPage() {
                     <p className="text-xs text-slate-500 mt-0.5">Modo: {treatment.mode} · Area: {treatment.appliedAreaHa} ha</p>
                   </div>
                 ))}
-                {treatments.length === 0 && <p className="text-sm text-slate-500">Sin tratamientos.</p>}
+                {filteredTreatments.length === 0 && <p className="text-sm text-slate-500">Sin tratamientos.</p>}
               </div>
             )}
           </article>
         </section>
       )}
+
+      <Dialog open={cuadernoDialogOpen} onOpenChange={setCuadernoDialogOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Nuevo registro</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {cuadernoError ? <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{cuadernoError}</div> : null}
+            <Field label="Actividad">
+              <select value={cuadernoForm.activityType} onChange={(e) => setCuadernoForm((prev) => ({ ...prev, activityType: e.target.value as FieldLogbookEntry['activityType'] }))} className={fieldClassName}>
+                <option value="siembra">Siembra</option>
+                <option value="fertilizacion">Fertilizacion</option>
+                <option value="riego">Riego</option>
+                <option value="aplicacion">Aplicacion</option>
+                <option value="scouting">Scouting</option>
+                <option value="cosecha">Cosecha</option>
+                <option value="mantenimiento">Mantenimiento</option>
+                <option value="otro">Otro</option>
+              </select>
+            </Field>
+            <Field label="Fecha">
+              <input type="date" value={cuadernoForm.fecha} onChange={(e) => setCuadernoForm((prev) => ({ ...prev, fecha: e.target.value }))} className={fieldClassName} />
+            </Field>
+            <Field label="Descripcion">
+              <textarea value={cuadernoForm.description} onChange={(e) => setCuadernoForm((prev) => ({ ...prev, description: e.target.value }))} rows={4} className={fieldClassName} />
+            </Field>
+            <div className="flex justify-end gap-3">
+              <button type="button" onClick={() => setCuadernoDialogOpen(false)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm">Cancelar</button>
+              <button type="button" onClick={() => void handleCreateEntry()} disabled={guardandoCuaderno} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm text-white disabled:opacity-60">
+                {guardandoCuaderno ? 'Guardando...' : 'Guardar registro'}
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={tratamientoDialogOpen} onOpenChange={setTratamientoDialogOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Nuevo tratamiento</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {tratamientoError ? <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{tratamientoError}</div> : null}
+            <Field label="Modo">
+              <select value={tratamientoForm.mode} onChange={(e) => setTratamientoForm((prev) => ({ ...prev, mode: e.target.value as TreatmentApplication['mode'] }))} className={fieldClassName}>
+                <option value="manual">Manual</option>
+                <option value="bulk">Masivo</option>
+              </select>
+            </Field>
+            <Field label="Tipo de problema">
+              <select value={tratamientoForm.issueType} onChange={(e) => setTratamientoForm((prev) => ({ ...prev, issueType: e.target.value as TreatmentApplication['issueType'] }))} className={fieldClassName}>
+                <option value="maleza">Maleza</option>
+                <option value="plaga">Plaga</option>
+                <option value="enfermedad">Enfermedad</option>
+                <option value="nutricion">Nutricion</option>
+                <option value="otro">Otro</option>
+              </select>
+            </Field>
+            <Field label="Producto">
+              <input value={tratamientoForm.productName} onChange={(e) => setTratamientoForm((prev) => ({ ...prev, productName: e.target.value }))} className={fieldClassName} />
+            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Dosis">
+                <input type="number" min={0} step="0.1" value={tratamientoForm.dosagePerHa} onChange={(e) => setTratamientoForm((prev) => ({ ...prev, dosagePerHa: Number(e.target.value) }))} className={fieldClassName} />
+              </Field>
+              <Field label="Unidad">
+                <select value={tratamientoForm.dosageUnit} onChange={(e) => setTratamientoForm((prev) => ({ ...prev, dosageUnit: e.target.value as TreatmentApplication['dosageUnit'] }))} className={fieldClassName}>
+                  <option value="l_ha">l/ha</option>
+                  <option value="kg_ha">kg/ha</option>
+                  <option value="cc_ha">cc/ha</option>
+                  <option value="g_ha">g/ha</option>
+                </select>
+              </Field>
+            </div>
+            <Field label="Area aplicada (ha)">
+              <input type="number" min={0} step="0.1" value={tratamientoForm.appliedAreaHa} onChange={(e) => setTratamientoForm((prev) => ({ ...prev, appliedAreaHa: Number(e.target.value) }))} className={fieldClassName} />
+            </Field>
+            <div className="flex justify-end gap-3">
+              <button type="button" onClick={() => setTratamientoDialogOpen(false)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm">Cancelar</button>
+              <button type="button" onClick={() => void handleCreateTreatment()} disabled={guardandoTratamiento} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm text-white disabled:opacity-60">
+                {guardandoTratamiento ? 'Guardando...' : 'Guardar tratamiento'}
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </PageShell>
+  );
+}
+
+const fieldClassName = 'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm';
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-sm text-slate-700">{label}</Label>
+      {children}
+    </div>
   );
 }

@@ -1,7 +1,7 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, PlusCircle } from 'lucide-react';
+import { AlertTriangle, Pencil, PlusCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { PageShell } from '@/components/layout/PageShell';
 import type { Field, Plot } from '@/types/sig-agro';
@@ -15,8 +15,17 @@ import {
   generarAlertasRiego,
   obtenerPlanesRiego,
 } from '@/services/irrigation-plans';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 
 const DEFAULT_CAMPAIGN = '2025-2026';
+const EMPTY_FORM = {
+  fieldId: '',
+  plotId: '',
+  targetMm: 20,
+  method: 'pivot' as IrrigationPlan['method'],
+  planDate: new Date().toISOString().split('T')[0],
+};
 
 export default function RiegoPage() {
   const { user, organizationId } = useAuth();
@@ -28,12 +37,19 @@ export default function RiegoPage() {
 
   const [fieldId, setFieldId] = useState('');
   const [plotId, setPlotId] = useState('');
-  const [targetMm, setTargetMm] = useState(20);
-  const [method, setMethod] = useState<IrrigationPlan['method']>('pivot');
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editando, setEditando] = useState<IrrigationPlan | null>(null);
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [formData, setFormData] = useState(EMPTY_FORM);
 
   const availablePlots = useMemo(
     () => plots.filter((plot) => !fieldId || plot.fieldId === fieldId),
     [plots, fieldId]
+  );
+  const dialogPlots = useMemo(
+    () => plots.filter((plot) => !formData.fieldId || plot.fieldId === formData.fieldId),
+    [plots, formData.fieldId]
   );
 
   const summary = useMemo(() => calcularResumenRiego(plans), [plans]);
@@ -64,23 +80,63 @@ export default function RiegoPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizationId, campaignId]);
 
-  const handleCreatePlan = async () => {
-    if (!organizationId || !user || !fieldId || !plotId || targetMm <= 0) return;
+  function abrirDialog(plan?: IrrigationPlan) {
+    if (plan) {
+      setEditando(plan);
+      setFormData({
+        fieldId: plan.fieldId,
+        plotId: plan.plotId,
+        targetMm: plan.targetMm,
+        method: plan.method || 'pivot',
+        planDate: new Date(plan.planDate).toISOString().split('T')[0],
+      });
+    } else {
+      setEditando(null);
+      setFormData({
+        ...EMPTY_FORM,
+        fieldId,
+        plotId: plotId || '',
+      });
+    }
+    setError(null);
+    setDialogOpen(true);
+  }
 
-    await crearPlanRiego(organizationId, {
-      organizationId,
-      campaignId,
-      fieldId,
-      plotId,
-      planDate: new Date(),
-      targetMm,
-      executionStatus: 'planned',
-      method,
-      createdBy: user.id,
-    });
+  async function handleSavePlan() {
+    if (!organizationId || !user || !formData.fieldId || !formData.plotId || formData.targetMm <= 0) {
+      setError('Completa campo, lote y objetivo');
+      return;
+    }
 
-    await loadAll();
-  };
+    setGuardando(true);
+    setError(null);
+    try {
+      const payload = {
+        organizationId,
+        campaignId,
+        fieldId: formData.fieldId,
+        plotId: formData.plotId,
+        planDate: new Date(formData.planDate),
+        targetMm: formData.targetMm,
+        executionStatus: editando?.executionStatus || 'planned',
+        method: formData.method,
+        createdBy: editando?.createdBy || user.id,
+      };
+
+      if (editando) {
+        await actualizarPlanRiego(organizationId, editando.id, payload);
+      } else {
+        await crearPlanRiego(organizationId, payload);
+      }
+
+      setDialogOpen(false);
+      setEditando(null);
+      setFormData(EMPTY_FORM);
+      await loadAll();
+    } finally {
+      setGuardando(false);
+    }
+  }
 
   const markCompleted = async (plan: IrrigationPlan) => {
     if (!organizationId) return;
@@ -92,6 +148,11 @@ export default function RiegoPage() {
     await loadAll();
   };
 
+  const filteredPlans = useMemo(
+    () => plans.filter((plan) => (!fieldId || plan.fieldId === fieldId) && (!plotId || plan.plotId === plotId)),
+    [plans, fieldId, plotId]
+  );
+
   if (!organizationId) return <div className="p-6">Selecciona una organizacion para continuar.</div>;
 
   return (
@@ -99,7 +160,6 @@ export default function RiegoPage() {
       title="Planificacion de Riego"
       subtitle="Plan vs ejecucion con KPIs de eficiencia y alertas de ventana."
     >
-
       <section className="rounded-xl border border-slate-200 bg-white p-4 grid grid-cols-2 md:grid-cols-6 gap-3">
         <Kpi title="Planes" value={summary.totalPlans} />
         <Kpi title="Objetivo mm" value={summary.totalTargetMm} />
@@ -119,7 +179,7 @@ export default function RiegoPage() {
         </section>
       )}
 
-      <section className="rounded-xl border border-slate-200 bg-white p-4 grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
+      <section className="rounded-xl border border-slate-200 bg-white p-4 grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
         <div>
           <label className="text-xs text-slate-600">Campana</label>
           <input value={campaignId} onChange={(e) => setCampaignId(e.target.value)} className="w-full border rounded-lg px-3 py-2 text-sm" />
@@ -127,41 +187,29 @@ export default function RiegoPage() {
         <div>
           <label className="text-xs text-slate-600">Campo</label>
           <select value={fieldId} onChange={(e) => { setFieldId(e.target.value); setPlotId(''); }} className="w-full border rounded-lg px-3 py-2 text-sm">
-            <option value="">Seleccionar</option>
+            <option value="">Todos</option>
             {fields.map((field) => <option key={field.id} value={field.id}>{field.nombre}</option>)}
           </select>
         </div>
         <div>
           <label className="text-xs text-slate-600">Lote</label>
           <select value={plotId} onChange={(e) => setPlotId(e.target.value)} className="w-full border rounded-lg px-3 py-2 text-sm">
-            <option value="">Seleccionar</option>
+            <option value="">Todos</option>
             {availablePlots.map((plot) => <option key={plot.id} value={plot.id}>{plot.nombre}</option>)}
           </select>
         </div>
-        <div>
-          <label className="text-xs text-slate-600">Objetivo (mm)</label>
-          <input type="number" min={1} value={targetMm} onChange={(e) => setTargetMm(Number(e.target.value))} className="w-full border rounded-lg px-3 py-2 text-sm" />
+        <div className="md:col-span-2 flex justify-end">
+          <button onClick={() => abrirDialog()} className="rounded-lg bg-emerald-600 text-white px-4 py-2 text-sm inline-flex items-center gap-2">
+            <PlusCircle className="w-4 h-4" /> Nuevo plan de riego
+          </button>
         </div>
-        <div>
-          <label className="text-xs text-slate-600">Metodo</label>
-          <select value={method} onChange={(e) => setMethod(e.target.value as IrrigationPlan['method'])} className="w-full border rounded-lg px-3 py-2 text-sm">
-            <option value="pivot">Pivot</option>
-            <option value="goteo">Goteo</option>
-            <option value="aspersor">Aspersor</option>
-            <option value="surco">Surco</option>
-            <option value="otro">Otro</option>
-          </select>
-        </div>
-        <button onClick={() => void handleCreatePlan()} className="rounded-lg bg-emerald-600 text-white px-3 py-2 text-sm inline-flex items-center justify-center gap-2">
-          <PlusCircle className="w-4 h-4" /> Crear plan
-        </button>
       </section>
 
       <section className="rounded-xl border border-slate-200 bg-white p-4">
         <h2 className="font-medium mb-3">Planes de riego</h2>
         {loading ? <p className="text-sm text-slate-500">Cargando...</p> : (
           <div className="space-y-2 max-h-[480px] overflow-auto">
-            {plans.map((plan) => (
+            {filteredPlans.map((plan) => (
               <div key={plan.id} className="border border-slate-200 rounded-lg p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                 <div>
                   <p className="text-sm text-slate-800">
@@ -169,17 +217,68 @@ export default function RiegoPage() {
                   </p>
                   <p className="text-xs text-slate-500">{new Date(plan.planDate).toLocaleString()}</p>
                 </div>
-                {plan.executionStatus === 'planned' && (
-                  <button onClick={() => void markCompleted(plan)} className="rounded-lg border border-emerald-300 text-emerald-700 px-3 py-1.5 text-xs">
-                    Marcar completado
+                <div className="flex gap-2">
+                  <button onClick={() => abrirDialog(plan)} className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs inline-flex items-center gap-1">
+                    <Pencil className="w-3.5 h-3.5" /> Editar
                   </button>
-                )}
+                  {plan.executionStatus === 'planned' && (
+                    <button onClick={() => void markCompleted(plan)} className="rounded-lg border border-emerald-300 text-emerald-700 px-3 py-1.5 text-xs">
+                      Marcar completado
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
-            {plans.length === 0 && <p className="text-sm text-slate-500">Sin planes de riego.</p>}
+            {filteredPlans.length === 0 && <p className="text-sm text-slate-500">Sin planes de riego.</p>}
           </div>
         )}
       </section>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>{editando ? 'Editar plan de riego' : 'Nuevo plan de riego'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {error ? <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
+            <Field label="Campo">
+              <select value={formData.fieldId} onChange={(e) => setFormData((prev) => ({ ...prev, fieldId: e.target.value, plotId: '' }))} className={fieldClassName}>
+                <option value="">Seleccionar</option>
+                {fields.map((field) => <option key={field.id} value={field.id}>{field.nombre}</option>)}
+              </select>
+            </Field>
+            <Field label="Lote">
+              <select value={formData.plotId} onChange={(e) => setFormData((prev) => ({ ...prev, plotId: e.target.value }))} className={fieldClassName}>
+                <option value="">Seleccionar</option>
+                {dialogPlots.map((plot) => <option key={plot.id} value={plot.id}>{plot.nombre}</option>)}
+              </select>
+            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Objetivo (mm)">
+                <input type="number" min={1} value={formData.targetMm} onChange={(e) => setFormData((prev) => ({ ...prev, targetMm: Number(e.target.value) }))} className={fieldClassName} />
+              </Field>
+              <Field label="Fecha">
+                <input type="date" value={formData.planDate} onChange={(e) => setFormData((prev) => ({ ...prev, planDate: e.target.value }))} className={fieldClassName} />
+              </Field>
+            </div>
+            <Field label="Metodo">
+              <select value={formData.method} onChange={(e) => setFormData((prev) => ({ ...prev, method: e.target.value as IrrigationPlan['method'] }))} className={fieldClassName}>
+                <option value="pivot">Pivot</option>
+                <option value="goteo">Goteo</option>
+                <option value="aspersor">Aspersor</option>
+                <option value="surco">Surco</option>
+                <option value="otro">Otro</option>
+              </select>
+            </Field>
+            <div className="flex justify-end gap-3">
+              <button type="button" onClick={() => setDialogOpen(false)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm">Cancelar</button>
+              <button type="button" onClick={() => void handleSavePlan()} disabled={guardando} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm text-white disabled:opacity-60">
+                {guardando ? 'Guardando...' : editando ? 'Guardar cambios' : 'Crear plan'}
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </PageShell>
   );
 }
@@ -189,6 +288,17 @@ function Kpi({ title, value, warn = false }: { title: string; value: string | nu
     <div className={`rounded-lg border p-3 ${warn ? 'border-amber-300 bg-amber-50' : 'border-slate-200 bg-slate-50'}`}>
       <p className="text-xs text-slate-600">{title}</p>
       <p className="text-lg font-semibold text-slate-900">{value}</p>
+    </div>
+  );
+}
+
+const fieldClassName = 'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm';
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-sm text-slate-700">{label}</Label>
+      {children}
     </div>
   );
 }
