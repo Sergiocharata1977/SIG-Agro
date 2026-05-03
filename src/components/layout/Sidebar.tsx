@@ -934,42 +934,42 @@ export default function Sidebar() {
 
                 {megaMenuOpen && (
                   <>
-                    <div className="fixed inset-0 z-[540] hidden backdrop-blur-[3px] md:block" style={{ background: 'var(--dashboard-overlay)' }} onClick={() => setMegaMenuOpen(false)} />
+                    <div className="fixed inset-0 z-[540] hidden md:block" onClick={() => setMegaMenuOpen(false)} />
                     <div className="absolute left-0 right-0 top-[calc(100%+12px)] z-[550] md:fixed md:left-[calc(20rem+16px)] md:right-auto md:top-24 md:max-h-[calc(100vh-7rem)] md:w-[780px] md:overflow-y-auto">
-                      <div className="overflow-hidden rounded-[32px] shadow-[0_32px_96px_rgba(10,21,16,0.16)]" style={{ border: '1px solid var(--dashboard-sidebar-border)', background: 'var(--dashboard-popup-bg)' }}>
-                        <div className="flex items-start justify-between gap-4 border-b px-7 py-6" style={{ borderColor: 'var(--dashboard-sidebar-border)', background: 'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.9))' }}>
-                          <div className="max-w-2xl">
+                      <div className="overflow-hidden rounded-[28px] shadow-[0_28px_80px_rgba(2,12,9,0.16)] backdrop-blur-xl" style={{ border: '1px solid var(--dashboard-sidebar-border)', background: 'linear-gradient(180deg, var(--dashboard-sidebar-panel), var(--dashboard-popup-bg))' }}>
+                        <div className="flex items-start justify-between gap-4 border-b px-6 py-5" style={{ borderColor: 'var(--dashboard-sidebar-border)' }}>
+                          <div>
                             <p className="text-[11px] font-semibold uppercase tracking-[0.24em]" style={{ color: 'var(--dashboard-accent)' }}>Mega menu</p>
-                            <h3 className="mt-2 text-[2rem] font-semibold tracking-[-0.03em]" style={{ color: 'var(--dashboard-text)' }}>Exploracion central</h3>
-                            <p className="mt-3 max-w-2xl text-sm leading-6 sm:text-base sm:leading-7" style={{ color: 'var(--dashboard-muted)' }}>
+                            <h3 className="mt-1 text-2xl font-semibold" style={{ color: 'var(--dashboard-text)' }}>Exploracion central</h3>
+                            <p className="mt-2 max-w-2xl text-sm leading-6" style={{ color: 'var(--dashboard-muted)' }}>
                               Accesos principales para tablero, territorio operativo y seguimiento productivo.
                             </p>
                           </div>
                           <button
                             type="button"
                             onClick={() => setMegaMenuOpen(false)}
-                            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border transition hover:-translate-y-0.5 hover:bg-slate-50"
-                            style={{ borderColor: 'var(--dashboard-sidebar-border)', color: 'var(--dashboard-sidebar-text)', background: 'rgba(255,255,255,0.88)' }}
+                            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border transition hover:bg-slate-50"
+                            style={{ borderColor: 'var(--dashboard-sidebar-border)', color: 'var(--dashboard-sidebar-text)' }}
                             aria-label="Cerrar panel de exploracion"
                           >
-                            <X className="h-5 w-5" />
+                            <X className="h-4 w-4" />
                           </button>
                         </div>
 
-                        <div className="grid gap-5 p-6 md:grid-cols-3">
+                        <div className="grid gap-4 p-5 md:grid-cols-3">
                           {megaMenuGroups.map((group) => {
                             const GroupIcon = group.icon;
                             return (
                               <section
                                 key={group.key}
-                                className={`rounded-[28px] border p-5 ${
+                                className={`rounded-[24px] border p-4 ${
                                   group.active
-                                    ? 'shadow-[0_16px_34px_rgba(15,23,42,0.08)]'
+                                    ? 'shadow-[0_14px_30px_rgba(15,23,42,0.08)]'
                                     : ''
                                 }`}
                                 style={{
                                   borderColor: group.active ? 'var(--dashboard-accent)' : 'var(--dashboard-sidebar-border)',
-                                  background: 'white',
+                                  background: 'var(--dashboard-sidebar-panel)',
                                 }}
                               >
                                 <div className="flex items-start gap-3">
@@ -977,7 +977,7 @@ export default function Sidebar() {
                                     <GroupIcon className="h-5 w-5" />
                                   </div>
                                   <div className="min-w-0">
-                                    <h4 className="text-base font-semibold tracking-[-0.02em]" style={{ color: 'var(--dashboard-text)' }}>{group.title}</h4>
+                                    <h4 className="text-base font-semibold" style={{ color: 'var(--dashboard-text)' }}>{group.title}</h4>
                                     <p className="mt-1 text-xs leading-5" style={{ color: 'var(--dashboard-muted)' }}>
                                       {describeGroup(group.key)}
                                     </p>
